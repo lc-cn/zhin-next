@@ -1,0 +1,26 @@
+{
+  "name": "@zhin/bot",
+  "version": "0.1.0",
+  "description": "Zhin Bot 示例应用",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "zhin dev --bun",
+    "start": "zhin start --bun",
+    "initial": "zhin init ../../test-bot -c js -p pnpm",
+    "daemon": "zhin start --daemon --bun",
+    "build": "zhin build",
+    "stop": "zhin stop"
+  },
+  "dependencies": {
+    "@zhin/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@zhin/cli": "workspace:*",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

@@ -1,0 +1,25 @@
+{
+  "name": "test-bot",
+  "version": "0.1.0",
+  "description": "test-bot 机器人",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "zhin dev --bun",
+    "start": "zhin start --bun",
+    "daemon": "zhin start --bun --daemon",
+    "build": "zhin build",
+    "stop": "zhin stop"
+  },
+  "dependencies": {
+    "@zhin/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@zhin/cli": "workspace:*",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

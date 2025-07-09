@@ -1,0 +1,29 @@
+{
+  "name": "@zhin/core",
+  "version": "1.0.0",
+  "description": "Zhin机器人核心框架",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lc-cn/icqq": "^1.0.2",
+    "eventemitter3": "^5.0.1",
+    "ws": "^8.14.2",
+    "yaml": "^2.3.4",
+    "toml": "^3.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+} 
