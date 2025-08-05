@@ -84,7 +84,8 @@ export const STACK_TRACE_REGEX = /at\s+.*\s+\((.+):\d+:\d+\)/;
 
 /** 错误消息常量 */
 export const ERROR_MESSAGES = {
-    CONTEXT_NOT_FOUND: 'Effect context not found',
+    CONTEXT_NOT_FOUND: 'Effect Context not found',
+    CONTEXT_NOT_MOUNTED:'Effect Context not mounted',
     CALLER_FILE_NOT_FOUND: 'Cannot determine caller file',
     CIRCULAR_DEPENDENCY: 'Circular dependency detected',
     MODULE_NOT_FOUND: 'Module not found in dirs',
@@ -130,9 +131,9 @@ export const DEFAULT_GC_CONFIG: GCConfig = {
 /**
  * 执行手动垃圾回收
  * @param config 垃圾回收配置
- * @param context 上下文信息（用于日志）
+ * @param Context 上下文信息（用于日志）
  */
-export function performGC(config: Partial<GCConfig> = {}, context?: string): void {
+export function performGC(config: Partial<GCConfig> = {}, Context?: string): void {
     const finalConfig = { ...DEFAULT_GC_CONFIG, ...config };
     
     if (!finalConfig.enabled || !global.gc) {
@@ -149,11 +150,11 @@ export function performGC(config: Partial<GCConfig> = {}, context?: string): voi
             });
         }
         
-        if (context) {
-            console.debug(`Manual GC triggered: ${context}`);
+        if (Context) {
+            console.debug(`Manual GC triggered: ${Context}`);
         }
     } catch (error) {
-        console.warn('Manual GC failed', { error, context });
+        console.warn('Manual GC failed', { error, Context });
     }
 }
 

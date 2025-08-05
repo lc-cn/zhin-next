@@ -16,7 +16,8 @@ export class FileWatcher extends EventEmitter {
     constructor(
         dirs: string[],
         extensions: Set<string>,
-        logger: Logger
+        logger: Logger,
+        private exclude:string[]=[path.join(process.cwd(),'node_modules')]
     ) {
         super();
         this.#dirs = dirs.map(dir => resolvePath(dir));
@@ -45,7 +46,7 @@ export class FileWatcher extends EventEmitter {
     }
     /** 设置目录监听器 */
     private setupDirWatcher(dir: string): void {
-        if (this.#dirWatchers.has(dir)) {
+        if (this.exclude.includes(dir)||this.#dirWatchers.has(dir)) {
             return;
         }
 

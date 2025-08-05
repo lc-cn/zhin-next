@@ -9,6 +9,7 @@ interface InitOptions {
   config?: 'json' | 'yaml' | 'toml' | 'ts' | 'js';
   packageManager?: 'npm' | 'yarn' | 'pnpm';
   runtime?: 'node' | 'bun';
+  yes?: boolean;
 }
 
 export const initCommand = new Command('init')
@@ -17,7 +18,13 @@ export const initCommand = new Command('init')
   .option('-c, --config <format>', '配置文件格式 (json|yaml|toml|ts|js)', 'yaml')
   .option('-p, --package-manager <manager>', '包管理器 (npm|yarn|pnpm)', 'npm')
   .option('-r, --runtime <runtime>', '运行时 (node|bun)', 'node')
+  .option('-y, --yes', '自动回答所有问题')
   .action(async (projectName: string, options: InitOptions) => {
+    if(options.yes) {
+      options.config = 'yaml';
+      options.packageManager = 'npm';
+      options.runtime = 'node';
+    }
     try {
       let name = projectName;
       

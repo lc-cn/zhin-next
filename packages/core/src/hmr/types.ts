@@ -13,11 +13,11 @@ export interface Logger {
 }
 
 /** Context 接口 */
-export interface Context<T = any> {
+export interface Context<R = any,T extends Dependency=Dependency> {
     name: string;
-    value?: T;
-    mounted?: (parent: Dependency) => T | Promise<T>;
-    dispose?: (value: T) => void;
+    value?: R;
+    mounted?: (parent: T) => R | Promise<R>;
+    dispose?: (value: R) => void;
 }
 
 /** 插件版本信息接口 */
@@ -29,7 +29,7 @@ export interface PluginVersion {
 }
 
 /** 依赖配置接口 */
-export interface DependencyConfig {
+export interface DependencyOptions {
     /** 依赖是否启用 */
     enabled?: boolean;
     /** 依赖优先级（数字越大优先级越高） */
@@ -40,7 +40,7 @@ export interface DependencyConfig {
 }
 
 /** 监听器配置接口 */
-export interface HMRConfig extends DependencyConfig {
+export interface HMROptions extends DependencyOptions {
     /** 可监听的文件扩展名 */
     extensions?: Set<string>;
     /** 要监听的目录列表 */

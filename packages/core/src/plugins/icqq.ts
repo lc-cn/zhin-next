@@ -1,8 +1,8 @@
 import {createClient, Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@lc-cn/icqq";
 import path from "path";
-import {Bot} from "../adapter.js";
+import {Bot} from "../bot.js";
 import {BotConfig, Group, Message, MessageSegment, SendContent, SendMessageOptions, User} from "../types.js";
-import { registerAdapter,useLogger } from '../app.js';
+import {register, useLogger} from '../app.js';
 
 export interface IcqqBotConfig extends BotConfig,Config{
     adapter:'icqq'
@@ -28,7 +28,6 @@ export class IcqqBot extends Bot<IcqqBotConfig>{
             },
             channel:{
                 id:msg.message_type==='group'?msg.group_id.toString():msg.from_id.toString(),
-                name:msg.message_type==='group'?msg.group_name:msg.sender.nickname,
                 type:msg.message_type
             },
             content: IcqqBot.toSegments(msg.message),
@@ -46,7 +45,7 @@ export class IcqqBot extends Bot<IcqqBotConfig>{
         this.handleMessage(message);
     }
     async connect(): Promise<void> {
-        if(this.#internal) throw new Error(`${this.config.name} has connected`)
+        if(this.#internal) throw new Error(`${this.name} has connected`)
         const client=this.#internal=createClient(this.config)
         client.on('message',this.handleIcqqMessage.bind(this))
         client.on('system.login.device',(e:unknown)=>{
@@ -70,12 +69,12 @@ export class IcqqBot extends Bot<IcqqBotConfig>{
                 this.connected=true
                 resolve()
             })
-            client.login(Number(this.config.name),this.config.password)
+            client.login(Number(this.name),this.config.password)
         })
     }
 
     async disconnect(): Promise<void> {
-        if(!this.#internal) throw new Error(`${this.config.name} has no connect`)
+        if(!this.#internal) throw new Error(`${this.name} has no connect`)
         return this.#internal.logout()
     }
 
@@ -131,10 +130,28 @@ export namespace IcqqBot{
         })
     }
 }
-// 注册OneBot11适配器工厂
-registerAdapter('icqq', (config: IcqqBotConfig) => {
-    // 这里可以选择使用连接池或创建新连接
-    const logger = useLogger();
-    logger.debug('Creating Icqq bot', { name: config.name });
-    return new IcqqBot(config as IcqqBotConfig);
-});
+const logger=useLogger()
+register({
+    name:'icqq',
+    async mounted(p){
+        const bots=new Map<string,IcqqBot>()
+        const configs=p.app.getConfig().bots?.filter(c=>c.adapter==='icqq')
+        if(!configs?.length) return bots
+        for(const config of configs){
+            const bot=new IcqqBot(config as IcqqBotConfig)
+            await bot.connect()
+            bot.on('message',(m)=>p.dispatch('message',m))
+            logger.info(`bot ${config.name} for icqq connected`);
+            bots.set(config.name,bot);
+        }
+        logger.info(`context icqq mounted`)
+        return bots
+    },
+    async dispose(bots){
+        for(const [name,bot] of bots){
+            await bot.disconnect()
+            logger.info(`bot ${name} for icqq disconnectd`)
+        }
+        logger.info(`context icqq disposed`)
+    }
+})

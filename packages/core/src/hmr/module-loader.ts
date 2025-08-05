@@ -112,11 +112,8 @@ export class ModuleLoader<P extends Dependency = Dependency> extends EventEmitte
                 const importUrl: string=`${fileUrl}?t=${Date.now()}`;
                 
                 await import(importUrl);
-                
-                // 安装完成
-                await dependency.mounted();
-                
-                this.emit('add', dependency);
+
+                this.emit('add', this);
                 return dependency;
             } catch (error) {
                 // 导入失败，清理依赖

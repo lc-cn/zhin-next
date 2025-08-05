@@ -66,7 +66,7 @@ import {
     useLogger 
 } from '@zhin/core';
 
-// Create shared context
+// Create shared Context
 createContext({
     name: 'database',
     async mounted() {
@@ -112,8 +112,8 @@ addCronJob({
 
 | Hook | Description |
 |------|-------------|
-| `createContext<T>()` | Create shared context with lifecycle |
-| `useContext<T>()` | Access context value |
+| `createContext<T>()` | Create shared Context with lifecycle |
+| `useContext<T>()` | Access Context value |
 | `onMounted()` | Plugin initialization hook |
 | `onDispose()` | Plugin cleanup hook |
 | `addCommand()` | Register command handler |
@@ -131,7 +131,7 @@ The HMR system automatically watches for file changes and reloads plugins withou
 
 1. **File Watching** - Monitors plugin directories for changes
 2. **Smart Reloading** - Only reloads affected plugins
-3. **State Preservation** - Maintains context and connection state
+3. **State Preservation** - Maintains Context and connection state
 4. **Error Recovery** - Graceful handling of reload failures
 5. **Performance Metrics** - Tracks reload times and statistics
 

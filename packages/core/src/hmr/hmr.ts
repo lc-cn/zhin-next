@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { Dependency } from './dependency.js';
-import { HMRConfig, Logger } from './types.js';
+import {HMROptions, Logger} from './types.js';
 import { 
     ConsoleLogger, 
     DEFAULT_WATCHABLE_EXTENSIONS, 
@@ -21,7 +21,7 @@ import { fileURLToPath } from 'url';
 // 默认HMR配置
 // ============================================================================
 
-const DEFAULT_HMR_CONFIG: Required<Omit<HMRConfig,'logger'>> & { 
+const DEFAULT_HMR_CONFIG: Required<Omit<HMROptions,'logger'>> & {
     logger: Logger;
 } = {
     priority: 0,
@@ -45,7 +45,7 @@ const DEFAULT_HMR_CONFIG: Required<Omit<HMRConfig,'logger'>> & {
  * HMR 基类：提供热模块替换功能
  * 继承自Dependency，内部组合各个功能模块
  */
-export abstract class HMR<P extends Dependency = Dependency> extends Dependency<P> {
+export abstract class HMR<P extends Dependency = Dependency> extends Dependency<P,HMROptions> {
     /** HMR 栈，用于跟踪当前活动的 HMR 实例 */
     private static _hmrStack?: HMR<any>[];
     /** 依赖栈，用于跟踪当前活动的依赖 */
@@ -93,7 +93,7 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     static get currentHMR(): HMR {
         const hmrStack = this.hmrStack;
         if (hmrStack.length === 0) {
-            throw createError('No active HMR context');
+            throw createError('No active HMR Context');
         }
         return hmrStack[hmrStack.length - 1];
     }
@@ -102,7 +102,7 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     static get currentDependency(): Dependency {
         const dependencyStack = this.dependencyStack;
         if (dependencyStack.length === 0) {
-            throw createError('No active dependency context');
+            throw createError('No active dependency Context');
         }
         return dependencyStack[dependencyStack.length - 1];
     }
@@ -163,41 +163,37 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     /** 重载管理器 */
     protected readonly reloadManager: ReloadManager;
     protected readonly pendingDependencies: Set<string> = new Set();
-    /** HMR 配置 */
-    declare config: HMRConfig;
 
     /** 私有日志记录器 */
     logger: Logger;
 
-    constructor(name: string,config: HMRConfig = {}) {
-        const finalConfig = mergeConfig(DEFAULT_HMR_CONFIG, config);
-        super(null, name, getCallerFile(), finalConfig);
-
-        this.config = finalConfig;
-        this.logger = finalConfig.logger;
+    constructor(name: string,options: HMROptions = {}) {
+        const finalOptions = mergeConfig(DEFAULT_HMR_CONFIG, options);
+        super(null, name, getCallerFile(), finalOptions);
+        this.logger = finalOptions.logger;
 
         // 初始化功能模块
         this.fileWatcher = new FileWatcher(
-            finalConfig.dirs || [],
-            finalConfig.extensions || DEFAULT_WATCHABLE_EXTENSIONS,
+            finalOptions.dirs || [],
+            finalOptions.extensions || DEFAULT_WATCHABLE_EXTENSIONS,
             this.logger
         );
 
         this.moduleLoader = new ModuleLoader<P>(
             this,
             this.logger,
-            finalConfig.algorithm || 'md5'
+            finalOptions.algorithm || 'md5'
         );
 
         this.performanceMonitor = new PerformanceMonitor();
 
         this.reloadManager = new ReloadManager(
             this.logger,
-            finalConfig.debounce || 100
+            finalOptions.debounce || 100
         );
 
         // 设置最大监听器数量
-        this.setMaxListeners(finalConfig.max_listeners);
+        this.setMaxListeners(finalOptions.max_listeners);
 
         // 设置事件监听
         this.setupEventListeners();
@@ -324,6 +320,7 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
         })
         const promises = this.dependencies.values();
         await Promise.all(Array.from(promises).map(dep => dep.waitForReady()));
+
     }
 
     /** 获取依赖列表 */
@@ -361,20 +358,19 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     }
 
     /** 更新HMR配置 */
-    updateHMRConfig(newConfig: Partial<HMRConfig>): void {
-        const oldConfig = { ...this.config };
-        this.config = { ...this.config, ...newConfig };
+    updateOptions(options: Partial<HMROptions>): void {
+        super.updateOptions(options)
         
         // 更新相关设置
-        if (newConfig.extensions) {
+        if (this.options.extensions) {
             // 更新文件监听器的扩展名
             // 注意：这里需要重新创建文件监听器或者添加更新方法
         }
         
-        if (newConfig.dirs) {
+        if (this.options.dirs) {
             // 更新监听目录
             const currentDirs = this.getWatchDirs();
-            const newDirs = newConfig.dirs;
+            const newDirs = this.options.dirs;
             
             // 移除不再需要的目录
             for (const dir of currentDirs) {
@@ -391,12 +387,9 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
             }
         }
         
-        if (newConfig.max_listeners) {
-            this.setMaxListeners(newConfig.max_listeners);
+        if (this.options.max_listeners) {
+            this.setMaxListeners(this.options.max_listeners);
         }
-        
-        this.logger.info('Configuration updated', { oldConfig, newConfig: this.config });
-        this.emit('config-changed', oldConfig, this.config);
     }
 
     /** 获取性能统计信息 */
@@ -447,14 +440,10 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
         performGC({ onDispose: true }, `HMR dispose: ${this.name}`);
     }
 
-    /** 获取配置 */
-    getConfig(): Readonly<HMRConfig> {
-        return { ...this.config };
-    }
 
     /** 设置调试模式 */
     setDebugMode(enabled: boolean): void {
-        this.config.debug = enabled;
+        this.options.debug = enabled;
         this.logger.info(`Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     }
 

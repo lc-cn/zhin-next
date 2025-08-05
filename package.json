@@ -21,7 +21,8 @@
     "link": "pnpm --filter @zhin/cli exec npm link",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "create": "node packages/create-zhin/dist/index.js"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

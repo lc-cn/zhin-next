@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
-import { Bot } from '../adapter.js';
+import { Bot } from '../bot.js';
 import {BotConfig, Message, SendMessageOptions, User, Group, MessageSegment} from '../types.js';
-import { registerAdapter,useLogger } from '../app.js';
+import {register, useLogger} from '../app.js';
 
 // ============================================================================
 // OneBot11 配置和类型
@@ -41,7 +41,7 @@ interface ApiResponse<T = any> {
 // OneBot11 适配器实现
 // ============================================================================
 
-export class OneBot11Bot extends Bot<OneBotV11Config> {
+export class OneBot11WsClient extends Bot<OneBotV11Config> {
   private ws?: WebSocket;
   private reconnectTimer?: NodeJS.Timeout;
   private heartbeatTimer?: NodeJS.Timeout;
@@ -194,11 +194,9 @@ export class OneBot11Bot extends Bot<OneBotV11Config> {
 
       const response = message as ApiResponse;
       if (response.status === 'ok') {
-        request.resolve(response.data);
-      } else {
-        request.reject(new Error(`API error: ${response.retcode}`));
+        return request.resolve(response.data);
       }
-      return;
+      return request.reject(new Error(`API error: ${response.retcode}`));
     }
 
     // 处理事件消息
@@ -218,7 +216,6 @@ export class OneBot11Bot extends Bot<OneBotV11Config> {
       },
       channel:{
         id:(onebotMsg.group_id||onebotMsg.user_id).toString(),
-        name:(onebotMsg.group_id||onebotMsg.user_id).toString(),
         type:onebotMsg.group_id?'group':'private'
       },
       content: onebotMsg.message,
@@ -262,12 +259,28 @@ export class OneBot11Bot extends Bot<OneBotV11Config> {
     }, interval);
   }
 }
-
-//
-// 注册OneBot11适配器工厂
-registerAdapter('onebot11', (config: OneBotV11Config) => {
-  // 这里可以选择使用连接池或创建新连接
-  const logger = useLogger();
-  logger.debug('Creating OneBot11 bot', { url: config.url });
-  return new OneBot11Bot(config as OneBotV11Config);
-}); 
+const logger=useLogger()
+register({
+  name:'onebot11',
+  async mounted(p){
+    const bots=new Map<string,OneBot11WsClient>()
+    const configs=p.app.getConfig().bots?.filter(c=>c.adapter==='onebot11')
+    if(!configs?.length) return bots
+    for(const config of configs){
+      const bot=new OneBot11WsClient(config as OneBotV11Config)
+      await bot.connect()
+      bot.on('message',(m)=>p.dispatch('message',m))
+      logger.info(`bot ${config.name} for onebot11 connect`)
+      bots.set(config.name,bot)
+    }
+    logger.info(`context onebot11 mounted`)
+    return bots
+  },
+  async dispose(bots){
+    for(const [name,bot] of bots){
+      await bot.disconnect()
+      logger.info(`bot ${name} for onebot11 disconnected`)
+    }
+    logger.info(`context onebot11 disposed`)
+  }
+})

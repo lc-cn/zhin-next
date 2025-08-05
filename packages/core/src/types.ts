@@ -13,7 +13,8 @@ export interface MessageSender{
   id: string;
   name?: string;
 }
-export interface MessageChannel extends MessageSender{
+export interface MessageTarget{
+  id: string;
   type: 'group' | 'private' | 'channel';
 }
 export interface Message {
@@ -21,7 +22,7 @@ export interface Message {
   content: MessageSegment[];
   sender: MessageSender;
   reply(content:SendContent,quote?:boolean|string):Promise<void>
-  channel: MessageChannel;
+  channel: MessageTarget;
   timestamp: number;
   raw: string;
 }
@@ -71,7 +72,7 @@ export interface AdapterEvents {
 }
 
 export interface SendMessageOptions {
-  channel:MessageChannel
+  channel:MessageTarget
   content:SendContent
 } 
 export type MaybePromise<T> = T extends Promise<infer U> ? T|U : T|Promise<T>;
