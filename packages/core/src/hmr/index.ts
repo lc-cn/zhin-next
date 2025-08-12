@@ -7,8 +7,8 @@ export type {
     Logger,
     Context,
     PluginVersion,
-    DependencyConfig,
-    HMRConfig,
+    DependencyOptions,
+    HMROptions,
     HmrOptions,
     DependencyResolution,
     PluginEventMap

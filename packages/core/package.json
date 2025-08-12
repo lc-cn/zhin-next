@@ -1,5 +1,5 @@
 {
-  "name": "@zhin/core",
+  "name": "@zhin.js/core",
   "version": "1.0.0",
   "description": "Zhin机器人核心框架",
   "type": "module",

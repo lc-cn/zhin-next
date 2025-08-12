@@ -16,7 +16,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@zhin/cli": "workspace:*"
+    "@zhin.js/cli": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

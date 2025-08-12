@@ -21,11 +21,10 @@ import { fileURLToPath } from 'url';
 // 默认HMR配置
 // ============================================================================
 
-const DEFAULT_HMR_CONFIG: Required<Omit<HMROptions,'logger'>> & {
+const DEFAULT_HMR_OPTIONS: Required<Omit<HMROptions,'logger'>> & {
     logger: Logger;
 } = {
     priority: 0,
-    disable_dependencies: [],
     dirs: [],
     enabled: true,
     extensions: DEFAULT_WATCHABLE_EXTENSIONS,
@@ -168,7 +167,7 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     logger: Logger;
 
     constructor(name: string,options: HMROptions = {}) {
-        const finalOptions = mergeConfig(DEFAULT_HMR_CONFIG, options);
+        const finalOptions = mergeConfig(DEFAULT_HMR_OPTIONS, options);
         super(null, name, getCallerFile(), finalOptions);
         this.logger = finalOptions.logger;
 
@@ -245,6 +244,7 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
         const disposes:(()=>void)[]=[]
         for(const fileUrl of filePath){
             disposes.push(this.fileWatcher.watching(fileUrl,callback))
+            this.logger.info(`start watching "${path.relative(process.cwd(),fileUrl)}"`)
         }
         this.on('dispose',()=>{
             while (disposes.length){

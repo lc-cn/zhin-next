@@ -1,21 +1,15 @@
-import { defineConfig } from '@zhin/core';
+import { defineConfig } from '@zhin.js/core';
 
 export default defineConfig(async (env)=>{
   return {
     // 机器人配置
     bots: [
       // {
-      //   name: 'onebot11',
-      //   adapter: 'onebot11',
-      //   url: env.ONEBOT_URL || 'ws://localhost:8080',
-      //   access_token: env.ONEBOT_ACCESS_TOKEN || ''
-      // },
-      {
-        name:'1689919782',
-        adapter:'icqq',
-        log_level:'off',
-        platform:4
-      }
+      //   name:'1689919782',
+      //   context:'icqq',
+      //   log_level:'off',
+      //   platform:4
+      // }
     ],
     // 插件目录
     plugin_dirs: [
@@ -25,11 +19,9 @@ export default defineConfig(async (env)=>{
     // 要加载的插件列表
     plugins: [
       'icqq',
+      'process',
       'test-plugin'
     ],
-
-    // 禁用的依赖列表
-    disable_dependencies: [],
 
     // 调试模式
     debug: env.DEBUG === 'true'

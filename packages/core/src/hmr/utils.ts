@@ -131,9 +131,9 @@ export const DEFAULT_GC_CONFIG: GCConfig = {
 /**
  * 执行手动垃圾回收
  * @param config 垃圾回收配置
- * @param Context 上下文信息（用于日志）
+ * @param context 上下文信息（用于日志）
  */
-export function performGC(config: Partial<GCConfig> = {}, Context?: string): void {
+export function performGC(config: Partial<GCConfig> = {}, context?: string): void {
     const finalConfig = { ...DEFAULT_GC_CONFIG, ...config };
     
     if (!finalConfig.enabled || !global.gc) {
@@ -149,13 +149,7 @@ export function performGC(config: Partial<GCConfig> = {}, Context?: string): voi
                 // 延迟后的额外清理
             });
         }
-        
-        if (Context) {
-            console.debug(`Manual GC triggered: ${Context}`);
-        }
-    } catch (error) {
-        console.warn('Manual GC failed', { error, Context });
-    }
+    } catch  {}
 }
 
 /**

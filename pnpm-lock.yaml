@@ -57,11 +57,11 @@ importers:
 
   apps/bot:
     dependencies:
-      '@zhin/core':
+      '@zhin.js/core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
-      '@zhin/cli':
+      '@zhin.js/cli':
         specifier: workspace:*
         version: link:../../packages/cli
       tsx:
@@ -138,7 +138,7 @@ importers:
 
   packages/create-zhin:
     dependencies:
-      '@zhin/cli':
+      '@zhin.js/cli':
         specifier: workspace:*
         version: link:../cli
     devDependencies:
@@ -151,11 +151,11 @@ importers:
 
   test-bot:
     dependencies:
-      '@zhin/core':
+      '@zhin.js/core':
         specifier: workspace:*
         version: link:../packages/core
     devDependencies:
-      '@zhin/cli':
+      '@zhin.js/cli':
         specifier: workspace:*
         version: link:../packages/cli
       tsx:

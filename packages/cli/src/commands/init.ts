@@ -166,10 +166,10 @@ async function createProjectStructure(projectPath: string, projectName: string, 
       stop: 'zhin stop'
     },
     dependencies: {
-      '@zhin/core': 'workspace:*'
+      '@zhin.js/core': 'workspace:*'
     },
     devDependencies: {
-      '@zhin/cli': 'workspace:*',
+      '@zhin.js/cli': 'workspace:*',
       'typescript': '^5.0.0',
       ...(options.runtime === 'node' && { 'tsx': '^4.0.0' })
     },
@@ -200,8 +200,8 @@ async function createProjectStructure(projectPath: string, projectName: string, 
       sourceMap: true,
       baseUrl: './src',
       paths: {
-        '@zhin/core': ['../../packages/core/src/index.ts'],
-        '@zhin/core/*': ['../../packages/core/src/*']
+        '@zhin.js/core': ['../../packages/core/src/index.ts'],
+        '@zhin.js/core/*': ['../../packages/core/src/*']
       }
     },
     include: ['src/**/*'],
@@ -217,7 +217,7 @@ async function createProjectStructure(projectPath: string, projectName: string, 
   await createEnvFile(projectPath);
   
   // 创建主入口文件
-  const indexContent = `import { createApp } from '@zhin/core';
+  const indexContent = `import { createApp } from '@zhin.js/core';
 
 // 启动机器人
 async function main() {
@@ -263,7 +263,7 @@ main().catch(console.error);
   await fs.writeFile(path.join(projectPath, 'src', 'index.ts'), indexContent);
   
   // 创建示例插件
-  const pluginContent = `import { usePlugin, useLogger, onDispose } from '@zhin/core';
+  const pluginContent = `import { usePlugin, useLogger, onDispose } from '@zhin.js/core';
 
 const plugin = usePlugin();
 const logger = useLogger();
@@ -459,7 +459,7 @@ ${getConfigExample(options.config!)}
 ### 插件示例
 
 \`\`\`typescript
-import { usePlugin, useLogger, addCommand } from '@zhin/core';
+import { usePlugin, useLogger, addCommand } from '@zhin.js/core';
 
 const plugin = usePlugin();
 const logger = useLogger();
@@ -541,7 +541,7 @@ function getConfigContent(format: string): string {
         bots: [
           {
             name: 'onebot11',
-            adapter: 'onebot11',
+            context: 'onebot11',
             url: '${ONEBOT_URL:-ws://localhost:8080}',
             access_token: '${ONEBOT_ACCESS_TOKEN:-}'
           }
@@ -552,9 +552,8 @@ function getConfigContent(format: string): string {
         ],
         plugins: [
           'onebot11',
-          'test-plugin'
+          'process'
         ],
-        disable_dependencies: [],
         debug: '${DEBUG:-false}'
       }, null, 2);
       
@@ -565,7 +564,7 @@ function getConfigContent(format: string): string {
 # 机器人配置
 bots:
   - name: onebot11
-    adapter: onebot11
+    context: onebot11
     url: \${ONEBOT_URL:-ws://localhost:8080}
     access_token: \${ONEBOT_ACCESS_TOKEN:-}
 
@@ -593,7 +592,7 @@ debug: \${DEBUG:-false}
 # 机器人配置
 [[bots]]
 name = "onebot11"
-adapter = "onebot11"
+context = "onebot11"
 url = "\${ONEBOT_URL:-ws://localhost:8080}"
 access_token = "\${ONEBOT_ACCESS_TOKEN:-}"
 
@@ -611,7 +610,7 @@ debug = "\${DEBUG:-false}"
 `;
       
     case 'ts':
-      return `import { defineConfig } from '@zhin/core';
+      return `import { defineConfig } from '@zhin.js/core';
 
 export default defineConfig(async (env)=>{
   return {
@@ -619,7 +618,7 @@ export default defineConfig(async (env)=>{
     bots: [
       {
         name: 'onebot11',
-        adapter: 'onebot11',
+        context: 'onebot11',
         url: env.ONEBOT_URL || 'ws://localhost:8080',
         access_token: env.ONEBOT_ACCESS_TOKEN || ''
       }
@@ -634,9 +633,6 @@ export default defineConfig(async (env)=>{
       'onebot11',
       'test-plugin'
     ],
-
-    // 禁用的依赖列表
-    disable_dependencies: [],
 
     // 调试模式
     debug: env.DEBUG === 'true'
@@ -646,7 +642,7 @@ export default defineConfig(async (env)=>{
 `;
       
     case 'js':
-      return `import { defineConfig } from '@zhin/core';
+      return `import { defineConfig } from '@zhin.js/core';
 
 export default defineConfig(async (env)=>{
   return {
@@ -654,7 +650,7 @@ export default defineConfig(async (env)=>{
     bots: [
       {
         name: 'onebot11',
-        adapter: 'onebot11',
+        context: 'onebot11',
         url: env.ONEBOT_URL || 'ws://localhost:8080',
         access_token: env.ONEBOT_ACCESS_TOKEN || ''
       }
@@ -669,9 +665,6 @@ export default defineConfig(async (env)=>{
       'onebot11',
       'test-plugin'
     ],
-
-    // 禁用的依赖列表
-    disable_dependencies: [],
 
     // 调试模式
     debug: env.DEBUG === 'true'
@@ -693,7 +686,7 @@ function getConfigExample(format: string): string {
   "bots": [
     {
       "name": "onebot11",
-      "adapter": "onebot11",
+      "context": "onebot11",
       "url": "\${ONEBOT_URL:-ws://localhost:8080}",
       "access_token": "\${ONEBOT_ACCESS_TOKEN:-}"
     }
@@ -719,7 +712,7 @@ function getConfigExample(format: string): string {
 # 机器人配置
 bots:
   - name: onebot11
-    adapter: onebot11
+    context: onebot11
     url: \${ONEBOT_URL:-ws://localhost:8080}
     access_token: \${ONEBOT_ACCESS_TOKEN:-}
 
@@ -748,7 +741,7 @@ debug: \${DEBUG:-false}
 # 机器人配置
 [[bots]]
 name = "onebot11"
-adapter = "onebot11"
+context = "onebot11"
 url = "\${ONEBOT_URL:-ws://localhost:8080}"
 access_token = "\${ONEBOT_ACCESS_TOKEN:-}"
 
@@ -767,7 +760,7 @@ debug = "\${DEBUG:-false}"
 `;
     case 'ts':
       return `\`\`\`typescript
-import type { AppConfig } from '@zhin/core';
+import type { AppConfig } from '@zhin.js/core';
 
 /**
  * Zhin Bot 配置文件
@@ -778,7 +771,7 @@ const config: AppConfig = {
   bots: [
     {
       name: 'onebot11',
-      adapter: 'onebot11',
+      context: 'onebot11',
       url: process.env.ONEBOT_URL || 'ws://localhost:8080',
       access_token: process.env.ONEBOT_ACCESS_TOKEN || ''
     }
@@ -795,9 +788,6 @@ const config: AppConfig = {
     'onebot11',
     'test-plugin'
   ],
-
-  // 禁用的依赖列表
-  disable_dependencies: [],
 
   // 调试模式
   debug: process.env.DEBUG === 'true'
@@ -817,7 +807,7 @@ const config = {
   bots: [
     {
       name: 'onebot11',
-      adapter: 'onebot11',
+      context: 'onebot11',
       url: process.env.ONEBOT_URL || 'ws://localhost:8080',
       access_token: process.env.ONEBOT_ACCESS_TOKEN || ''
     }
@@ -834,9 +824,6 @@ const config = {
     'onebot11',
     'test-plugin'
   ],
-
-  // 禁用的依赖列表
-  disable_dependencies: [],
 
   // 调试模式
   debug: process.env.DEBUG === 'true'

@@ -3,7 +3,7 @@
 // ============================================================================
 
 // 核心系统
-export { Bot } from './bot.js';
+export type { Bot } from './bot.js';
 export { loadConfig, saveConfig, createDefaultConfig } from './config.js';
 export * from './types.js';
 export * from './config.js';

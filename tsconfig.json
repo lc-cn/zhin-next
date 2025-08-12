@@ -20,8 +20,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@zhin/core": ["./packages/core/src/index.ts"],
-      "@zhin/core/*": ["./packages/core/src/*"]
+      "@zhin.js/core": ["./packages/core/src/index.ts"],
+      "@zhin.js/core/*": ["./packages/core/src/*"]
     }
   },
   "include": [

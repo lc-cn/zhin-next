@@ -1,23 +1,25 @@
-import {createClient, Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@lc-cn/icqq";
+import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@lc-cn/icqq";
 import path from "path";
 import {Bot} from "../bot.js";
-import {BotConfig, Group, Message, MessageSegment, SendContent, SendMessageOptions, User} from "../types.js";
+import {BotConfig, Message, MessageSegment, SendContent, SendMessageOptions} from "../types.js";
 import {register, useLogger} from '../app.js';
 
 export interface IcqqBotConfig extends BotConfig,Config{
-    adapter:'icqq'
+    context:'icqq'
     name:`${number}`
     password?:string
     scope?:string
 }
-export class IcqqBot extends Bot<IcqqBotConfig>{
-    #internal?:Client
+export interface IcqqBot{
+    readonly config:Required<IcqqBotConfig>
+}
+export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
+    connected?:boolean
     constructor(config:IcqqBotConfig) {
         if(!config.scope) config.scope='lc-cn'
         if(!config.data_dir) config.data_dir=path.join(process.cwd(),'data')
         if(config.scope.startsWith('@')) config.scope=config.scope.slice(1)
         super(config);
-
     }
     private handleIcqqMessage(msg: PrivateMessageEvent|GroupMessageEvent): void {
         const message: Message = {
@@ -42,69 +44,47 @@ export class IcqqBot extends Bot<IcqqBotConfig>{
                 })
             }
         };
-        this.handleMessage(message);
+        this.emit('message',message)
     }
     async connect(): Promise<void> {
-        if(this.#internal) throw new Error(`${this.name} has connected`)
-        const client=this.#internal=createClient(this.config)
-        client.on('message',this.handleIcqqMessage.bind(this))
-        client.on('system.login.device',(e:unknown)=>{
-            client.sendSmsCode()
+        this.on('message',this.handleIcqqMessage.bind(this))
+        this.on('system.login.device',(e:unknown)=>{
+            this.sendSmsCode()
             process.stdin.once('data',(data)=>{
-                client.submitSmsCode(data.toString().trim())
+                this.submitSmsCode(data.toString().trim())
             })
         })
-        client.on('system.login.qrcode',(e:unknown)=>{
+        this.on('system.login.qrcode',(e:unknown)=>{
             process.stdin.once('data',()=>{
-                client.login()
+                this.login()
             })
         })
-        client.on('system.login.slider',()=>{
+        this.on('system.login.slider',()=>{
             process.stdin.once('data',(e)=>{
-                client.submitSlider(e.toString().trim())
+                this.submitSlider(e.toString().trim())
             })
         })
         return new Promise((resolve)=>{
-            client.once('system.online',()=>{
-                this.connected=true
+            this.once('system.online',()=>{
+                this.connected=true;
                 resolve()
             })
-            client.login(Number(this.name),this.config.password)
+            this.login(Number(this.config.name),this.config.password)
         })
     }
 
     async disconnect(): Promise<void> {
-        if(!this.#internal) throw new Error(`${this.name} has no connect`)
-        return this.#internal.logout()
-    }
-
-    async getGroup(groupId: string): Promise<Group> {
-        const groupInfo=await this.#internal?.getGroupInfo(Number(groupId));
-        if(!groupInfo) throw new Error(`can't find group ${groupId}`)
-        return {
-            group_id:groupId,
-            group_name:groupInfo.group_name,
-            member_count:groupInfo.member_count
-
-        }
-    }
-
-    async getUser(user_id: string): Promise<User> {
-        const userInfo=await this.#internal?.getStrangerInfo(Number(user_id))
-        if(!userInfo) throw new Error(`can't find user ${user_id}`)
-        return {
-            user_id,
-            nickname:userInfo.nickname
-        }
+        await this.logout()
+        this.connected=false;
     }
 
     async sendMessage(options: SendMessageOptions): Promise<void> {
         switch (options.channel.type){
             case 'private':
-                await this.#internal?.sendPrivateMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
+                await this.sendPrivateMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
                 break;
             case "group":
-                await this.#internal?.sendGroupMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
+                await this.sendGroupMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
                 break;
             default:
                 throw new Error(`unsupported channel type ${options.channel.type}`)
@@ -135,12 +115,11 @@ register({
     name:'icqq',
     async mounted(p){
         const bots=new Map<string,IcqqBot>()
-        const configs=p.app.getConfig().bots?.filter(c=>c.adapter==='icqq')
+        const configs=p.app.getConfig().bots?.filter(c=>c.context==='icqq')
         if(!configs?.length) return bots
         for(const config of configs){
             const bot=new IcqqBot(config as IcqqBotConfig)
             await bot.connect()
-            bot.on('message',(m)=>p.dispatch('message',m))
             logger.info(`bot ${config.name} for icqq connected`);
             bots.set(config.name,bot);
         }

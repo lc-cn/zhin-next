@@ -1,3 +1,7 @@
+import {ProcessBot} from "./plugins/process";
+import {IcqqBot} from "./plugins/icqq";
+import {OneBot11WsClient} from "./plugins/onebot11";
+
 export interface MessageSegment<T extends keyof Segment=keyof Segment> {
   type: T;
   data: Segment[T];
@@ -42,14 +46,14 @@ export interface Group {
 
 export interface BotConfig {
   name: string;
-  adapter: string;
+  context: string;
   [key: string]: any;
 }
 
 
 
 export interface AppConfig {
-  /** 适配器配置列表 */
+  /** 机器人配置列表 */
   bots?: BotConfig[];
   /** 插件目录列表，默认为 ['./plugins', 'node_modules'] */
   plugin_dirs?: string[];
@@ -71,8 +75,17 @@ export interface AdapterEvents {
   'message.group': (message: Message) => void;
 }
 
+export interface GlobalContext extends Record<string, any>{
+  process:Map<string,ProcessBot>
+  icqq:Map<string,IcqqBot>
+  onebot11:Map<string,OneBot11WsClient>
+}
 export interface SendMessageOptions {
   channel:MessageTarget
   content:SendContent
-} 
+}
 export type MaybePromise<T> = T extends Promise<infer U> ? T|U : T|Promise<T>;
+export type SideEffect<A extends (keyof GlobalContext)[]>=(...args:Contexts<A>)=>MaybePromise<void|DisposeFn<Contexts<A>>>
+export type DisposeFn<A>=(context:ArrayItem<A>)=>MaybePromise<void>
+export type Contexts<CS extends (keyof GlobalContext)[]>=CS extends [infer L,...infer R]?R extends (keyof GlobalContext)[]?[ContextItem<L>,...Contexts<R>]:never[]:never[]
+type ContextItem<L>=L extends keyof GlobalContext?GlobalContext[L]:never

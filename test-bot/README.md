@@ -74,7 +74,7 @@ const config = {
   bots: [
     {
       name: 'onebot11',
-      adapter: 'onebot11',
+      context: 'onebot11',
       url: process.env.ONEBOT_URL || 'ws://localhost:8080',
       access_token: process.env.ONEBOT_ACCESS_TOKEN || ''
     }
@@ -91,10 +91,6 @@ const config = {
     'onebot11',
     'test-plugin'
   ],
-
-  // 禁用的依赖列表
-  disable_dependencies: [],
-
   // 调试模式
   debug: process.env.DEBUG === 'true'
 };
@@ -110,7 +106,7 @@ export default config;
 ### 插件示例
 
 ```typescript
-import { usePlugin, useLogger, addCommand } from '@zhin/core';
+import { usePlugin, useLogger, addCommand } from '@zhin.js/core';
 
 const plugin = usePlugin();
 const logger = useLogger();

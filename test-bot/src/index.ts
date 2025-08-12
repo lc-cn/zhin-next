@@ -1,22 +1,15 @@
-import { createApp,Message } from '@zhin/core';
+import { createApp } from '@zhin.js/core';
 
 // 启动机器人
 async function main() {
     try {
         // 异步创建机器人实例 (自动从配置文件加载)
-        const bot = await createApp();
-
-
-        // 监听消息事件
-        bot.on('message', (message:Message) => {
-            bot.logger.info(`receive msg from ${message.channel.type}(${message.channel.id}):${message.raw}`);
-        });
-        
-        await bot.start();
+        const app = await createApp();
+        await app.start();
         
         // 优雅退出处理
         const shutdown = async (signal: string) => {
-          await bot.stop();
+          await app.stop();
           process.exit(0);
         };
 

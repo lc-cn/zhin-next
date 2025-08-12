@@ -128,8 +128,8 @@ describe('CLI init命令测试', () => {
       const packageJson = JSON.parse(packageJsonContent);
       
       expect(packageJson.name).toBe(projectName);
-      expect(packageJson.dependencies).toHaveProperty('@zhin/core');
-      expect(packageJson.devDependencies).toHaveProperty('@zhin/cli');
+      expect(packageJson.dependencies).toHaveProperty('@zhin.js/core');
+      expect(packageJson.devDependencies).toHaveProperty('@zhin.js/cli');
       expect(packageJson.scripts).toHaveProperty('dev');
       expect(packageJson.scripts).toHaveProperty('build');
       expect(packageJson.scripts).toHaveProperty('start');

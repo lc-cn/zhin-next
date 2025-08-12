@@ -4,12 +4,12 @@
 // ============================================================================
 
 
-import { Message, SendContent} from "./types";
+import {MaybePromise, Message, SendContent} from "./types";
 import {Dependency, Logger} from "./hmr";
 import {App,MessageChannel} from "./app";
 
 /** 消息中间件函数 */
-export type MessageMiddleware = (message: Message, next: () => Promise<void>) => Promise<void>;
+export type MessageMiddleware = (message: Message, next: () => Promise<void>) => MaybePromise<void>;
 
 /** 事件监听器函数 */
 export type EventListener<T = any> = (data: T) => void | Promise<void>;
@@ -38,6 +38,15 @@ export class Plugin extends Dependency<Plugin> {
     #logger?:Logger
     constructor(parent: Dependency<Plugin>, name: string, filePath: string) {
         super(parent, name, filePath);
+        this.on('message',this.#handleMessage.bind(this))
+    }
+    #handleMessage(message:Message){
+        const next=async (index:number)=>{
+            if(!this.middlewares[index]) return
+            const middleware=this.middlewares[index]
+            middleware(message,()=>next(index+1))
+        }
+        next(0)
     }
 
     /** 获取所属的App实例 */

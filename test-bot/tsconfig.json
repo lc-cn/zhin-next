@@ -17,10 +17,10 @@
     "sourceMap": true,
     "baseUrl": "./src",
     "paths": {
-      "@zhin/core": [
+      "@zhin.js/core": [
         "../../packages/core/src/index.ts"
       ],
-      "@zhin/core/*": [
+      "@zhin.js/core/*": [
         "../../packages/core/src/*"
       ]
     }

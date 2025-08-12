@@ -1,10 +1,7 @@
-import { usePlugin, useLogger, onDispose } from '@zhin/core';
+import { useLogger, onDispose } from '@zhin.js/core';
 
-const plugin = usePlugin();
 const logger = useLogger();
 
-// 添加测试命令
-plugin.addCommand('error-test', '错误测试命令被调用');
 
 // 添加内存监控定时器
 const timer = setInterval(() => {

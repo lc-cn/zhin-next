@@ -1,4 +1,4 @@
-import {createApp, Message} from '@zhin/core';
+import {createApp, Message} from '@zhin.js/core';
 
 // 启动机器人
 async function main() {

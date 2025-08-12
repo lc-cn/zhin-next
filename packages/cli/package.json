@@ -1,5 +1,5 @@
 {
-  "name": "@zhin/cli",
+  "name": "@zhin.js/cli",
   "version": "1.0.0",
   "description": "Zhin机器人框架CLI工具",
   "type": "module",

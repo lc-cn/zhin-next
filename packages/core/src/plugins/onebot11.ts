@@ -1,14 +1,17 @@
 import WebSocket from 'ws';
 import { Bot } from '../bot.js';
+import {Plugin} from '../plugin.js'
 import {BotConfig, Message, SendMessageOptions, User, Group, MessageSegment} from '../types.js';
 import {register, useLogger} from '../app.js';
+import {EventEmitter} from "events";
+import {clearInterval, clearTimeout} from "node:timers";
 
 // ============================================================================
 // OneBot11 配置和类型
 // ============================================================================
 
 export interface OneBotV11Config extends BotConfig {
-  adapter: 'onebot11';
+  context: 'onebot11';
   url: string;
   access_token?: string;
   reconnect_interval?: number;
@@ -41,7 +44,8 @@ interface ApiResponse<T = any> {
 // OneBot11 适配器实现
 // ============================================================================
 
-export class OneBot11WsClient extends Bot<OneBotV11Config> {
+export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Config> {
+  connected?:boolean
   private ws?: WebSocket;
   private reconnectTimer?: NodeJS.Timeout;
   private heartbeatTimer?: NodeJS.Timeout;
@@ -52,8 +56,8 @@ export class OneBot11WsClient extends Bot<OneBotV11Config> {
     timeout: NodeJS.Timeout;
   }>();
 
-  constructor(config: OneBotV11Config) {
-    super(config);
+  constructor(public plugin:Plugin,public config: OneBotV11Config) {
+    super();
   }
 
 
@@ -68,7 +72,7 @@ export class OneBot11WsClient extends Bot<OneBotV11Config> {
       this.ws = new WebSocket(wsUrl,{headers});
 
       this.ws.on('open', () => {
-        this.handleConnect();
+        this.connected=true;
         this.startHeartbeat();
         resolve();
       });
@@ -78,12 +82,12 @@ export class OneBot11WsClient extends Bot<OneBotV11Config> {
           const message = JSON.parse(data.toString());
           this.handleWebSocketMessage(message);
         } catch (error) {
-          this.handleError(new Error(`Failed to parse message: ${error}`));
+          this.emit('error',error)
         }
       });
 
       this.ws.on('close', (code,reason) => {
-        this.handleDisconnect();
+        this.connected=false
         reject({code,reason})
         this.scheduleReconnect();
       });
@@ -229,8 +233,7 @@ export class OneBot11WsClient extends Bot<OneBotV11Config> {
         })
       }
     };
-
-    this.handleMessage(message);
+    this.emit('message',message)
   }
 
   private startHeartbeat(): void {
@@ -253,7 +256,7 @@ export class OneBot11WsClient extends Bot<OneBotV11Config> {
       try {
         await this.connect();
       } catch (error) {
-        this.handleError(new Error(`Reconnection failed: ${error}`));
+        this.emit('error',new Error(`Reconnection failed: ${error}`));
         this.scheduleReconnect();
       }
     }, interval);
@@ -264,12 +267,11 @@ register({
   name:'onebot11',
   async mounted(p){
     const bots=new Map<string,OneBot11WsClient>()
-    const configs=p.app.getConfig().bots?.filter(c=>c.adapter==='onebot11')
+    const configs=p.app.getConfig().bots?.filter(c=>c.context==='onebot11')
     if(!configs?.length) return bots
     for(const config of configs){
-      const bot=new OneBot11WsClient(config as OneBotV11Config)
+      const bot=new OneBot11WsClient(p,config as OneBotV11Config)
       await bot.connect()
-      bot.on('message',(m)=>p.dispatch('message',m))
       logger.info(`bot ${config.name} for onebot11 connect`)
       bots.set(config.name,bot)
     }

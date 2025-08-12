@@ -38,7 +38,7 @@ packages/core/src/
 ### Basic Bot Setup
 
 ```typescript
-import { Bot } from '@zhin/core';
+import { Bot } from '@zhin.js/core';
 
 const bot = new Bot({
     plugin_dirs: ['./plugins'],
@@ -64,7 +64,7 @@ import {
     addCommand, 
     onGroupMessage, 
     useLogger 
-} from '@zhin/core';
+} from '@zhin.js/core';
 
 // Create shared Context
 createContext({
@@ -164,7 +164,7 @@ Errors: ${stats.errors}
 ## 🔌 Adapter Development
 
 ```typescript
-import { registerAdapter, createContext } from '@zhin/core';
+import { registerAdapter, createContext } from '@zhin.js/core';
 
 // Register new protocol adapter
 registerAdapter('my-protocol', (config) => {

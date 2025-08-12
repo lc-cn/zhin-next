@@ -1,20 +1,19 @@
 import path from 'path';
 import * as fs from 'fs'
 import { HMR, Context, Logger, ConsoleLogger } from './hmr';
-import {AppConfig,  Message, MessageTarget, SendContent} from './types.js';
+import {AppConfig, Contexts, GlobalContext, Message, MessageTarget, SendContent, SideEffect} from './types.js';
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { getCallerFile, getCallerFiles } from './hmr/utils.js';
 import { logger } from './logger.js';
 import {CronJob, EventListener, MessageMiddleware, Plugin} from "./plugin.js";
 import {Bot} from "./bot.js";
-import {GlobalContext} from "./hmr/dependency";
 
 // ============================================================================
 // App 类
 // ============================================================================
 export interface MessageChannel extends MessageTarget{
-    adapter:string
+    context:string
     bot:string
 }
 /**
@@ -61,7 +60,6 @@ export class App extends HMR<Plugin> {
     static defaultConfig: AppConfig = {
         plugin_dirs: ['./plugins'],
         plugins: [],
-        disable_dependencies: [],
         bots: [],
         debug: false,
     };
@@ -70,7 +68,7 @@ export class App extends HMR<Plugin> {
     static loadConfigSync(): AppConfig {
         // 由于loadConfig是异步的，我们需要创建一个同步版本
         // 或者在这里简化处理，让用户使用异步创建方法
-        throw new Error('同步加载配置暂不支持，请使用 Bot.createAsync() 方法');
+        throw new Error('同步加载配置暂不支持，请使用 App.createAsync() 方法');
     }
 
     /** 创建插件依赖 */
@@ -145,10 +143,10 @@ export class App extends HMR<Plugin> {
 
     /** 发送消息 */
     async sendMessage<T extends Bot>(channel:MessageChannel, content: SendContent): Promise<void> {
-        const bots=this.getContext<Map<string,T>>(channel.adapter)
-        if(!bots) throw new Error('No available adapter to send message')
+        const bots=this.getContext<Map<string,T>>(channel.context)
+        if(!bots) throw new Error('No available context to send message')
         const bot=bots.get(channel.bot)
-        if(!bot) throw new Error(`No available bot for ${channel.adapter} to send message`)
+        if(!bot) throw new Error(`No available bot for ${channel.context} to send message`)
         return bot.sendMessage({
             channel,
             content
@@ -245,9 +243,9 @@ export function use(name: string){
 }
 
 /** 标记必需的Context */
-export function required(name: string): void {
+export function useContext<T extends (keyof GlobalContext)[]>(...args:[...T,sideEffect:SideEffect<T>]): void {
     const plugin = usePlugin();
-    plugin.required(name);
+    plugin.useContext(...args as any);
 }
 
 /** 添加中间件 */
@@ -280,13 +278,14 @@ export function onMessage(handler: (message: Message) => void | Promise<void>): 
 /** 监听插件挂载事件 */
 export function onMounted(hook: (plugin: Plugin) => Promise<void> | void): void {
     const plugin = usePlugin();
-    if(plugin.requireContextReady) hook(plugin)
+    if(plugin.isReady) hook(plugin)
     plugin.on('self.mounted', hook);
 }
 
 /** 监听插件销毁事件 */
 export function onDispose(hook: () => void): void {
     const plugin = usePlugin();
+    if(plugin.isDispose) hook()
     plugin.on('self.dispose', hook);
 }
 

@@ -43,7 +43,7 @@ Zhin 框架内置了智能的内存管理机制，包括：
 #### 手动触发垃圾回收
 
 ```typescript
-import { performGC } from '@zhin/core';
+import { performGC } from '@zhin.js/core';
 
 // 在插件中手动触发垃圾回收
 performGC({ enabled: true }, 'custom cleanup');
@@ -54,7 +54,7 @@ performGC({ enabled: true }, 'custom cleanup');
 ### 1. 定义适配器配置接口
 
 ```typescript
-import type { AdapterConfig } from '@zhin/core';
+import type { AdapterConfig } from '@zhin.js/core';
 
 export interface MyProtocolConfig extends AdapterConfig {
   protocol: 'my-protocol';
@@ -66,8 +66,8 @@ export interface MyProtocolConfig extends AdapterConfig {
 ### 2. 实现适配器类
 
 ```typescript
-import { Adapter } from '@zhin/core';
-import type { SendMessageOptions } from '@zhin/core';
+import { Adapter } from '@zhin.js/core';
+import type { SendMessageOptions } from '@zhin.js/core';
 
 class MyProtocolAdapter extends Adapter {
   private config: MyProtocolConfig;
@@ -116,7 +116,7 @@ class MyProtocolAdapter extends Adapter {
 ### 3. 创建插件
 
 ```typescript
-import type { Plugin, PluginContext } from '@zhin/core';
+import type { Plugin, PluginContext } from '@zhin.js/core';
 
 export const myProtocolPlugin: Plugin = {
   name: 'my-protocol',
@@ -172,13 +172,13 @@ plugins:
 2. **NPM 包** (`node_modules`):
    - `my-protocol` (直接包名)
    - `zhin-plugin-my-protocol` (社区插件约定)
-   - `@zhin/plugin-my-protocol` (官方插件)
+   - `@zhin.js/plugin-my-protocol` (官方插件)
    - `@scope/zhin-plugin-my-protocol` (作用域插件)
 
 ### 2. 手动安装插件
 
 ```typescript
-import { Bot } from '@zhin/core';
+import { Bot } from '@zhin.js/core';
 import { myProtocolPlugin } from './my-protocol-plugin';
 
 const bot = new Bot();

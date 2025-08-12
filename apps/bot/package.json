@@ -1,5 +1,5 @@
 {
-  "name": "@zhin/bot",
+  "name": "@zhin.js/bot",
   "version": "0.1.0",
   "description": "Zhin Bot 示例应用",
   "type": "module",
@@ -13,10 +13,10 @@
     "stop": "zhin stop"
   },
   "dependencies": {
-    "@zhin/core": "workspace:*"
+    "@zhin.js/core": "workspace:*"
   },
   "devDependencies": {
-    "@zhin/cli": "workspace:*",
+    "@zhin.js/cli": "workspace:*",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },

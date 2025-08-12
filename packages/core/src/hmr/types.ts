@@ -32,8 +32,6 @@ export interface PluginVersion {
 export interface DependencyOptions {
     /** 依赖是否启用 */
     enabled?: boolean;
-    /** 依赖优先级（数字越大优先级越高） */
-    disable_dependencies?: string[];
     /** 依赖版本要求 */
     version?: string;
     priority?: number;

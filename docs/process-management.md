@@ -25,7 +25,7 @@ Zhin CLI 提供了强大的跨平台进程管理功能，支持 Linux、macOS �
 检查指定目录下的进程状态。
 
 ```typescript
-import { getProcessStatus } from '@zhin/cli';
+import { getProcessStatus } from '@zhin.js/cli';
 
 const status = await getProcessStatus('/path/to/project');
 console.log(status);
@@ -36,7 +36,7 @@ console.log(status);
 获取进程的详细状态信息。
 
 ```typescript
-import { getProcessStatusDetailed } from '@zhin/cli';
+import { getProcessStatusDetailed } from '@zhin.js/cli';
 
 const status = await getProcessStatusDetailed('/path/to/project');
 console.log(status);
@@ -55,7 +55,7 @@ console.log(status);
 获取所有相关进程的列表。
 
 ```typescript
-import { getRelatedProcesses } from '@zhin/cli';
+import { getRelatedProcesses } from '@zhin.js/cli';
 
 const processes = await getRelatedProcesses('node');
 console.log(processes);
@@ -69,7 +69,7 @@ console.log(processes);
 启动后台进程。
 
 ```typescript
-import { startProcess } from '@zhin/cli';
+import { startProcess } from '@zhin.js/cli';
 
 await startProcess('node', ['app.js'], '/path/to/project');
 ```
@@ -78,7 +78,7 @@ await startProcess('node', ['app.js'], '/path/to/project');
 停止指定目录下的进程。
 
 ```typescript
-import { stopProcess } from '@zhin/cli';
+import { stopProcess } from '@zhin.js/cli';
 
 await stopProcess('/path/to/project');
 ```
@@ -138,7 +138,7 @@ taskkill /PID 12345 /F     # 强制终止
 
 ### 日志记录
 ```typescript
-import { logger } from '@zhin/cli';
+import { logger } from '@zhin.js/cli';
 
 // 启用详细日志
 logger.setLevel('debug');

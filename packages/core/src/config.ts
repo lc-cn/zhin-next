@@ -68,11 +68,10 @@ function replaceEnvVarsInObject(obj: any): any {
   }
   
   if (obj && typeof obj === 'object') {
-    const result: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      result[key] = replaceEnvVarsInObject(value);
+      obj[key] = replaceEnvVarsInObject(value);
     }
-    return result;
+    return obj;
   }
   
   return obj;
@@ -227,8 +226,8 @@ function validateConfig(config: any): void {
       throw new Error(`机器人 ${index} 缺少 name 字段`);
     }
     
-    if (!bot.adapter) {
-      throw new Error(`机器人 ${bot.name} 缺少 adapter 字段`);
+    if (!bot.context) {
+      throw new Error(`机器人 ${bot.name} 缺少 context 字段`);
     }
   }
 }
@@ -266,7 +265,7 @@ export function createDefaultConfig(format: ConfigFormat = 'yaml'): AppConfig {
     bots: [
       {
         name: 'onebot11',
-        adapter: 'onebot11',
+        context: 'onebot11',
         url: '${ONEBOT_URL:-ws://localhost:8080}',
         access_token: '${ONEBOT_ACCESS_TOKEN:-}'
       }
