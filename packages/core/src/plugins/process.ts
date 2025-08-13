@@ -30,7 +30,11 @@ export class ProcessBot extends EventEmitter implements Bot<ProcessConfig>{
             reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
                 if(!Array.isArray(content)) content=[content]
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
-                this.plugin.dispatch('message.send','process',`${process.pid}`,message.channel,content)
+                this.plugin.dispatch('message.send',{
+                    ...message.channel,
+                    context:'process',
+                    bot:`${process.pid}`
+                },content)
             }
         };
         logger.info(`recv ${message.channel.type}(${message.channel.id}):${ProcessBot.contentToString(message.raw)}`)

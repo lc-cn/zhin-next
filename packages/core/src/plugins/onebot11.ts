@@ -228,7 +228,11 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
       timestamp: onebotMsg.time,
       reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
         if(quote) content.unshift({type:'reply',data:{message_id:message.id}})
-        this.plugin.dispatch('message.send','process',this.config.name,message.channel,content)
+        this.plugin.dispatch('message.send',{
+          ...message.channel,
+          context:'onebot11',
+          bot:`${this.config.name}`
+        },content)
       }
     };
     this.plugin.dispatch('message.receive',message)

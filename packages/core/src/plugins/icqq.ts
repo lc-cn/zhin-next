@@ -4,7 +4,7 @@ import {Bot} from "../bot.js";
 import {BotConfig, Message, MessageSegment, SendContent, SendMessageOptions} from "../types.js";
 import {register, useLogger} from '../app.js';
 import {Plugin} from "../plugin.js";
-import process from "node:process";
+import {channel} from "node:diagnostics_channel";
 
 export interface IcqqBotConfig extends BotConfig,Config{
     context:'icqq'
@@ -40,7 +40,11 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
             reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
                 if(!Array.isArray(content)) content=[content]
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
-                this.plugin.dispatch('message.send','process',`${this.uin}`,message.channel,content)
+                this.plugin.dispatch('message.send',{
+                    ...message.channel,
+                    context:'icqq',
+                    bot:`${this.uin}`
+                },content)
             }
         };
         this.plugin.dispatch('message.receive',message)
