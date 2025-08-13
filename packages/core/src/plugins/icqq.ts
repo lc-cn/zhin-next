@@ -3,6 +3,8 @@ import path from "path";
 import {Bot} from "../bot.js";
 import {BotConfig, Message, MessageSegment, SendContent, SendMessageOptions} from "../types.js";
 import {register, useLogger} from '../app.js';
+import {Plugin} from "../plugin.js";
+import process from "node:process";
 
 export interface IcqqBotConfig extends BotConfig,Config{
     context:'icqq'
@@ -15,7 +17,7 @@ export interface IcqqBot{
 }
 export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
     connected?:boolean
-    constructor(config:IcqqBotConfig) {
+    constructor(private plugin:Plugin,config:IcqqBotConfig) {
         if(!config.scope) config.scope='lc-cn'
         if(!config.data_dir) config.data_dir=path.join(process.cwd(),'data')
         if(config.scope.startsWith('@')) config.scope=config.scope.slice(1)
@@ -35,16 +37,13 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
             content: IcqqBot.toSegments(msg.message),
             raw: msg.raw_message,
             timestamp: msg.time,
-            reply:(content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+            reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
                 if(!Array.isArray(content)) content=[content]
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
-                return this.sendMessage({
-                    channel:message.channel,
-                    content
-                })
+                this.plugin.dispatch('message.send','process',`${this.uin}`,message.channel,content)
             }
         };
-        this.emit('message',message)
+        this.plugin.dispatch('message.receive',message)
     }
     async connect(): Promise<void> {
         this.on('message',this.handleIcqqMessage.bind(this))
@@ -118,7 +117,7 @@ register({
         const configs=p.app.getConfig().bots?.filter(c=>c.context==='icqq')
         if(!configs?.length) return bots
         for(const config of configs){
-            const bot=new IcqqBot(config as IcqqBotConfig)
+            const bot=new IcqqBot(p,config as IcqqBotConfig)
             await bot.connect()
             logger.info(`bot ${config.name} for icqq connected`);
             bots.set(config.name,bot);

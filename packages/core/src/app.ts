@@ -1,7 +1,16 @@
 import path from 'path';
 import * as fs from 'fs'
 import { HMR, Context, Logger, ConsoleLogger } from './hmr';
-import {AppConfig, Contexts, GlobalContext, Message, MessageTarget, SendContent, SideEffect} from './types.js';
+import {
+    AppConfig,
+    GlobalContext,
+    Message, MessageRender,
+    MessageSegment,
+    RenderContext,
+    SendContent,
+    SideEffect,
+    MessageChannel,
+} from './types.js';
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { getCallerFile, getCallerFiles } from './hmr/utils.js';
@@ -12,10 +21,6 @@ import {Bot} from "./bot.js";
 // ============================================================================
 // App 类
 // ============================================================================
-export interface MessageChannel extends MessageTarget{
-    context:string
-    bot:string
-}
 /**
  * App类：继承自HMR，提供热更新的机器人框架
  */
@@ -52,10 +57,9 @@ export class App extends HMR<Plugin> {
             extensions: new Set(['.js', '.ts']),
             debug: finalConfig.debug
         });
-        
+        this.on('message.send',this.sendMessage.bind(this))
         this.config = finalConfig;
     }
-
     /** 默认配置 */
     static defaultConfig: AppConfig = {
         plugin_dirs: ['./plugins'],
@@ -63,7 +67,21 @@ export class App extends HMR<Plugin> {
         bots: [],
         debug: false,
     };
-
+    async sendMessage(channel:MessageChannel,content:SendContent){
+        const adapter=this.getContext<Map<string,Bot>>(channel.context)
+        if(!adapter) throw new Error(`can't find adapter for name ${channel.context}`)
+        const bot=adapter.get(channel.bot)
+        if(!bot) throw new Error(`can't find bot ${channel.bot} for adapter ${channel.bot}`)
+        const renderContext:RenderContext={
+            channel,
+            content,
+        }
+        const renderAfter=await this.renderMessage(renderContext,content)
+        return bot.sendMessage({
+            channel,
+            content:renderAfter
+        })
+    }
     /** 同步加载配置文件 */
     static loadConfigSync(): AppConfig {
         // 由于loadConfig是异步的，我们需要创建一个同步版本
@@ -141,16 +159,16 @@ export class App extends HMR<Plugin> {
         throw new Error(`can't find Context of ${name}`)
     }
 
-    /** 发送消息 */
-    async sendMessage<T extends Bot>(channel:MessageChannel, content: SendContent): Promise<void> {
-        const bots=this.getContext<Map<string,T>>(channel.context)
-        if(!bots) throw new Error('No available context to send message')
-        const bot=bots.get(channel.bot)
-        if(!bot) throw new Error(`No available bot for ${channel.context} to send message`)
-        return bot.sendMessage({
-            channel,
-            content
-        });
+    async renderMessage<T extends RenderContext>(context:T,content:SendContent){
+        const handlers=this.dependencyList.reduce((result,plugin)=>{
+            result.push(...plugin.listeners('before-message.send'))
+            return result
+        },[] as Function[])
+        for(const handler of handlers){
+            const result=await handler.call(context,content)
+            if(result) content=result
+        }
+        return content
     }
     getLogger(...names: string[]): Logger {
         return new ConsoleLogger(`[${[...names].join('/')}]`, process.env.NODE_ENV === 'development');
@@ -228,7 +246,10 @@ export function usePlugin(): Plugin {
         throw error;
     }
 }
-
+export function addRender<T extends RenderContext>(render:MessageRender<T>){
+    const plugin = usePlugin();
+    return plugin.addRender(render);
+}
 /** 创建Context */
 export function register<T>(context: Context<T,Plugin>): Context<T,Plugin> {
     const plugin = usePlugin();
@@ -262,17 +283,17 @@ export function onEvent<T = any>(event: string, listener: EventListener<T>): voi
 
 /** 监听群组消息 */
 export function onGroupMessage(handler: (message: Message) => void | Promise<void>): void {
-    onEvent('message.group', handler);
+    onEvent('message.receive.group', handler);
 }
 
 /** 监听私聊消息 */
 export function onPrivateMessage(handler: (message: Message) => void | Promise<void>): void {
-    onEvent('message.private', handler);
+    onEvent('message.receive.private', handler);
 }
 
 /** 监听所有消息 */
 export function onMessage(handler: (message: Message) => void | Promise<void>): void {
-    onEvent('message', handler);
+    onEvent('message.receive', handler);
 }
 
 /** 监听插件挂载事件 */

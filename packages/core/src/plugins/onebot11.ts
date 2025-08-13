@@ -5,6 +5,7 @@ import {BotConfig, Message, SendMessageOptions, User, Group, MessageSegment} fro
 import {register, useLogger} from '../app.js';
 import {EventEmitter} from "events";
 import {clearInterval, clearTimeout} from "node:timers";
+import process from "node:process";
 
 // ============================================================================
 // OneBot11 配置和类型
@@ -225,15 +226,12 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
       content: onebotMsg.message,
       raw: onebotMsg.raw_message,
       timestamp: onebotMsg.time,
-      reply:(content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+      reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
         if(quote) content.unshift({type:'reply',data:{message_id:message.id}})
-        return this.sendMessage({
-          channel:message.channel,
-          content
-        })
+        this.plugin.dispatch('message.send','process',this.config.name,message.channel,content)
       }
     };
-    this.emit('message',message)
+    this.plugin.dispatch('message.receive',message)
   }
 
   private startHeartbeat(): void {

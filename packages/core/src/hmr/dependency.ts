@@ -103,7 +103,7 @@ export class Dependency<P extends Dependency = any,O extends DependencyOptions=D
         }
     }
     useContext<T extends (keyof GlobalContext)[]>(...args:[...T,sideEffect:SideEffect<T>]){
-        const contexts=args.slice(-1) as T
+        const contexts=args.slice(0,-1) as T
         const sideEffect=args[args.length-1] as SideEffect<T>
         const contextReadyCallback=async ()=>{
             const args=contexts.map(item=>this.use(item))

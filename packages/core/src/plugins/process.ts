@@ -27,20 +27,17 @@ export class ProcessBot extends EventEmitter implements Bot<ProcessConfig>{
             content:[{type:'text',data:{text:content}}],
             raw:content,
             timestamp: ts,
-            reply:(content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+            reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
                 if(!Array.isArray(content)) content=[content]
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
-                return this.sendMessage({
-                    channel:message.channel,
-                    content
-                })
+                this.plugin.dispatch('message.send','process',`${process.pid}`,message.channel,content)
             }
         };
         logger.info(`recv ${message.channel.type}(${message.channel.id}):${ProcessBot.contentToString(message.raw)}`)
-        this.emit('message',message)
+        this.plugin.dispatch('message.receive',message)
     }
 
-    constructor(p:Plugin,public config:ProcessConfig) {
+    constructor(private plugin:Plugin,public config:ProcessConfig) {
         super();
         this.#listenInput=this.#listenInput.bind(this)
     }

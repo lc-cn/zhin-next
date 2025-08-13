@@ -4,9 +4,9 @@
 // ============================================================================
 
 
-import {MaybePromise, Message, SendContent} from "./types";
+import {MaybePromise, Message,MessageChannel, RenderContext, SendContent, MessageRender} from "./types";
 import {Dependency, Logger} from "./hmr";
-import {App,MessageChannel} from "./app";
+import {App} from "./app";
 
 /** 消息中间件函数 */
 export type MessageMiddleware = (message: Message, next: () => Promise<void>) => MaybePromise<void>;
@@ -38,7 +38,7 @@ export class Plugin extends Dependency<Plugin> {
     #logger?:Logger
     constructor(parent: Dependency<Plugin>, name: string, filePath: string) {
         super(parent, name, filePath);
-        this.on('message',this.#handleMessage.bind(this))
+        this.on('message.receive',this.#handleMessage.bind(this))
     }
     #handleMessage(message:Message){
         const next=async (index:number)=>{
@@ -48,7 +48,12 @@ export class Plugin extends Dependency<Plugin> {
         }
         next(0)
     }
-
+    addRender<T extends RenderContext>(render:MessageRender<T>){
+        this.before('message.send',render)
+    }
+    before(event:string,listener:(...args:any[])=>any){
+        this.on(`before-${event}`,listener)
+    }
     /** 获取所属的App实例 */
     get app(): App {
         return this.parent as App;

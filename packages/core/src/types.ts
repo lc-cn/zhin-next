@@ -89,3 +89,12 @@ export type SideEffect<A extends (keyof GlobalContext)[]>=(...args:Contexts<A>)=
 export type DisposeFn<A>=(context:ArrayItem<A>)=>MaybePromise<void>
 export type Contexts<CS extends (keyof GlobalContext)[]>=CS extends [infer L,...infer R]?R extends (keyof GlobalContext)[]?[ContextItem<L>,...Contexts<R>]:never[]:never[]
 type ContextItem<L>=L extends keyof GlobalContext?GlobalContext[L]:never
+export interface MessageChannel extends MessageTarget{
+  context:string
+  bot:string
+}
+export type RenderContext={
+  channel:MessageChannel,
+  content:SendContent
+}
+export type MessageRender<T extends RenderContext>=(this:T,content:SendContent)=>MaybePromise<SendContent|void>
