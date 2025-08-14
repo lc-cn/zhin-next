@@ -67,7 +67,7 @@ export interface MyProtocolConfig extends AdapterConfig {
 
 ```typescript
 import { Adapter } from '@zhin.js/core';
-import type { SendMessageOptions } from '@zhin.js/core';
+import type { SendSendOptions } from '@zhin.js/core';
 
 class MyProtocolAdapter extends Adapter {
   private config: MyProtocolConfig;
@@ -89,7 +89,7 @@ class MyProtocolAdapter extends Adapter {
     this.emit('disconnect');
   }
 
-  async sendMessage(options: SendMessageOptions): Promise<void> {
+  async sendMessage(options: SendSendOptions): Promise<void> {
     // 实现消息发送逻辑
     console.log('发送消息:', options);
   }

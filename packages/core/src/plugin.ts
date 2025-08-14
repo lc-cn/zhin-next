@@ -4,7 +4,7 @@
 // ============================================================================
 
 
-import {MaybePromise, Message,MessageChannel, RenderContext, SendContent, MessageRender} from "./types";
+import {MaybePromise, Message, BeforeSendHandler, SendOptions} from "./types";
 import {Dependency, Logger} from "./hmr";
 import {App} from "./app";
 
@@ -48,8 +48,8 @@ export class Plugin extends Dependency<Plugin> {
         }
         next(0)
     }
-    addRender<T extends RenderContext>(render:MessageRender<T>){
-        this.before('message.send',render)
+    beforeSend(handler:BeforeSendHandler){
+        this.before('message.send',handler)
     }
     before(event:string,listener:(...args:any[])=>any){
         this.on(`before-${event}`,listener)
@@ -100,7 +100,7 @@ export class Plugin extends Dependency<Plugin> {
         })
     }
     /** 发送消息 */
-    async sendMessage(channelId:MessageChannel, content: SendContent): Promise<void> {
-        await this.app.sendMessage(channelId, content);
+    async sendMessage(options:SendOptions): Promise<void> {
+        await this.app.sendMessage(options);
     }
 }

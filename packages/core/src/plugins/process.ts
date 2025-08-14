@@ -1,9 +1,10 @@
 import {Bot} from "../bot.js";
 import {Plugin} from '../plugin.js'
 import * as process from 'node:process'
-import {BotConfig, Message, MessageSegment, SendContent, SendMessageOptions} from "../types";
-import {register, useLogger} from "../app";
+import {BotConfig, Message, SendOptions, MessageSegment, SendContent} from "../types";
+import {registerAdapter, useLogger} from "../app";
 import {EventEmitter} from "events";
+import {Adapter} from "../adapter";
 
 export interface ProcessConfig extends BotConfig {
     context: 'process';
@@ -33,12 +34,14 @@ export class ProcessBot extends EventEmitter implements Bot<ProcessConfig>{
                 this.plugin.dispatch('message.send',{
                     ...message.channel,
                     context:'process',
-                    bot:`${process.pid}`
-                },content)
+                    bot:`${process.pid}`,
+                    content
+                })
             }
         };
-        logger.info(`recv ${message.channel.type}(${message.channel.id}):${ProcessBot.contentToString(message.raw)}`)
+        logger.info(`recv ${message.channel.type}(${message.channel.id}):${ProcessBot.contentToString(message.content)}`)
         this.plugin.dispatch('message.receive',message)
+        this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
     }
 
     constructor(private plugin:Plugin,public config:ProcessConfig) {
@@ -53,22 +56,10 @@ export class ProcessBot extends EventEmitter implements Bot<ProcessConfig>{
         process.stdin.off('data',this.#listenInput)
         this.connected=false
     }
-    async getUser(user_id: string) {
-        return {
-            user_id,
-            nickname:''
-        }
-    }
-    async getGroup(group_id:string){
-        return {
-            group_id,
-            group_name:'',
-            member_count:0
-        }
-    }
-    async sendMessage(options: SendMessageOptions){
+    async sendMessage(options: SendOptions){
+        options=await this.plugin.app.handleBeforeSend(options)
         if(!this.connected) return
-        logger.info(`send ${options.channel.type}(${options.channel.id}):${ProcessBot.contentToString(options.content)}`)
+        logger.info(`send ${options.type}(${options.id}):${ProcessBot.contentToString(options.content)}`)
     }
 }
 export namespace ProcessBot{
@@ -82,21 +73,5 @@ export namespace ProcessBot{
         }).join('')
     }
 }
-register({ // 注册上下文
-    name:'process',
-    async mounted(p){ // 这是上下文自身的挂载时机
-        const result=new Map<string,ProcessBot>
-        const bot=new ProcessBot(p,{
-            context:'process',
-            name:process.title,
-        })
-        result.set(`${process.pid}`,bot)
-        await bot.connect()
-        return result
-    },
-    async dispose(bots){
-        for(const [,bot] of bots){
-            await bot.disconnect()
-        }
-    }
-})
+
+registerAdapter(new Adapter('process',ProcessBot))

@@ -4,12 +4,16 @@ export default defineConfig(async (env)=>{
   return {
     // 机器人配置
     bots: [
-      // {
-      //   name:'1689919782',
-      //   context:'icqq',
-      //   log_level:'off',
-      //   platform:4
-      // }
+      {
+        name:`${process.pid}`,
+        context:'process'
+      },
+      {
+        name:'1689919782',
+        context:'icqq',
+        log_level:'off',
+        platform:4
+      }
     ],
     // 插件目录
     plugin_dirs: [

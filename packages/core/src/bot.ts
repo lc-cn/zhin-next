@@ -1,7 +1,9 @@
-import type {BotConfig, SendMessageOptions} from "./types";
+import type {BotConfig, SendOptions} from "./types";
 
 export interface Bot<T extends BotConfig=BotConfig> {
     config: T;
     connected?: boolean;
-    sendMessage(options: SendMessageOptions): Promise<void>
+    connect():Promise<void>
+    disconnect():Promise<void>
+    sendMessage(options: SendOptions): Promise<void>
 }

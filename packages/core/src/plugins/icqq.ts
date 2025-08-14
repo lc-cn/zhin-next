@@ -1,10 +1,11 @@
 import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@lc-cn/icqq";
 import path from "path";
 import {Bot} from "../bot.js";
-import {BotConfig, Message, MessageSegment, SendContent, SendMessageOptions} from "../types.js";
-import {register, useLogger} from '../app.js';
+import {BotConfig, Message, SendOptions, MessageSegment, SendContent} from "../types.js";
+import {registerAdapter} from '../app.js';
 import {Plugin} from "../plugin.js";
-import {channel} from "node:diagnostics_channel";
+import {Adapter} from "../adapter";
+import {ProcessBot} from "./process";
 
 export interface IcqqBotConfig extends BotConfig,Config{
     context:'icqq'
@@ -43,11 +44,14 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
                 this.plugin.dispatch('message.send',{
                     ...message.channel,
                     context:'icqq',
-                    bot:`${this.uin}`
-                },content)
+                    bot:`${this.uin}`,
+                    content
+                })
             }
         };
         this.plugin.dispatch('message.receive',message)
+        this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):${ProcessBot.contentToString(message.content)}`)
+        this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
     }
     async connect(): Promise<void> {
         this.on('message',this.handleIcqqMessage.bind(this))
@@ -81,16 +85,18 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
         this.connected=false;
     }
 
-    async sendMessage(options: SendMessageOptions): Promise<void> {
-        switch (options.channel.type){
+    async sendMessage(options: SendOptions): Promise<void> {
+        options=await this.plugin.app.handleBeforeSend(options)
+        this.plugin.logger.info(`send ${options.type}(${options.id}):`,options.content)
+        switch (options.type){
             case 'private':
-                await this.sendPrivateMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
+                await this.sendPrivateMsg(Number(options.id),IcqqBot.toSendable(options.content))
                 break;
             case "group":
-                await this.sendGroupMsg(Number(options.channel.id),IcqqBot.toSendable(options.content))
+                await this.sendGroupMsg(Number(options.id),IcqqBot.toSendable(options.content))
                 break;
             default:
-                throw new Error(`unsupported channel type ${options.channel.type}`)
+                throw new Error(`unsupported channel type ${options.type}`)
         }
     }
 
@@ -109,31 +115,9 @@ export namespace IcqqBot{
         return content.map((segment):MessageElem=>{
             if(typeof segment==="string") return {type:'text',text:segment}
             const {type,data}=segment
+            console.log(segment)
             return {type,...data} as MessageElem
         })
     }
 }
-const logger=useLogger()
-register({
-    name:'icqq',
-    async mounted(p){
-        const bots=new Map<string,IcqqBot>()
-        const configs=p.app.getConfig().bots?.filter(c=>c.context==='icqq')
-        if(!configs?.length) return bots
-        for(const config of configs){
-            const bot=new IcqqBot(p,config as IcqqBotConfig)
-            await bot.connect()
-            logger.info(`bot ${config.name} for icqq connected`);
-            bots.set(config.name,bot);
-        }
-        logger.info(`context icqq mounted`)
-        return bots
-    },
-    async dispose(bots){
-        for(const [name,bot] of bots){
-            await bot.disconnect()
-            logger.info(`bot ${name} for icqq disconnectd`)
-        }
-        logger.info(`context icqq disposed`)
-    }
-})
+registerAdapter(new Adapter('icqq',IcqqBot))

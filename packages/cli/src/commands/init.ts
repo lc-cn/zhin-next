@@ -15,15 +15,15 @@ interface InitOptions {
 export const initCommand = new Command('init')
   .description('初始化新的Zhin机器人项目')
   .argument('[project-name]', '项目名称')
-  .option('-c, --config <format>', '配置文件格式 (json|yaml|toml|ts|js)', 'yaml')
-  .option('-p, --package-manager <manager>', '包管理器 (npm|yarn|pnpm)', 'npm')
-  .option('-r, --runtime <runtime>', '运行时 (node|bun)', 'node')
+  .option('-c, --config <format>', '配置文件格式 (json|yaml|toml|ts|js)', 'js')
+  .option('-p, --package-manager <manager>', '包管理器 (npm|yarn|pnpm)', 'pnpm')
+  .option('-r, --runtime <runtime>', '运行时 (node|bun)', 'bun')
   .option('-y, --yes', '自动回答所有问题')
   .action(async (projectName: string, options: InitOptions) => {
     if(options.yes) {
-      options.config = 'yaml';
-      options.packageManager = 'npm';
-      options.runtime = 'node';
+      options.config = 'js';
+      options.packageManager = 'pnpm';
+      options.runtime = 'bun';
     }
     try {
       let name = projectName;
@@ -55,10 +55,10 @@ export const initCommand = new Command('init')
             name: 'runtime',
             message: '选择运行时:',
             choices: [
-              { name: 'Node.js', value: 'node' },
-              { name: 'Bun', value: 'bun' }
+              { name: 'Bun (推荐)', value: 'bun' },
+              { name: 'Node.js', value: 'node' }
             ],
-            default: options.runtime || 'node'
+            default: options.runtime || 'bun'
           },
         ])
         options.runtime=inputRuntime;
@@ -70,11 +70,11 @@ export const initCommand = new Command('init')
             name: 'packageManager',
             message: '选择包管理器:',
             choices: [
+              { name: 'pnpm (推荐)', value: 'pnpm' },
               { name: 'npm', value: 'npm' },
-              { name: 'yarn', value: 'yarn' },
-              { name: 'pnpm', value: 'pnpm' }
+              { name: 'yarn', value: 'yarn' }
             ],
-            default: options.packageManager || 'npm'
+            default: options.packageManager || 'pnpm'
           }
         ])
         options.packageManager=inputPackageManager;
@@ -86,13 +86,13 @@ export const initCommand = new Command('init')
             name: 'configFormat',
             message: '选择配置文件格式:',
             choices: [
-              { name: 'YAML (推荐)', value: 'yaml' },
-              { name: 'JSON', value: 'json' },
-              { name: 'TOML', value: 'toml' },
+              { name: 'JavaScript (推荐)', value: 'js' },
               { name: 'TypeScript', value: 'ts' },
-              { name: 'JavaScript', value: 'js' }
+              { name: 'YAML', value: 'yaml' },
+              { name: 'JSON', value: 'json' },
+              { name: 'TOML', value: 'toml' }
             ],
-            default: options.config || 'yaml'
+            default: options.config || 'js'
           }
         ]);
         options.config=inputConfigFormat;
@@ -150,6 +150,7 @@ async function createProjectStructure(projectPath: string, projectName: string, 
   await fs.ensureDir(path.join(projectPath, 'src'));
   await fs.ensureDir(path.join(projectPath, 'src', 'plugins'));
   await fs.ensureDir(path.join(projectPath, 'dist'));
+  await fs.ensureDir(path.join(projectPath, 'data'));
   
   // 创建 package.json
   const packageJson = {
@@ -161,7 +162,7 @@ async function createProjectStructure(projectPath: string, projectName: string, 
     scripts: {
       dev: options.runtime === 'bun' ? 'zhin dev --bun' : 'zhin dev',
       start: options.runtime === 'bun' ? 'zhin start --bun' : 'zhin start',
-      daemon: options.runtime === 'bun' ? 'zhin start --daemon --bun' : 'zhin start --daemon',
+      daemon: options.runtime === 'bun' ? 'zhin start --bun --daemon' : 'zhin start --daemon',
       build: 'zhin build',
       stop: 'zhin stop'
     },
@@ -213,9 +214,6 @@ async function createProjectStructure(projectPath: string, projectName: string, 
   // 创建配置文件
   await createConfigFile(projectPath, options.config!);
   
-  // 创建环境变量文件
-  await createEnvFile(projectPath);
-  
   // 创建主入口文件
   const indexContent = `import { createApp } from '@zhin.js/core';
 
@@ -223,33 +221,17 @@ async function createProjectStructure(projectPath: string, projectName: string, 
 async function main() {
     try {
         // 异步创建机器人实例 (自动从配置文件加载)
-        const bot = await createApp();
-        
-        // 监听消息事件
-        bot.on('message', (message) => {
-          bot.logger.info('收到消息:', message);
-        });
-
-        // 监听私聊消息
-        bot.on('message.private', (message) => {
-          bot.logger.info('收到私聊消息:', message.raw_message);
-        });
-
-        // 监听群聊消息
-        bot.on('message.group', (message) => {
-          bot.logger.info(\`群 \${message.group_id} 收到消息:\`, message.raw_message);
-        });
-        
-        await bot.start();
+        const app = await createApp();
+        await app.start();
         
         // 优雅退出处理
         const shutdown = async (signal: string) => {
-          await bot.stop();
+          await app.stop();
           process.exit(0);
         };
 
-        process.on('SIGINT', () => shutdown('SIGINT'));
-        process.on('SIGTERM', () => shutdown('SIGTERM'));
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
     } catch (error) {
         console.error('机器人启动失败:', error);
         process.exit(1);
@@ -263,27 +245,46 @@ main().catch(console.error);
   await fs.writeFile(path.join(projectPath, 'src', 'index.ts'), indexContent);
   
   // 创建示例插件
-  const pluginContent = `import { usePlugin, useLogger, onDispose } from '@zhin.js/core';
+  const pluginContent = `import {
+  onDispose,
+  addMiddleware, useContext, sendMessage, beforeSend, onGroupMessage,
+} from '@zhin.js/core';
+import * as process from "node:process";
 
-const plugin = usePlugin();
-const logger = useLogger();
+onDispose(async ()=>{
+  console.log('插件已销毁')
+})
 
-// 添加测试命令
-plugin.addCommand('test', (message, args) => {
-  logger.info('测试命令被调用:', { message, args });
-});
+addMiddleware(async (message, next)=>{ // 添加中间件到插件
+  // 在这里处理消息
+  return next()
+})
 
-// 添加内存监控定时器
-const timer = setInterval(() => {
-  const memoryUsage = process.memoryUsage();
-  logger.info(\`内存使用: RSS \${(memoryUsage.rss/1024/1024).toFixed(2)}MB | 堆总计 \${(memoryUsage.heapTotal/1024/1024).toFixed(2)}MB | 堆已用 \${(memoryUsage.heapUsed/1024/1024).toFixed(2)}MB\`);
-}, 30000); // 每30秒输出一次
+let hasChanged=false
+beforeSend((options)=>{
+  if(!hasChanged){
+    options.content='bar'
+    hasChanged=true
+  }
+  return options
+})
 
-// 插件销毁时清理资源
-onDispose(() => {
-  clearInterval(timer);
-  logger.info('测试插件已销毁');
-});
+onGroupMessage((m)=>{
+  if(m.channel.id==='629336764'){
+    m.reply('hello')
+  }
+})
+
+// 依赖process上下文
+useContext('process',()=>{
+  sendMessage({
+    context:'process',
+    bot:\`\${process.pid}\`,
+    id:process.title,
+    type:'private',
+    content:'foo'
+  })
+})
 `;
   
   await fs.writeFile(path.join(projectPath, 'src', 'plugins', 'test-plugin.ts'), pluginContent);
@@ -430,21 +431,13 @@ ${projectName}/
 │   └── plugins/          # 插件目录
 │       └── test-plugin.ts # 示例插件
 ├── dist/                 # 构建输出目录
+├── data/                 # 数据目录
 ├── zhin.config.${options.config}     # 配置文件
-├── .env.example         # 环境变量示例
 ├── package.json         # 项目配置
 └── tsconfig.json        # TypeScript配置
 \`\`\`
 
 ## ⚙️ 配置
-
-### 环境变量
-
-复制 \`.env.example\` 为 \`.env\` 并配置你的环境变量：
-
-\`\`\`bash
-cp .env.example .env
-\`\`\`
 
 ### 机器人配置
 
@@ -514,99 +507,83 @@ async function createConfigFile(projectPath: string, format: string) {
   await fs.writeFile(path.join(projectPath, fileName), configContent);
 }
 
-async function createEnvFile(projectPath: string) {
-  const envContent = `# OneBot 11 配置
-ONEBOT_URL=ws://localhost:8080
-ONEBOT_ACCESS_TOKEN=
-
-# 日志配置
-LOG_LEVEL=info
-DEBUG=false
-
-# 环境配置
-NODE_ENV=development
-`;
-  
-  // 创建 .env.example 文件供参考
-  await fs.writeFile(path.join(projectPath, '.env.example'), envContent);
-  
-  // 也创建一个空的 .env 文件（会被 .gitignore 忽略）
-  await fs.writeFile(path.join(projectPath, '.env'), envContent);
-}
-
 function getConfigContent(format: string): string {
   switch (format) {
     case 'json':
       return JSON.stringify({
         bots: [
           {
-            name: 'onebot11',
-            context: 'onebot11',
-            url: '${ONEBOT_URL:-ws://localhost:8080}',
-            access_token: '${ONEBOT_ACCESS_TOKEN:-}'
+            name: `${process.pid}`,
+            context: 'process'
+          },
+          {
+            name: '1689919782',
+            context: 'icqq',
+            log_level: 'off',
+            platform: 4
           }
         ],
         plugin_dirs: [
-          '${PLUGIN_DIR:-./src/plugins}',
+          './src/plugins',
           'node_modules'
         ],
         plugins: [
-          'onebot11',
-          'process'
+          'icqq',
+          'process',
+          'test-plugin'
         ],
-        debug: '${DEBUG:-false}'
+        debug: false
       }, null, 2);
       
     case 'yaml':
       return `# Zhin Bot 配置文件
-# 支持环境变量替换，格式: \${VAR_NAME:-default_value}
 
 # 机器人配置
 bots:
-  - name: onebot11
-    context: onebot11
-    url: \${ONEBOT_URL:-ws://localhost:8080}
-    access_token: \${ONEBOT_ACCESS_TOKEN:-}
+  - name: \${process.pid}
+    context: process
+  - name: '1689919782'
+    context: icqq
+    log_level: off
+    platform: 4
 
 # 插件目录
 plugin_dirs:
-  - \${PLUGIN_DIR:-./src/plugins}
+  - ./src/plugins
   - node_modules
 
 # 要加载的插件列表
 plugins:
-  - onebot11
+  - icqq
+  - process
   - test-plugin
 
-# 禁用的依赖列表
-disable_dependencies: []
-
 # 调试模式
-debug: \${DEBUG:-false}
+debug: false
 `;
       
     case 'toml':
       return `# Zhin Bot 配置文件
-# 支持环境变量替换，格式: \${VAR_NAME:-default_value}
 
 # 机器人配置
 [[bots]]
-name = "onebot11"
-context = "onebot11"
-url = "\${ONEBOT_URL:-ws://localhost:8080}"
-access_token = "\${ONEBOT_ACCESS_TOKEN:-}"
+name = "\${process.pid}"
+context = "process"
+
+[[bots]]
+name = "1689919782"
+context = "icqq"
+log_level = "off"
+platform = 4
 
 # 插件目录
-plugin_dirs = ["\${PLUGIN_DIR:-./src/plugins}", "node_modules"]
+plugin_dirs = ["./src/plugins", "node_modules"]
 
 # 要加载的插件列表
-plugins = ["onebot11", "test-plugin"]
-
-# 禁用的依赖列表
-disable_dependencies = []
+plugins = ["icqq", "process", "test-plugin"]
 
 # 调试模式
-debug = "\${DEBUG:-false}"
+debug = false
 `;
       
     case 'ts':
@@ -617,10 +594,14 @@ export default defineConfig(async (env)=>{
     // 机器人配置
     bots: [
       {
-        name: 'onebot11',
-        context: 'onebot11',
-        url: env.ONEBOT_URL || 'ws://localhost:8080',
-        access_token: env.ONEBOT_ACCESS_TOKEN || ''
+        name: \`\${process.pid}\`,
+        context: 'process'
+      },
+      {
+        name: '1689919782',
+        context: 'icqq',
+        log_level: 'off',
+        platform: 4
       }
     ],
     // 插件目录
@@ -630,7 +611,8 @@ export default defineConfig(async (env)=>{
     ],
     // 要加载的插件列表
     plugins: [
-      'onebot11',
+      'icqq',
+      'process',
       'test-plugin'
     ],
 
@@ -638,7 +620,6 @@ export default defineConfig(async (env)=>{
     debug: env.DEBUG === 'true'
   }
 })
-
 `;
       
     case 'js':
@@ -649,10 +630,14 @@ export default defineConfig(async (env)=>{
     // 机器人配置
     bots: [
       {
-        name: 'onebot11',
-        context: 'onebot11',
-        url: env.ONEBOT_URL || 'ws://localhost:8080',
-        access_token: env.ONEBOT_ACCESS_TOKEN || ''
+        name: \`\${process.pid}\`,
+        context: 'process'
+      },
+      {
+        name: '1689919782',
+        context: 'icqq',
+        log_level: 'off',
+        platform: 4
       }
     ],
     // 插件目录
@@ -662,7 +647,8 @@ export default defineConfig(async (env)=>{
     ],
     // 要加载的插件列表
     plugins: [
-      'onebot11',
+      'icqq',
+      'process',
       'test-plugin'
     ],
 
@@ -670,7 +656,6 @@ export default defineConfig(async (env)=>{
     debug: env.DEBUG === 'true'
   }
 })
-
 `;
 
     default:
@@ -685,151 +670,154 @@ function getConfigExample(format: string): string {
 {
   "bots": [
     {
-      "name": "onebot11",
-      "context": "onebot11",
-      "url": "\${ONEBOT_URL:-ws://localhost:8080}",
-      "access_token": "\${ONEBOT_ACCESS_TOKEN:-}"
+      "name": "\${process.pid}",
+      "context": "process"
+    },
+    {
+      "name": "1689919782",
+      "context": "icqq",
+      "log_level": "off",
+      "platform": 4
     }
   ],
   "plugin_dirs": [
-    "\${PLUGIN_DIR:-./src/plugins}",
+    "./src/plugins",
     "node_modules"
   ],
   "plugins": [
-    "onebot11",
+    "icqq",
+    "process",
     "test-plugin"
   ],
-  "disable_dependencies": [],
-  "debug": "\${DEBUG:-false}"
+  "debug": false
 }
 \`\`\`
 `;
     case 'yaml':
       return `\`\`\`yaml
 # Zhin Bot 配置文件
-# 支持环境变量替换，格式: \${VAR_NAME:-default_value}
 
 # 机器人配置
 bots:
-  - name: onebot11
-    context: onebot11
-    url: \${ONEBOT_URL:-ws://localhost:8080}
-    access_token: \${ONEBOT_ACCESS_TOKEN:-}
+  - name: \${process.pid}
+    context: process
+  - name: '1689919782'
+    context: icqq
+    log_level: off
+    platform: 4
 
 # 插件目录
 plugin_dirs:
-  - \${PLUGIN_DIR:-./src/plugins}
+  - ./src/plugins
   - node_modules
 
 # 要加载的插件列表
 plugins:
-  - onebot11
+  - icqq
+  - process
   - test-plugin
 
-# 禁用的依赖列表
-disable_dependencies: []
-
 # 调试模式
-debug: \${DEBUG:-false}
+debug: false
 \`\`\`
 `;
     case 'toml':
       return `\`\`\`toml
 # Zhin Bot 配置文件
-# 支持环境变量替换，格式: \${VAR_NAME:-default_value}
 
 # 机器人配置
 [[bots]]
-name = "onebot11"
-context = "onebot11"
-url = "\${ONEBOT_URL:-ws://localhost:8080}"
-access_token = "\${ONEBOT_ACCESS_TOKEN:-}"
+name = "\${process.pid}"
+context = "process"
+
+[[bots]]
+name = "1689919782"
+context = "icqq"
+log_level = "off"
+platform = 4
 
 # 插件目录
-plugin_dirs = ["\${PLUGIN_DIR:-./src/plugins}", "node_modules"]
+plugin_dirs = ["./src/plugins", "node_modules"]
 
 # 要加载的插件列表
-plugins = ["onebot11", "test-plugin"]
-
-# 禁用的依赖列表
-disable_dependencies = []
+plugins = ["icqq", "process", "test-plugin"]
 
 # 调试模式
-debug = "\${DEBUG:-false}"
+debug = false
 \`\`\`
 `;
     case 'ts':
       return `\`\`\`typescript
-import type { AppConfig } from '@zhin.js/core';
+import { defineConfig } from '@zhin.js/core';
 
-/**
- * Zhin Bot 配置文件
- * 支持环境变量替换，格式: \${VAR_NAME:-default_value}
- */
-const config: AppConfig = {
-  // 机器人配置
-  bots: [
-    {
-      name: 'onebot11',
-      context: 'onebot11',
-      url: process.env.ONEBOT_URL || 'ws://localhost:8080',
-      access_token: process.env.ONEBOT_ACCESS_TOKEN || ''
-    }
-  ],
+export default defineConfig(async (env)=>{
+  return {
+    // 机器人配置
+    bots: [
+      {
+        name: \`\${process.pid}\`,
+        context: 'process'
+      },
+      {
+        name: '1689919782',
+        context: 'icqq',
+        log_level: 'off',
+        platform: 4
+      }
+    ],
+    // 插件目录
+    plugin_dirs: [
+      env.PLUGIN_DIR || './src/plugins',
+      'node_modules'
+    ],
+    // 要加载的插件列表
+    plugins: [
+      'icqq',
+      'process',
+      'test-plugin'
+    ],
 
-  // 插件目录
-  plugin_dirs: [
-    process.env.PLUGIN_DIR || './src/plugins',
-    'node_modules'
-  ],
-
-  // 要加载的插件列表
-  plugins: [
-    'onebot11',
-    'test-plugin'
-  ],
-
-  // 调试模式
-  debug: process.env.DEBUG === 'true'
-};
-
-export default config;
+    // 调试模式
+    debug: env.DEBUG === 'true'
+  }
+})
 \`\`\`
 `;
     case 'js':
       return `\`\`\`javascript
-/**
- * Zhin Bot 配置文件
- * 支持环境变量替换，格式: \${VAR_NAME:-default_value}
- */
-const config = {
-  // 机器人配置
-  bots: [
-    {
-      name: 'onebot11',
-      context: 'onebot11',
-      url: process.env.ONEBOT_URL || 'ws://localhost:8080',
-      access_token: process.env.ONEBOT_ACCESS_TOKEN || ''
-    }
-  ],
+import { defineConfig } from '@zhin.js/core';
 
-  // 插件目录
-  plugin_dirs: [
-    process.env.PLUGIN_DIR || './src/plugins',
-    'node_modules'
-  ],
+export default defineConfig(async (env)=>{
+  return {
+    // 机器人配置
+    bots: [
+      {
+        name: \`\${process.pid}\`,
+        context: 'process'
+      },
+      {
+        name: '1689919782',
+        context: 'icqq',
+        log_level: 'off',
+        platform: 4
+      }
+    ],
+    // 插件目录
+    plugin_dirs: [
+      env.PLUGIN_DIR || './src/plugins',
+      'node_modules'
+    ],
+    // 要加载的插件列表
+    plugins: [
+      'icqq',
+      'process',
+      'test-plugin'
+    ],
 
-  // 要加载的插件列表
-  plugins: [
-    'onebot11',
-    'test-plugin'
-  ],
-
-  // 调试模式
-  debug: process.env.DEBUG === 'true'
-};
-
-export default config;
+    // 调试模式
+    debug: env.DEBUG === 'true'
+  }
+})
 \`\`\`
 `;
     default:

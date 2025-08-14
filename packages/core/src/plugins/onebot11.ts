@@ -1,11 +1,11 @@
 import WebSocket from 'ws';
 import { Bot } from '../bot.js';
 import {Plugin} from '../plugin.js'
-import {BotConfig, Message, SendMessageOptions, User, Group, MessageSegment} from '../types.js';
-import {register, useLogger} from '../app.js';
+import {BotConfig, Message, User, Group, MessageSegment, SendOptions} from '../types.js';
+import {registerAdapter} from '../app.js';
 import {EventEmitter} from "events";
 import {clearInterval, clearTimeout} from "node:timers";
-import process from "node:process";
+import {Adapter} from "../adapter";
 
 // ============================================================================
 // OneBot11 配置和类型
@@ -123,19 +123,21 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
     }
   }
 
-  async sendMessage(options: SendMessageOptions): Promise<void> {
+  async sendMessage(options: SendOptions): Promise<void> {
+    options=await this.plugin.app.handleBeforeSend(options)
+    this.plugin.logger.info(`send ${options.type}(${options.id}):`,options.content)
     const messageData: any = {
       message: options.content
     };
 
-    if (options.channel.type==='group') {
+    if (options.type==='group') {
       await this.callApi('send_group_msg', {
-        group_id: parseInt(options.channel.id),
+        group_id: parseInt(options.id),
         ...messageData
       });
-    } else if (options.channel.type==='private') {
+    } else if (options.type==='private') {
       await this.callApi('send_private_msg', {
-        user_id: parseInt(options.channel.id),
+        user_id: parseInt(options.id),
         ...messageData
       });
     } else {
@@ -231,11 +233,14 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
         this.plugin.dispatch('message.send',{
           ...message.channel,
           context:'onebot11',
-          bot:`${this.config.name}`
-        },content)
+          bot:`${this.config.name}`,
+          content
+        })
       }
     };
     this.plugin.dispatch('message.receive',message)
+    this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):`,message.content)
+    this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
   }
 
   private startHeartbeat(): void {
@@ -264,27 +269,4 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
     }, interval);
   }
 }
-const logger=useLogger()
-register({
-  name:'onebot11',
-  async mounted(p){
-    const bots=new Map<string,OneBot11WsClient>()
-    const configs=p.app.getConfig().bots?.filter(c=>c.context==='onebot11')
-    if(!configs?.length) return bots
-    for(const config of configs){
-      const bot=new OneBot11WsClient(p,config as OneBotV11Config)
-      await bot.connect()
-      logger.info(`bot ${config.name} for onebot11 connect`)
-      bots.set(config.name,bot)
-    }
-    logger.info(`context onebot11 mounted`)
-    return bots
-  },
-  async dispose(bots){
-    for(const [name,bot] of bots){
-      await bot.disconnect()
-      logger.info(`bot ${name} for onebot11 disconnected`)
-    }
-    logger.info(`context onebot11 disposed`)
-  }
-})
+registerAdapter(new Adapter('onebot11',OneBot11WsClient))

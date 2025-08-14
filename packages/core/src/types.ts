@@ -1,6 +1,7 @@
 import {ProcessBot} from "./plugins/process";
 import {IcqqBot} from "./plugins/icqq";
 import {OneBot11WsClient} from "./plugins/onebot11";
+import {Adapter} from "./adapter";
 
 export interface MessageSegment<T extends keyof Segment=keyof Segment> {
   type: T;
@@ -17,7 +18,8 @@ export interface MessageSender{
   id: string;
   name?: string;
 }
-export interface MessageTarget{
+export type MessageComponent<T extends object>=(props:T&{children:SendContent})=>MaybePromise<SendContent>
+export interface MessageChannel{
   id: string;
   type: 'group' | 'private' | 'channel';
 }
@@ -26,7 +28,7 @@ export interface Message {
   content: MessageSegment[];
   sender: MessageSender;
   reply(content:SendContent,quote?:boolean|string):Promise<void>
-  channel: MessageTarget;
+  channel: MessageChannel;
   timestamp: number;
   raw: string;
 }
@@ -66,35 +68,20 @@ export interface AppConfig {
 }
 export type DefineConfig<T> = T | ((env:Record<string,string>)=>MaybePromise<T>);
 
-export interface AdapterEvents {
-  connect: () => void;
-  disconnect: () => void;
-  error: (error: Error) => void;
-  message: (message: Message) => void;
-  'message.private': (message: Message) => void;
-  'message.group': (message: Message) => void;
-}
 
 export interface GlobalContext extends Record<string, any>{
-  process:Map<string,ProcessBot>
-  icqq:Map<string,IcqqBot>
-  onebot11:Map<string,OneBot11WsClient>
-}
-export interface SendMessageOptions {
-  channel:MessageTarget
-  content:SendContent
+  process:Adapter<ProcessBot>
+  icqq:Adapter<IcqqBot>
+  onebot11:Adapter<OneBot11WsClient>
 }
 export type MaybePromise<T> = T extends Promise<infer U> ? T|U : T|Promise<T>;
 export type SideEffect<A extends (keyof GlobalContext)[]>=(...args:Contexts<A>)=>MaybePromise<void|DisposeFn<Contexts<A>>>
 export type DisposeFn<A>=(context:ArrayItem<A>)=>MaybePromise<void>
 export type Contexts<CS extends (keyof GlobalContext)[]>=CS extends [infer L,...infer R]?R extends (keyof GlobalContext)[]?[ContextItem<L>,...Contexts<R>]:never[]:never[]
 type ContextItem<L>=L extends keyof GlobalContext?GlobalContext[L]:never
-export interface MessageChannel extends MessageTarget{
+export interface SendOptions extends MessageChannel{
   context:string
   bot:string
-}
-export type RenderContext={
-  channel:MessageChannel,
   content:SendContent
 }
-export type MessageRender<T extends RenderContext>=(this:T,content:SendContent)=>MaybePromise<SendContent|void>
+export type BeforeSendHandler=(options:SendOptions)=>MaybePromise<SendOptions|void>

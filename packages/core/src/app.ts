@@ -4,19 +4,15 @@ import { HMR, Context, Logger, ConsoleLogger } from './hmr';
 import {
     AppConfig,
     GlobalContext,
-    Message, MessageRender,
-    MessageSegment,
-    RenderContext,
-    SendContent,
-    SideEffect,
-    MessageChannel,
+    Message, BeforeSendHandler,
+    SideEffect,SendOptions,
 } from './types.js';
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { getCallerFile, getCallerFiles } from './hmr/utils.js';
 import { logger } from './logger.js';
 import {CronJob, EventListener, MessageMiddleware, Plugin} from "./plugin.js";
-import {Bot} from "./bot.js";
+import {Adapter} from "./adapter";
 
 // ============================================================================
 // App 类
@@ -67,20 +63,12 @@ export class App extends HMR<Plugin> {
         bots: [],
         debug: false,
     };
-    async sendMessage(channel:MessageChannel,content:SendContent){
-        const adapter=this.getContext<Map<string,Bot>>(channel.context)
-        if(!adapter) throw new Error(`can't find adapter for name ${channel.context}`)
-        const bot=adapter.get(channel.bot)
-        if(!bot) throw new Error(`can't find bot ${channel.bot} for adapter ${channel.bot}`)
-        const renderContext:RenderContext={
-            channel,
-            content,
-        }
-        const renderAfter=await this.renderMessage(renderContext,content)
-        return bot.sendMessage({
-            channel,
-            content:renderAfter
-        })
+    async sendMessage(options:SendOptions){
+        const adapter=this.getContext<Adapter>(options.context)
+        if(!adapter) throw new Error(`can't find adapter for name ${options.context}`)
+        const bot=adapter.bots.get(options.bot)
+        if(!bot) throw new Error(`can't find bot ${options.bot} for adapter ${options.bot}`)
+        return bot.sendMessage(options)
     }
     /** 同步加载配置文件 */
     static loadConfigSync(): AppConfig {
@@ -159,16 +147,16 @@ export class App extends HMR<Plugin> {
         throw new Error(`can't find Context of ${name}`)
     }
 
-    async renderMessage<T extends RenderContext>(context:T,content:SendContent){
+    async handleBeforeSend(options:SendOptions){
         const handlers=this.dependencyList.reduce((result,plugin)=>{
             result.push(...plugin.listeners('before-message.send'))
             return result
         },[] as Function[])
         for(const handler of handlers){
-            const result=await handler.call(context,content)
-            if(result) content=result
+            const result=await handler(options)
+            if(result) options=result
         }
-        return content
+        return options
     }
     getLogger(...names: string[]): Logger {
         return new ConsoleLogger(`[${[...names].join('/')}]`, process.env.NODE_ENV === 'development');
@@ -246,14 +234,27 @@ export function usePlugin(): Plugin {
         throw error;
     }
 }
-export function addRender<T extends RenderContext>(render:MessageRender<T>){
+export function beforeSend(handler:BeforeSendHandler){
     const plugin = usePlugin();
-    return plugin.addRender(render);
+    return plugin.beforeSend(handler);
 }
 /** 创建Context */
 export function register<T>(context: Context<T,Plugin>): Context<T,Plugin> {
     const plugin = usePlugin();
     return plugin.register(context);
+}
+export function registerAdapter<T extends Adapter>(adapter:T){
+    const plugin = usePlugin();
+    plugin.register({
+        name:adapter.name,
+        async mounted(plugin){
+           await adapter.start(plugin)
+            return adapter
+        },
+        dispose(){
+            return adapter.stop(plugin)
+        }
+    })
 }
 
 export function use<T extends keyof GlobalContext>(name: T): GlobalContext[T]
@@ -283,12 +284,12 @@ export function onEvent<T = any>(event: string, listener: EventListener<T>): voi
 
 /** 监听群组消息 */
 export function onGroupMessage(handler: (message: Message) => void | Promise<void>): void {
-    onEvent('message.receive.group', handler);
+    onEvent('message.group.receive', handler);
 }
 
 /** 监听私聊消息 */
 export function onPrivateMessage(handler: (message: Message) => void | Promise<void>): void {
-    onEvent('message.receive.private', handler);
+    onEvent('message.private.receive', handler);
 }
 
 /** 监听所有消息 */
@@ -317,9 +318,9 @@ export function addCronJob(job: CronJob): void {
 }
 
 /** 发送消息 */
-export async function sendMessage(channel:MessageChannel, content: SendContent): Promise<void> {
+export async function sendMessage(options:SendOptions): Promise<void> {
     const app = useApp();
-    await app.sendMessage(channel, content);
+    await app.sendMessage(options);
 }
 
 /** 获取App实例（用于高级操作） */
