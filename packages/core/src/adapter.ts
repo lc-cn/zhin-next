@@ -2,7 +2,6 @@ import {BotConfig} from "./types";
 import {Bot} from "./bot";
 import {Plugin} from "./plugin";
 
-
 export class Adapter<R extends Bot=Bot>{
     public bots:Map<string,R>=new Map<string, R>()
     #botFactory:Adapter.BotFactory<R>
@@ -12,27 +11,47 @@ export class Adapter<R extends Bot=Bot>{
     async start(plugin:Plugin){
         const configs=plugin.app.getConfig().bots?.filter(c=>c.context===this.name)
         if(!configs?.length) return
-        for(const config of configs){
-            let bot: R
-            if (Adapter.isBotConstructor(this.#botFactory)) {
-                bot = new this.#botFactory(plugin,config) as R
-            } else {
-                bot = this.#botFactory(plugin,config) as R
+        try {
+            for(const config of configs){
+                let bot: R
+                if (Adapter.isBotConstructor(this.#botFactory)) {
+                    bot = new this.#botFactory(plugin,config) as R
+                } else {
+                    bot = this.#botFactory(plugin,config) as R
+                }
+                try {
+                    await bot.connect()
+                    plugin.logger.info(`bot ${config.name} of adapter ${this.name} connected`)
+                    this.bots.set(config.name,bot)
+                } catch (error) {
+                    // 如果连接失败，确保错误正确传播
+                    throw error
+                }
             }
-            await bot.connect()
-            plugin.logger.info(`bot ${config.name} of adapter ${this.name} connected`)
-            this.bots.set(config.name,bot)
-        }
 
-        plugin.logger.info(`adapter ${this.name} started`)
+            plugin.logger.info(`adapter ${this.name} started`)
+        } catch (error) {
+            // 确保错误正确传播
+            throw error
+        }
     }
     async stop(plugin:Plugin){
-        for(const [name,bot] of this.bots){
-            await bot.disconnect()
-            plugin.logger.info(`bot ${name} of adapter ${this.name} disconnected`)
-            this.bots.delete(name)
+        try {
+            for(const [name,bot] of this.bots){
+                try {
+                    await bot.disconnect()
+                    plugin.logger.info(`bot ${name} of adapter ${this.name} disconnected`)
+                    this.bots.delete(name)
+                } catch (error) {
+                    // 如果断开连接失败，确保错误正确传播
+                    throw error
+                }
+            }
+            plugin.logger.info(`adapter ${this.name} stopped`)
+        } catch (error) {
+            // 确保错误正确传播
+            throw error
         }
-        plugin.logger.info(`adapter ${this.name} stopped`)
     }
 }
 export namespace Adapter {

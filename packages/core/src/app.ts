@@ -138,7 +138,14 @@ export class App extends HMR<Plugin> {
 
     getContext<T>(name:string):T{
         for(const dep of this.dependencyList){
-            if(dep.contexts.has(name)) return dep.contexts.get(name)!.value
+            if(dep.contexts.has(name)) {
+                const context = dep.contexts.get(name)!
+                // 如果上下文还没有挂载，等待挂载完成
+                if (!context.value) {
+                    throw new Error(`Context ${name} is not mounted yet`)
+                }
+                return context.value
+            }
         }
         throw new Error(`can't find Context of ${name}`)
     }
@@ -328,4 +335,4 @@ export function getAppInstance(): App {
 export function useLogger(): Logger {
     const plugin = usePlugin();
     return plugin.logger;
-} 
+}

@@ -35,8 +35,8 @@ export class Dependency<P extends Dependency = any,O extends DependencyOptions=D
         this.dependencies = new Map();
         this.options = { ...options };
         this.setMaxListeners(DEFAULT_CONFIG.MAX_LISTENERS);
-        // 安装完成
-        this.mounted();
+        // 初始化完成，但不自动调用mounted
+        // this.mounted();
     }
 
     #contextsIsReady<CS extends (keyof GlobalContext)[]>(contexts:CS){

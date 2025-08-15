@@ -1,4 +1,3 @@
-
 // ============================================================================
 // 插件类型定义
 // ============================================================================
@@ -74,9 +73,6 @@ export class Plugin extends Dependency<Plugin> {
     addMiddleware(middleware: MessageMiddleware): void {
         this.middlewares.push(middleware);
         this.dispatch('middleware.add',middleware)
-        this.on('dispose',()=>{
-            this.dispatch('middleware.remove',middleware)
-        })
     }
 
     /** 添加事件监听器 */
@@ -86,22 +82,41 @@ export class Plugin extends Dependency<Plugin> {
         }
         this.eventListeners.get(event)!.push(listener);
         this.dispatch('listener.add',event,listener)
-        this.on('dispose',()=>{
-            this.dispatch('listener.remove',event,listener)
-        })
     }
 
     /** 添加定时任务 */
     addCronJob(job: CronJob): void {
         this.cronJobs.set(job.name, job);
         this.dispatch('cron-job.add',job)
-        this.dispatch('listener.add',job)
-        this.on('dispose',()=>{
-            this.dispatch('cron-job.remove',job)
-        })
     }
     /** 发送消息 */
     async sendMessage(options:SendOptions): Promise<void> {
         await this.app.sendMessage(options);
+    }
+
+    /** 销毁插件 */
+    dispose(): void {
+        // 移除所有中间件
+        for (const middleware of this.middlewares) {
+            this.dispatch('middleware.remove', middleware)
+        }
+        this.middlewares = []
+
+        // 移除所有事件监听器
+        for (const [event, listeners] of this.eventListeners) {
+            for (const listener of listeners) {
+                this.dispatch('listener.remove', event, listener)
+            }
+        }
+        this.eventListeners.clear()
+
+        // 移除所有定时任务
+        for (const [name, job] of this.cronJobs) {
+            this.dispatch('cron-job.remove', job)
+        }
+        this.cronJobs.clear()
+
+        // 调用父类的dispose方法
+        super.dispose()
     }
 }

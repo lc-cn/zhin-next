@@ -15,14 +15,14 @@ export class FileWatcher extends EventEmitter {
 
     constructor(
         dirs: string[],
-        extensions: Set<string>,
+        extensions: string[] | Set<string>,
         logger: Logger,
         private exclude:string[]=[path.join(process.cwd(),'node_modules')]
     ) {
         super();
         this.#dirs = dirs.map(dir => resolvePath(dir));
         this.#dirWatchers = new Map();
-        this.#watchableExtensions = extensions;
+        this.#watchableExtensions = Array.isArray(extensions) ? new Set(extensions) : extensions;
         this.#logger = logger;
     }
 
@@ -154,6 +154,7 @@ export class FileWatcher extends EventEmitter {
     dispose(): void {
         this.stopWatching();
         this.removeAllListeners();
+        this.#dirs.length = 0;
     }
     static getDirDep(filePath:string){
         const pkgPath=path.join(filePath,'package.json')

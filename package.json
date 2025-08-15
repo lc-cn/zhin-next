@@ -19,29 +19,33 @@
     "lint": "eslint . --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "link": "pnpm --filter @zhin.js/cli exec npm link",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "create": "node packages/create-zhin/dist/index.js"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "create": "node packages/create-zhin/dist/index.js",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "@types/node": "^20.10.0",
-    "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^6.13.0",
-    "@typescript-eslint/parser": "^6.13.0",
-    "eslint": "^8.54.0",
-    "jest": "^29.5.0",
-    "ts-jest": "^29.1.0",
-    "typescript": "^5.3.0"
+    "@types/node": "^24.2.1",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
+    "@vitest/coverage-v8": "^1.2.1",
+    "eslint": "^9.33.0",
+    "typescript": "^5.9.2",
+    "vitepress": "^1.6.4",
+    "vitest": "^1.2.1",
+    "vue": "^3.5.18"
   },
   "dependencies": {
-    "chalk": "^5.3.0",
-    "commander": "^11.1.0",
-    "cross-spawn": "^7.0.3",
-    "fs-extra": "^11.1.1",
-    "inquirer": "^9.2.12",
-    "ora": "^7.0.1"
+    "chalk": "^5.5.0",
+    "commander": "^14.0.0",
+    "cross-spawn": "^7.0.6",
+    "fs-extra": "^11.3.1",
+    "inquirer": "^12.9.2",
+    "ora": "^8.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
