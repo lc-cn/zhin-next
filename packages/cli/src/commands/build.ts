@@ -61,7 +61,7 @@ function isZhinProject(cwd: string): boolean {
   
   try {
     const packageJson = fs.readJsonSync(packageJsonPath);
-    return packageJson.dependencies && packageJson.dependencies['@zhin.js/core'];
+    return packageJson.dependencies && packageJson.dependencies['zhin.js'];
   } catch {
     return false;
   }

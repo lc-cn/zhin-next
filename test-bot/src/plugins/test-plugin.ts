@@ -1,5 +1,5 @@
-import {onMessage,useLogger,onDispose,addMiddleware,sendMessage,beforeSend,useContext} from '@zhin.js/core';
 import * as process from "node:process";
+import {onMessage,useLogger,onDispose,addMiddleware,sendMessage,beforeSend,useContext} from '@zhin.js/core';
 const formatSize=(size:number)=>`${(size/1024/1024).toFixed(2)}MB`
 
 onDispose(async ()=>{
@@ -17,7 +17,7 @@ onMessage((m)=>{ // 监听群消息
   }
 })
 // 依赖process上下文
-useContext('process',()=>{ // 指定某个上下文就绪时，需要做的事
+useContext('process',(p)=>{ // 指定某个上下文就绪时，需要做的事
   sendMessage({
     context:'process',
     bot:`${process.pid}`,

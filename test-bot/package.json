@@ -12,10 +12,14 @@
     "stop": "zhin stop"
   },
   "dependencies": {
-    "@zhin.js/core": "workspace:*"
+    "zhin.js": "workspace:*",
+    "@zhin.js/adapter-icqq": "workspace:*",
+    "@zhin.js/adapter-process": "workspace:*",
+    "@zhin.js/adapter-onebot11": "workspace:*"
   },
   "devDependencies": {
     "@zhin.js/cli": "workspace:*",
+    "@zhin.js/types": "workspace:*",
     "typescript": "^5.0.0",
     "tsx": "^4.0.0"
   },

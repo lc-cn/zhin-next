@@ -1,0 +1,1 @@
+# zhin types for typescript

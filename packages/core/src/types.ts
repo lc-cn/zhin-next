@@ -1,7 +1,4 @@
-import {ProcessBot} from "./plugins/process";
-import {IcqqBot} from "./plugins/icqq";
-import {OneBot11WsClient} from "./plugins/onebot11";
-import {Adapter} from "./adapter";
+import {MaybePromise}from '@zhin.js/types'
 
 export interface MessageSegment<T extends keyof Segment=keyof Segment> {
   type: T;
@@ -12,7 +9,6 @@ export interface Segment{
   any:Record<string, any>
 }
 export type MaybeArray<T>=T|T[]
-export type ArrayItem<T>=T extends Array<infer R>?R:unknown
 export type SendContent=MaybeArray<string|MessageSegment>
 export interface MessageSender{
   id: string;
@@ -68,17 +64,6 @@ export interface AppConfig {
 }
 export type DefineConfig<T> = T | ((env:Record<string,string>)=>MaybePromise<T>);
 
-
-export interface GlobalContext extends Record<string, any>{
-  process:Adapter<ProcessBot>
-  icqq:Adapter<IcqqBot>
-  onebot11:Adapter<OneBot11WsClient>
-}
-export type MaybePromise<T> = T extends Promise<infer U> ? T|U : T|Promise<T>;
-export type SideEffect<A extends (keyof GlobalContext)[]>=(...args:Contexts<A>)=>MaybePromise<void|DisposeFn<Contexts<A>>>
-export type DisposeFn<A>=(context:ArrayItem<A>)=>MaybePromise<void>
-export type Contexts<CS extends (keyof GlobalContext)[]>=CS extends [infer L,...infer R]?R extends (keyof GlobalContext)[]?[ContextItem<L>,...Contexts<R>]:never[]:never[]
-type ContextItem<L>=L extends keyof GlobalContext?GlobalContext[L]:never
 export interface SendOptions extends MessageChannel{
   context:string
   bot:string

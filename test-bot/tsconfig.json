@@ -16,6 +16,12 @@
     "declaration": false,
     "sourceMap": true,
     "baseUrl": "./src",
+    "types": [
+      "@zhin.js/types",
+      "@zhin.js/adapter-icqq",
+      "@zhin.js/adapter-process",
+      "@zhin.js/adapter-onebot11"
+    ],
     "paths": {
       "@zhin.js/core": [
         "../../packages/core/src/index.ts"
@@ -26,7 +32,7 @@
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
   ],
   "exclude": [
     "dist",

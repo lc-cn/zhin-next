@@ -1,0 +1,1 @@
+# zhin adapter for onebot11

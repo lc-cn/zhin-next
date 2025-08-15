@@ -4,8 +4,9 @@
 // ============================================================================
 
 
-import {MaybePromise, Message, BeforeSendHandler, SendOptions} from "./types";
-import {Dependency, Logger} from "./hmr";
+import {MaybePromise} from '@zhin.js/types'
+import { Message, BeforeSendHandler, SendOptions} from "./types";
+import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
 
 /** 消息中间件函数 */

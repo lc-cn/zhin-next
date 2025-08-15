@@ -55,20 +55,46 @@ importers:
         specifier: ^5.3.0
         version: 5.8.3
 
-  apps/bot:
+  adapters/icqq:
     dependencies:
-      '@zhin.js/core':
+      '@lc-cn/icqq':
+        specifier: latest
+        version: 1.0.3
+      '@zhin.js/types':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/types
+      zhin.js:
+        specifier: workspace:*
+        version: link:../../packages/zhin
     devDependencies:
-      '@zhin.js/cli':
-        specifier: workspace:*
-        version: link:../../packages/cli
-      tsx:
-        specifier: ^4.0.0
-        version: 4.20.3
       typescript:
-        specifier: ^5.0.0
+        specifier: ^5.3.0
+        version: 5.8.3
+
+  adapters/onebot11:
+    dependencies:
+      zhin.js:
+        specifier: workspace:*
+        version: link:../../packages/zhin
+    devDependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      typescript:
+        specifier: ^5.3.0
+        version: 5.8.3
+
+  adapters/process:
+    dependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      zhin.js:
+        specifier: workspace:*
+        version: link:../../packages/zhin
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
         version: 5.8.3
 
   packages/cli:
@@ -113,15 +139,12 @@ importers:
 
   packages/core:
     dependencies:
-      '@lc-cn/icqq':
-        specifier: ^1.0.2
-        version: 1.0.2
+      '@zhin.js/hmr':
+        specifier: workspace:*
+        version: link:../hmr
       dotenv:
         specifier: ^16.3.1
         version: 16.5.0
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       toml:
         specifier: ^3.0.0
         version: 3.0.0
@@ -132,6 +155,9 @@ importers:
         specifier: ^2.3.4
         version: 2.8.0
     devDependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../types
       typescript:
         specifier: ^5.3.0
         version: 5.8.3
@@ -149,15 +175,48 @@ importers:
         specifier: ^5.3.0
         version: 5.8.3
 
-  test-bot:
+  packages/hmr:
+    devDependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../types
+      typescript:
+        specifier: ^5.3.0
+        version: 5.8.3
+
+  packages/types: {}
+
+  packages/zhin:
     dependencies:
       '@zhin.js/core':
         specifier: workspace:*
-        version: link:../packages/core
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.8.3
+
+  test-bot:
+    dependencies:
+      '@zhin.js/adapter-icqq':
+        specifier: workspace:*
+        version: link:../adapters/icqq
+      '@zhin.js/adapter-onebot11':
+        specifier: workspace:*
+        version: link:../adapters/onebot11
+      '@zhin.js/adapter-process':
+        specifier: workspace:*
+        version: link:../adapters/process
+      zhin.js:
+        specifier: workspace:*
+        version: link:../packages/zhin
     devDependencies:
       '@zhin.js/cli':
         specifier: workspace:*
         version: link:../packages/cli
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../packages/types
       tsx:
         specifier: ^4.0.0
         version: 4.20.3
@@ -609,8 +668,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@lc-cn/icqq@1.0.2':
-    resolution: {integrity: sha512-2Hi7INmrzYGbP3rcIB+LArAEDNhbTQzv7dgYrFF0Pewo3r1lxpP3gJMq81R3prgh1no4O0NJZwHpwFZ5iHsdcQ==, tarball: https://npm.pkg.github.com/download/@lc-cn/icqq/1.0.2/f2c2cf8e6974f6358ff512735b9721653d83c5d7}
+  '@lc-cn/icqq@1.0.3':
+    resolution: {integrity: sha512-NR2L40nI6K5F/awVhITSuAVg4cJ7IQ6GWqn2rv3ydTo8pJ3UZ8lL9fO7pi4cKyH/paBBgEZEsJu4ENgYalJDJg==, tarball: https://npm.pkg.github.com/download/@lc-cn/icqq/1.0.3/8ad08e3ff47d613a825b9be63994dd7d80a57c56}
     engines: {node: '>= v14'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -1154,9 +1213,6 @@ packages:
   esutils@2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
-
-  eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
@@ -2727,7 +2783,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lc-cn/icqq@1.0.2':
+  '@lc-cn/icqq@1.0.3':
     dependencies:
       axios: 1.10.0
       log4js: 6.9.1
@@ -3369,8 +3425,6 @@ snapshots:
   estraverse@5.3.0: {}
 
   esutils@2.0.3: {}
-
-  eventemitter3@5.0.1: {}
 
   execa@5.1.1:
     dependencies:

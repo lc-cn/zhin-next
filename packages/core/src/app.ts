@@ -1,15 +1,14 @@
 import path from 'path';
 import * as fs from 'fs'
-import { HMR, Context, Logger, ConsoleLogger } from './hmr';
+import {SideEffect, GlobalContext} from '@zhin.js/types'
+import { HMR, Context, Logger, ConsoleLogger,getCallerFile, getCallerFiles } from '@zhin.js/hmr';
 import {
     AppConfig,
-    GlobalContext,
-    Message, BeforeSendHandler,
-    SideEffect,SendOptions,
+    Message, BeforeSendHandler,SendOptions,
 } from './types.js';
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
-import { getCallerFile, getCallerFiles } from './hmr/utils.js';
+import {  } from '@zhin.js/hmr';
 import { logger } from './logger.js';
 import {CronJob, EventListener, MessageMiddleware, Plugin} from "./plugin.js";
 import {Adapter} from "./adapter";
@@ -46,10 +45,7 @@ export class App extends HMR<Plugin> {
         // 调用父类构造函数
         super('Zhin',{
             logger: new ConsoleLogger('[Zhin]'),
-            dirs: [
-                ...finalConfig.plugin_dirs || [],
-                path.relative(process.cwd(),path.resolve(path.dirname(fileURLToPath(import.meta.url)),'plugins'))
-            ],
+            dirs: finalConfig.plugin_dirs || [],
             extensions: new Set(['.js', '.ts']),
             debug: finalConfig.debug
         });

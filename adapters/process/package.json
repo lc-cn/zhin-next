@@ -1,7 +1,7 @@
 {
-  "name": "@zhin.js/core",
+  "name": "@zhin.js/adapter-process",
   "version": "1.0.0",
-  "description": "Zhin机器人核心框架",
+  "description": "zhin adapter for process",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,15 +15,11 @@
     "build": "tsc",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@zhin.js/hmr": "workspace:*",
-    "ws": "^8.14.2",
-    "yaml": "^2.3.4",
-    "toml": "^3.0.0",
-    "dotenv": "^16.3.1"
-  },
   "devDependencies": {
-    "typescript": "^5.3.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "zhin.js": "workspace:*",
     "@zhin.js/types": "workspace:*"
   }
 } 

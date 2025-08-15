@@ -1,0 +1,1 @@
+# zhin adapter for icqq

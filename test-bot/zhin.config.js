@@ -1,4 +1,5 @@
-import { defineConfig } from '@zhin.js/core';
+import { defineConfig } from 'zhin.js';
+import path from "node:path";
 
 export default defineConfig(async (env)=>{
   return {
@@ -9,7 +10,7 @@ export default defineConfig(async (env)=>{
         context:'process'
       },
       {
-        name:'1689919782',
+        name: process.env.ICQQ_LOGIN_UIN,
         context:'icqq',
         log_level:'off',
         platform:4
@@ -18,12 +19,13 @@ export default defineConfig(async (env)=>{
     // 插件目录
     plugin_dirs: [
       env.PLUGIN_DIR || './src/plugins',
-      'node_modules'
+      'node_modules',
+        path.join('node_modules','@zhin.js'),
     ],
     // 要加载的插件列表
     plugins: [
-      'icqq',
-      'process',
+      'adapter-icqq',
+      'adapter-process',
       'test-plugin'
     ],
 
