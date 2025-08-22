@@ -71,7 +71,7 @@ export const devCommand = new Command('dev')
       let isKilling = false;
 
       // 重启函数
-      const restartBot = () => {
+      const restartBot = async () => {
         if (isRestarting || isKilling) return;
         isRestarting = true;
 

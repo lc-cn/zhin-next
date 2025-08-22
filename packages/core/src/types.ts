@@ -21,6 +21,8 @@ export interface MessageChannel{
 }
 export interface Message {
   id: string;
+  adapter:string
+  bot:string
   content: MessageSegment[];
   sender: MessageSender;
   reply(content:SendContent,quote?:boolean|string):Promise<void>

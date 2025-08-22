@@ -26,6 +26,8 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
     private handleIcqqMessage(msg: PrivateMessageEvent|GroupMessageEvent): void {
         const message: Message = {
             id: msg.message_id.toString(),
+            adapter:'icqq',
+            bot:`${this.config.name}`,
             sender:{
                 id:msg.sender.user_id.toString(),
                 name:msg.sender.nickname.toString(),

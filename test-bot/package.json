@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "zhin dev --bun",
+    "dev": "zhin dev",
     "start": "zhin start --bun",
     "daemon": "zhin start --bun --daemon",
     "build": "zhin build",

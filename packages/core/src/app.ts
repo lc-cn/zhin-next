@@ -8,7 +8,7 @@ import {
 } from './types.js';
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
-import {  } from '@zhin.js/hmr';
+import { generateEnvTypes } from './types-generator.js';
 import { logger } from './logger.js';
 import {CronJob, EventListener, MessageMiddleware, Plugin} from "./plugin.js";
 import {Adapter} from "./adapter";
@@ -118,6 +118,7 @@ export class App extends HMR<Plugin> {
 
     /** 启动App */
     async start(mode: 'dev' | 'prod' = 'prod'): Promise<void> {
+        await generateEnvTypes(process.cwd());
         // 加载插件
         for (const pluginName of this.config.plugins || []) {
             this.use(pluginName);

@@ -217,6 +217,8 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBotV11Confi
   private handleOneBot11Message(onebotMsg: OneBot11Message): void {
     const message: Message = {
       id: onebotMsg.message_id.toString(),
+      adapter:'onebot11',
+      bot:`${this.config.name}`,
       sender:{
         id:onebotMsg.user_id.toString(),
         name:onebotMsg.user_id.toString()

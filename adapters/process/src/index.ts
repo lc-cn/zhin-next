@@ -18,6 +18,8 @@ export class ProcessBot extends EventEmitter implements Bot<ProcessConfig>{
         const ts=Date.now()
         const message: Message = {
             id: `${ts}`,
+            adapter:'process',
+            bot:`${this.config.name}`,
             sender:{
                 id:`${process.pid}`,
                 name:process.title,

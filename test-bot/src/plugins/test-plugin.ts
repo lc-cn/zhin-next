@@ -1,5 +1,5 @@
 import * as process from "node:process";
-import {onMessage,useLogger,onDispose,addMiddleware,sendMessage,beforeSend,useContext} from '@zhin.js/core';
+import {onMessage,useLogger,onDispose,addMiddleware,sendMessage,beforeSend,useContext} from 'zhin.js';
 const formatSize=(size:number)=>`${(size/1024/1024).toFixed(2)}MB`
 
 onDispose(async ()=>{
@@ -17,13 +17,19 @@ onMessage((m)=>{ // 监听群消息
   }
 })
 // 依赖process上下文
-useContext('process',(p)=>{ // 指定某个上下文就绪时，需要做的事
+useContext('icqq',(p)=>{ // 指定某个上下文就绪时，需要做的事
+  onMessage(async (m)=>{ // 监听群消息
+    if(m.content[0].data?.text==='凉菜赞我'){
+      p.bots.get(m.bot)?.sendLike(Number(m.sender.id),10)
+      m.reply(`已赞`)
+    }
+  })
   sendMessage({
-    context:'process',
-    bot:`${process.pid}`,
-    id:process.title,
-    type:'private',
-    content:'foo'
+    context:'icqq',
+    bot:`1689919782`,
+    id:'742600824',
+    type:'group',
+    content:'什么？viki有男朋友了？'
   })
 })
 const logger=useLogger()
