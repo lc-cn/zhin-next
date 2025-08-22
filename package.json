@@ -12,6 +12,7 @@
     "dev": "pnpm --filter test-bot dev",
     "start": "pnpm --filter test-bot start",
     "daemon": "pnpm --filter test-bot daemon",
+    "pub": "pnpm -r publish --access public --no-git-checks",
     "stop": "pnpm --filter test-bot stop",
     "init": "pnpm --filter test-bot initial && pnpm install",
     "build": "pnpm -r build",

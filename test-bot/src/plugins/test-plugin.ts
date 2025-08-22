@@ -19,18 +19,19 @@ onMessage((m)=>{ // 监听群消息
 // 依赖process上下文
 useContext('icqq',(p)=>{ // 指定某个上下文就绪时，需要做的事
   onMessage(async (m)=>{ // 监听群消息
-    if(m.content[0].data?.text==='凉菜赞我'){
-      p.bots.get(m.bot)?.sendLike(Number(m.sender.id),10)
-      m.reply(`已赞`)
+    if(m.content[0].data?.text==='赞我'){
+      const result=await Promise.allSettled(new Array(5).fill(
+          p.bots.get(m.bot)?.sendLike(+m.sender.id,10)))
+      m.reply(`${result.some(item=>item.status==='fulfilled' && item.value)?'已赞':'别太贪心'}`)
     }
   })
-  sendMessage({
-    context:'icqq',
-    bot:`1689919782`,
-    id:'742600824',
-    type:'group',
-    content:'什么？viki有男朋友了？'
-  })
+  // sendMessage({
+  //   context:'icqq',
+  //   bot:`1689919782`,
+  //   id:'742600824',
+  //   type:'group',
+  //   content:'什么？viki有男朋友了？'
+  // })
 })
 const logger=useLogger()
 logger.info(`启动耗时：${process.uptime()}`);

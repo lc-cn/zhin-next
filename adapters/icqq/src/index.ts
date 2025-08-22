@@ -51,7 +51,7 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
             }
         };
         this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):${IcqqBot.contentToString(message.content)}`)
+        this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):${msg.raw_message}`)
         this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
     }
     async connect(): Promise<void> {
@@ -88,14 +88,17 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
 
     async sendMessage(options: SendOptions): Promise<void> {
         options=await this.plugin.app.handleBeforeSend(options)
-        this.plugin.logger.info(`send ${options.type}(${options.id}):`,options.content)
         switch (options.type){
-            case 'private':
-                await this.sendPrivateMsg(Number(options.id),IcqqBot.toSendable(options.content))
+            case 'private':{
+                const result= await this.sendPrivateMsg(Number(options.id),IcqqBot.toSendable(options.content))
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${result.message_id}`)
                 break;
-            case "group":
-                await this.sendGroupMsg(Number(options.id),IcqqBot.toSendable(options.content))
+            }
+            case "group":{
+                const result=await this.sendGroupMsg(Number(options.id),IcqqBot.toSendable(options.content))
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${result.message_id}`)
                 break;
+            }
             default:
                 throw new Error(`unsupported channel type ${options.type}`)
         }
@@ -119,12 +122,6 @@ export namespace IcqqBot{
             console.log(segment)
             return {type,...data} as MessageElem
         })
-    }
-    export function contentToString(content:MessageSegment[]){
-        return content.map((item=>{
-            if(item.type==='text') return item.data.text
-            return `${item.type}`
-        })).join('')
     }
 }
 registerAdapter(new Adapter('icqq',IcqqBot))
