@@ -1,12 +1,8 @@
 import {MaybePromise}from '@zhin.js/types'
 
-export interface MessageSegment<T extends keyof Segment=keyof Segment> {
-  type: T;
-  data: Segment[T];
-}
-export interface Segment{
-  [key:string]:Record<string, any>
-  any:Record<string, any>
+export interface MessageSegment {
+  type: string;
+  data: Record<string, any>;
 }
 export type MaybeArray<T>=T|T[]
 export type SendContent=MaybeArray<string|MessageSegment>
@@ -14,6 +10,7 @@ export interface MessageSender{
   id: string;
   name?: string;
 }
+export type Dict<V=any,K extends string|symbol=string>=Record<K, V>;
 export type MessageComponent<T extends object>=(props:T&{children:SendContent})=>MaybePromise<SendContent>
 export interface MessageChannel{
   id: string;

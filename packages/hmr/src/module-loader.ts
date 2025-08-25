@@ -38,8 +38,7 @@ export class ModuleLoader<P extends Dependency = Dependency> extends EventEmitte
     }
 
     /** 添加模块 */
-    async add(filePath: string): Promise<void> {
-        const name = path.basename(filePath, path.extname(filePath));
+    async add(name:string,filePath: string): Promise<void> {
         // 如果已经存在，先移除
         if (this.dependencies.has(filePath)) {
             this.remove(filePath);
@@ -131,8 +130,9 @@ export class ModuleLoader<P extends Dependency = Dependency> extends EventEmitte
             return;
         }
         this.#reloadDependencies.add(filePath);
+        const dep=this.hmr.dependencies.get(filePath)!
         // 重新导入
-        await this.add(filePath);
+        await this.add(dep?.name,filePath);
         this.#reloadDependencies.delete(filePath);
         this.emit('reload', filePath);
     }

@@ -7,20 +7,11 @@ import {MaybePromise} from '@zhin.js/types'
 import { Message, BeforeSendHandler, SendOptions} from "./types";
 import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
+import {MessageCommand} from "./command";
+import {Component} from "./component";
 
 /** 消息中间件函数 */
 export type MessageMiddleware = (message: Message, next: () => Promise<void>) => MaybePromise<void>;
-
-/** 事件监听器函数 */
-export type EventListener<T = any> = (data: T) => void | Promise<void>;
-
-/** 定时任务配置 */
-export interface CronJob {
-    name: string;
-    schedule: string; // cron 表达式
-    handler: () => void | Promise<void>;
-    enabled?: boolean;
-}
 
 
 // ============================================================================
@@ -32,13 +23,20 @@ export interface CronJob {
  */
 export class Plugin extends Dependency<Plugin> {
     middlewares: MessageMiddleware[] = [];
-    eventListeners = new Map<string, EventListener[]>();
-    cronJobs = new Map<string, CronJob>();
-
+    components: Map<string, Component<any, any, any>> = new Map();
+    commands:MessageCommand[]=[];
     #logger?:Logger
     constructor(parent: Dependency<Plugin>, name: string, filePath: string) {
         super(parent, name, filePath);
         this.on('message.receive',this.#handleMessage.bind(this))
+        this.addMiddleware(async (message,next)=>{
+            for(const command of this.commands){
+                const result=await command.handle(message);
+                if(result) message.reply(result);
+            }
+            return next()
+        });
+        this.beforeSend(Component.render.bind(this.components))
     }
     #handleMessage(message:Message){
         const next=async (index:number)=>{
@@ -48,6 +46,7 @@ export class Plugin extends Dependency<Plugin> {
         }
         next(0)
     }
+
     beforeSend(handler:BeforeSendHandler){
         this.before('message.send',handler)
     }
@@ -68,27 +67,21 @@ export class Plugin extends Dependency<Plugin> {
         }
         return this.#logger=this.app.getLogger(...names)
     }
-
+    /** 添加组件 */
+    addComponent<T = {}, D = {}, P = Component.Props<T>>(component:Component<T,D,P>){
+        this.components.set(component.name,component);
+    }
+    /** 添加中间件 */
+    addCommand(command:MessageCommand){
+        this.commands.push(command);
+        this.dispatch('command.add',command);
+    }
     /** 添加中间件 */
     addMiddleware(middleware: MessageMiddleware): void {
         this.middlewares.push(middleware);
         this.dispatch('middleware.add',middleware)
     }
 
-    /** 添加事件监听器 */
-    addEventListener<T = any>(event: string, listener: EventListener<T>): void {
-        if (!this.eventListeners.has(event)) {
-            this.eventListeners.set(event, []);
-        }
-        this.eventListeners.get(event)!.push(listener);
-        this.dispatch('listener.add',event,listener)
-    }
-
-    /** 添加定时任务 */
-    addCronJob(job: CronJob): void {
-        this.cronJobs.set(job.name, job);
-        this.dispatch('cron-job.add',job)
-    }
     /** 发送消息 */
     async sendMessage(options:SendOptions): Promise<void> {
         await this.app.sendMessage(options);
@@ -101,21 +94,6 @@ export class Plugin extends Dependency<Plugin> {
             this.dispatch('middleware.remove', middleware)
         }
         this.middlewares = []
-
-        // 移除所有事件监听器
-        for (const [event, listeners] of this.eventListeners) {
-            for (const listener of listeners) {
-                this.dispatch('listener.remove', event, listener)
-            }
-        }
-        this.eventListeners.clear()
-
-        // 移除所有定时任务
-        for (const [name, job] of this.cronJobs) {
-            this.dispatch('cron-job.remove', job)
-        }
-        this.cronJobs.clear()
-
         // 调用父类的dispose方法
         super.dispose()
     }

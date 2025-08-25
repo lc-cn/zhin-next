@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@zhin.js/hmr": "workspace:*",
-    "ws": "^8.14.2",
+    "segment-matcher": "^1.0.2",
     "yaml": "^2.3.4",
     "toml": "^3.0.0",
     "dotenv": "^16.3.1"

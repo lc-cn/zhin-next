@@ -9,6 +9,9 @@ export * from './types.js';
 export * from './config.js';
 export * from './adapter.js'
 export * from './plugin.js';
+export * from './command.js';
+export * from './utils.js'
+export * from './component.js'
 // HMR Bot系统 (主要API)
 export * from './app.js';
 export * from '@zhin.js/hmr';

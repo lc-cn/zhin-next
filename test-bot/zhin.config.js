@@ -10,10 +10,18 @@ export default defineConfig(async (env)=>{
         context:'process'
       },
       {
-        name: process.env.ICQQ_LOGIN_UIN,
+        name: process.env.ICQQ_SCAN_UIN,
         context:'icqq',
         log_level:'off',
         platform:4
+      },
+      {
+        name: process.env.ICQQ_LOGIN_UIN,
+        context:'icqq',
+        log_level:'off',
+        password:"Lcl9623.",
+        sign_api_addr: process.env.ICQQ_SIGN_ADDR,
+        platform:1
       }
     ],
     // 插件目录

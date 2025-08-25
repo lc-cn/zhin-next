@@ -40,7 +40,6 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
             raw: msg.raw_message,
             timestamp: msg.time,
             reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
-                if(!Array.isArray(content)) content=[content]
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
                 this.plugin.dispatch('message.send',{
                     ...message.channel,
@@ -56,18 +55,21 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
     }
     async connect(): Promise<void> {
         this.on('message',this.handleIcqqMessage.bind(this))
-        this.on('system.login.device',(e:unknown)=>{
-            this.sendSmsCode()
+        this.on('system.login.device',async (e:unknown)=>{
+            await this.sendSmsCode()
+            this.plugin.logger.info('请输入短信验证码:')
             process.stdin.once('data',(data)=>{
                 this.submitSmsCode(data.toString().trim())
             })
         })
-        this.on('system.login.qrcode',(e:unknown)=>{
+        this.on('system.login.qrcode',(e)=>{
+            this.plugin.logger.info(`取码地址：${e.image}\n请扫码完成后回车继续:`)
             process.stdin.once('data',()=>{
                 this.login()
             })
         })
-        this.on('system.login.slider',()=>{
+        this.on('system.login.slider',(e)=>{
+            this.plugin.logger.info(`取码地址：${e.url}\n请输入滑块验证ticket:`)
             process.stdin.once('data',(e)=>{
                 this.submitSlider(e.toString().trim())
             })
@@ -119,7 +121,6 @@ export namespace IcqqBot{
         return content.map((segment):MessageElem=>{
             if(typeof segment==="string") return {type:'text',text:segment}
             const {type,data}=segment
-            console.log(segment)
             return {type,...data} as MessageElem
         })
     }

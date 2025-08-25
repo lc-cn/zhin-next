@@ -10,8 +10,11 @@ import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { generateEnvTypes } from './types-generator.js';
 import { logger } from './logger.js';
-import {CronJob, EventListener, MessageMiddleware, Plugin} from "./plugin.js";
+import { MessageMiddleware, Plugin} from "./plugin.js";
 import {Adapter} from "./adapter";
+import {MessageCommand} from "./command";
+import {aN} from "vitest/dist/reporters-w_64AS5f";
+import {Component} from "./component";
 
 // ============================================================================
 // App 类
@@ -280,8 +283,20 @@ export function addMiddleware(middleware: MessageMiddleware): void {
     plugin.addMiddleware(middleware);
 }
 
+/** 添加指令 */
+export function addCommand(command: MessageCommand): void {
+    const plugin = usePlugin();
+    plugin.addCommand(command);
+}
+
+/** 添加组件 */
+export function addComponent<T = {}, D = {}, P = Component.Props<T>>(component:Component<T,D,P>): void {
+    const plugin = usePlugin();
+    plugin.addComponent(component);
+}
+
 /** 监听事件 */
-export function onEvent<T = any>(event: string, listener: EventListener<T>): void {
+export function onEvent(event: string, listener:(...args:any[])=>any): void {
     const plugin = usePlugin();
     plugin.on(event, listener);
 }
@@ -315,11 +330,6 @@ export function onDispose(hook: () => void): void {
     plugin.on('self.dispose', hook);
 }
 
-/** 添加定时任务 */
-export function addCronJob(job: CronJob): void {
-    const plugin = usePlugin();
-    plugin.addCronJob(job);
-}
 
 /** 发送消息 */
 export async function sendMessage(options:SendOptions): Promise<void> {

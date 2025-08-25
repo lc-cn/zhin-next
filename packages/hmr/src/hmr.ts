@@ -260,15 +260,14 @@ export abstract class HMR<P extends Dependency = Dependency> extends Dependency<
     /** 添加插件 */
     #add(filePath: string): void {
         const resolvedPath = this.fileWatcher.resolve(filePath);
-        const name = path.basename(resolvedPath, path.extname(resolvedPath));
-        
+        const name = path.basename(filePath, path.extname(filePath));
         // 如果已经存在，先移除
         if (this.dependencies.has(resolvedPath)) {
             this.#remove(resolvedPath);
         }
         this.pendingDependencies.add(resolvedPath);
         // 异步导入模块
-        this.moduleLoader.add(resolvedPath).catch((error) => {
+        this.moduleLoader.add(name,resolvedPath).catch((error) => {
             this.logger.error(`Failed to load plugin: ${name}`, { 
                 filePath: resolvedPath, 
                 error 
