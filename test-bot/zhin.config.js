@@ -33,6 +33,7 @@ export default defineConfig(async (env)=>{
     // 要加载的插件列表
     plugins: [
       'adapter-icqq',
+        'http',
       'adapter-process',
       'test-plugin'
     ],

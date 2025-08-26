@@ -106,12 +106,12 @@ export class Dependency<P extends Dependency = any,O extends DependencyOptions=D
         const contexts=args.slice(0,-1) as T
         const sideEffect=args[args.length-1] as SideEffect<T>
         const contextReadyCallback=async ()=>{
-            const args=contexts.map(item=>this.use(item))
+            const args=contexts.map(item=>this.#use(item))
             const dispose=await sideEffect(...args as Contexts<T>)
             if(!dispose)return;
             const disposeFn=async (name:string)=>{
                 if(contexts.includes(name)){
-                    await dispose(this.use(name))
+                    await dispose(this.#use(name))
                 }
                 this.off('context.dispose',disposeFn)
             }
@@ -209,9 +209,9 @@ export class Dependency<P extends Dependency = any,O extends DependencyOptions=D
     }
 
     /** 使用Context */
-    use<T extends keyof GlobalContext>(name: T): GlobalContext[T]
-    use<T>(name: string): T
-    use(name: string){
+    #use<T extends keyof GlobalContext>(name: T): GlobalContext[T]
+    #use<T>(name: string): T
+    #use(name: string){
         const context = this.allContextList.find(c=>c.name===name)
         if (!context) {
             throw createError(ERROR_MESSAGES.CONTEXT_NOT_FOUND, { name });

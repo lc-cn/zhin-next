@@ -264,13 +264,6 @@ export function registerAdapter<T extends Adapter>(adapter:T){
     })
 }
 
-export function use<T extends keyof GlobalContext>(name: T): GlobalContext[T]
-export function use<T>(name: string): T
-export function use(name: string){
-    const plugin = usePlugin();
-    return plugin.use(name);
-}
-
 /** 标记必需的Context */
 export function useContext<T extends (keyof GlobalContext)[]>(...args:[...T,sideEffect:SideEffect<T>]): void {
     const plugin = usePlugin();

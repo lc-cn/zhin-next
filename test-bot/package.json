@@ -15,6 +15,7 @@
   "dependencies": {
     "zhin.js": "workspace:*",
     "@zhin.js/adapter-icqq": "workspace:*",
+    "@zhin.js/http": "workspace:*",
     "@zhin.js/adapter-process": "workspace:*",
     "@zhin.js/adapter-onebot11": "workspace:*"
   },
