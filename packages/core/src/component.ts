@@ -1,4 +1,4 @@
-import {getValueWithRuntime, compiler, segmentToString, stringToSegment} from './utils';
+import {getValueWithRuntime, compiler, segment} from './utils';
 import {Dict, Message, SendContent, SendOptions} from './types';
 import {MaybePromise} from "@zhin.js/types";
 export const CapWithChild = Symbol('CapWithChild');
@@ -140,10 +140,20 @@ export class Component<T = {}, D = {}, P = Component.Props<T>> {
             parent: context,
             children: context.children,
         } as Component.Context<D & P>;
-        const result = await this.$options.render(props as P, ctx);
-        context.$root = context.$root.replace(context.$origin || template, segmentToString(result));
+        const result = segment.toString(await this.$options.render(props as P, ctx));
+        context.$root = context.$root.replace(context.$origin || template,result.includes('<')?segment.escape(result):result);
         return context.render(context.$root, context);
     }
+}
+export function defineComponent<P>(render: Component.Render<P, {}>, name?: string): Component<{}, {}, P>;
+export function defineComponent<T, D = {}, P = Component.Props<T>>(options: Component.Options<T, D>): Component<T, D, P>;
+export function defineComponent<T = {}, D = {}, P = Component.Props<T>>(options: Component.Options<T, D, P> | Component.Render<P, D>, name = options.name) {
+    if (typeof options === 'function')
+        options = {
+            name,
+            render: options,
+        };
+    return new Component(options);
 }
 
 export namespace Component {
@@ -208,8 +218,13 @@ export namespace Component {
         return { name, value };
     };
 
-    export async function render(this:Map<string,Component>,options:SendOptions):Promise<SendOptions>{
-        if(!this.size) return options;
+    export async function render(componentMap:Map<string,Component>,options:SendOptions):Promise<SendOptions>{
+        if(!componentMap.size) return options;
+        const components=[
+            ...componentMap.values(),
+            Template,
+            Slot,
+        ]
         const createContext = (runtime: Dict = {}, parent: Component.Context, $root: string): Component.Context => {
             return {
                 $slots: {},
@@ -222,32 +237,53 @@ export namespace Component {
                 },
             };
         };
-        const renderWithRuntime = async (template: string, runtime: Dict, $root: string) => {
+        const renderWithRuntime = async (template: string, runtime: Dict, $root: string):Promise<SendContent> => {
             const ctx = createContext(runtime, runtime as Component.Context, $root);
             template = compiler(template, runtime);
-            for (const [_name, comp] of this) {
+            for (const comp of components) {
                 const match = comp.match(template);
                 if (!match) continue;
                 return await comp.render(match, ctx);
             }
             return template;
         };
-        const template=segmentToString(options.content);
+        const template=segment.toString(options.content);
         const output=await renderWithRuntime(template, options, template)
-        const content=stringToSegment(output)
+        const content=segment.from(output)
         return {
             ...options,
             content
         };
     }
+
+    export const Template=defineComponent({
+        name: 'template',
+        render(props, context) {
+            const keys = Object.keys(props);
+            if (!keys.length) keys.push('#default');
+            for (const key of Object.keys(props)) {
+                if (key.startsWith('#')) {
+                    context.parent.$slots[key.slice(1)] = (async p => {
+                        return await context.render(context.children || '', { ...context, ...p });
+                    }) as Render;
+                }
+            }
+            return '';
+        },
+    })
+    export const Slot=defineComponent({
+        name: 'slot',
+        props: {
+            name: String,
+        },
+        render({ name, ...props }, context) {
+            name = name || 'default';
+            if (!context.parent) return '';
+            if (context.parent.$slots[name]) return context.parent.$slots[name](props, context) as string;
+            return context.children || '';
+        },
+    })
 }
-export function defineComponent<P>(render: Component.Render<P, {}>, name?: string): Component<{}, {}, P>;
-export function defineComponent<T, D = {}, P = Component.Props<T>>(options: Component.Options<T, D>): Component<T, D, P>;
-export function defineComponent<T = {}, D = {}, P = Component.Props<T>>(options: Component.Options<T, D, P> | Component.Render<P, D>, name = options.name) {
-    if (typeof options === 'function')
-        options = {
-            name,
-            render: options,
-        };
-    return new Component(options);
-}
+process.on('unhandledRejection',e=>{
+    console.error(e);
+})

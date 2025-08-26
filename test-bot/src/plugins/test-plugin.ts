@@ -1,11 +1,35 @@
-import { useContext, addCommand,addComponent,defineComponent, MessageCommand } from 'zhin.js';
+import { useContext, addCommand,addComponent,defineComponent,segment, MessageCommand } from 'zhin.js';
 const testComponent=defineComponent({
     name:'test',
-    async render(){
-        return 'hello world'
+    props:{
+      id:String
+    },
+    async render({id},context){
+        return '这是父组件'+id+context.children||'';
+    }
+})
+const testComponent2=defineComponent({
+    name:'foo',
+    props:{
+        face:{
+            type:Number,
+            default:1
+        }
+    },
+    async render({face}){
+        return [
+            segment.escape(`这是子组件<face id='${face}/>`),
+            {
+                type:'face',
+                data:{
+                    id:face
+                }
+            }
+        ]
     }
 })
 addComponent(testComponent)
+addComponent(testComponent2)
 addCommand(new MessageCommand('echo').action((_,result)=>result.remaining))
 // 依赖icqq上下文
 useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事

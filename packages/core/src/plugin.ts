@@ -36,7 +36,7 @@ export class Plugin extends Dependency<Plugin> {
             }
             return next()
         });
-        this.beforeSend(Component.render.bind(this.components))
+        this.beforeSend((options)=>Component.render(this.components,options))
     }
     #handleMessage(message:Message){
         const next=async (index:number)=>{
