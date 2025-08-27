@@ -54,7 +54,7 @@ const testComponent2=defineComponent({
 addComponent(testComponent)
 addComponent(testComponent2)
 useContext('web',(web)=>{
-    web.addEntry(path.resolve(path.resolve(import.meta.dirname,'../client/index.ts')))
+    web.addEntry(path.resolve(path.resolve(import.meta.dirname,'../../client/index.ts')))
 })
 // 依赖icqq上下文
 useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事

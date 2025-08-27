@@ -28,7 +28,7 @@ export const buildCommand = new Command('build')
       logger.info('正在构建项目...');
       
       // 使用TypeScript编译
-      const child = spawn('npx', ['tsc'], {
+      const child = spawn('npx', ['tsc','--project','tsconfig.json'], {
         cwd,
         stdio: 'inherit'
       });

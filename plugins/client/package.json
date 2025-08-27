@@ -16,8 +16,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ionic/vue": "latest",
-    "@ionic/vue-router": "latest",
     "pinia": "latest",
     "vue-router": "latest"
   },

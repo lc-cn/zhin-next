@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <div>
+  <section>
     test view
-  </div>
+  </section>
 </template>
 
 <style scoped>

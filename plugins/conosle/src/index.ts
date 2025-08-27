@@ -65,7 +65,7 @@ useContext('router', async (router) => {
             },
         },
         optimizeDeps: {
-            include: ['vue', '@ionic/vue-router', 'pinia', '@ionic/vue'],
+            include: ['vue', 'pinia'],
         },
         build: {
             rollupOptions: {

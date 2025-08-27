@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from '@ionic/vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import { useCommonStore } from './store';
 import { MenuWithComponent, ToolInfo } from './types';
 export const router = createRouter({
