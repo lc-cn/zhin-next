@@ -1,16 +1,36 @@
-import {useContext, addCommand,Time, addComponent, defineComponent, segment, MessageCommand, useLogger} from 'zhin.js';
+import {
+    useContext,
+    addCommand,
+    Time,
+    addComponent,
+    defineComponent,
+    segment,
+    MessageCommand,
+} from 'zhin.js';
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+function formatMemoSize(size:number){
+    return `${(size/1024/1024).toFixed(2)}MB`
+}
+addCommand(new MessageCommand('send')
+    .action((_,result)=>result.remaining))
+addCommand(new MessageCommand('status')
+    .action(()=>{
+        return [
+            '-------状态-------',
+            `运行时间：${Time.formatTime(process.uptime()*1000)}`,
+            `内存使用：${formatMemoSize(process.memoryUsage.rss())}`,
+        ].join('\n')
+    }))
 const testComponent=defineComponent({
     name:'test',
     props:{
-      id:String
+        id:String
     },
     async render({id},context){
         return '这是父组件'+id+context.children||'';
     }
 })
-function formatMemoSize(size:number){
-    return `${(size/1024/1024).toFixed(2)}MB`
-}
 const testComponent2=defineComponent({
     name:'foo',
     props:{
@@ -33,14 +53,9 @@ const testComponent2=defineComponent({
 })
 addComponent(testComponent)
 addComponent(testComponent2)
-addCommand(new MessageCommand('echo').action((_,result)=>result.remaining))
-addCommand(new MessageCommand('status')
-    .action(()=>{
-        return [
-            `rss:${formatMemoSize(process.memoryUsage.rss())}`,
-            `uptime:${Time.formatTimeShort(process.uptime()*1000)}`
-        ].join('\n')
-    }))
+useContext('web',(web)=>{
+    web.addEntry(path.resolve(path.resolve(import.meta.dirname,'../client/index.ts')))
+})
 // 依赖icqq上下文
 useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
   const someUsers = new MessageCommand('赞[space][...atUsers:at]', { at: 'qq' })
@@ -54,5 +69,11 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
       return likeResult.join('\n');
     })
   addCommand(someUsers)
+    // sendMessage({
+    //     context:'icqq',
+    //     bot:'1689919782',
+    //     type:'group',
+    //     id:"742600824",
+    //     content:'路过的狗都得挨两句'
+    // })
 })
-useLogger().info(`启动耗时:${Time.formatTimeShort(process.uptime()*1000)}`)

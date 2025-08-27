@@ -4,15 +4,22 @@
   "description": "TypeScript机器人框架",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "adapters/*",
+    "packages/*",
+    "plugins/*"
   ],
+  "packageManager": "pnpm@9.0.2",
   "scripts": {
     "dev": "pnpm --filter test-bot dev",
     "start": "pnpm --filter test-bot start",
     "daemon": "pnpm --filter test-bot daemon",
-    "pub": "pnpm -r publish --access public --no-git-checks",
+    "release": "pnpm changeset",
+    "bump": "pnpm changeset version",
+    "pub": "pnpm -r publish --access public --no-git-checks --registry https://registry.npmjs.org",
     "stop": "pnpm --filter test-bot stop",
     "init": "pnpm --filter test-bot initial && pnpm install",
     "build": "pnpm -r build",
@@ -43,12 +50,10 @@
   "dependencies": {
     "chalk": "^5.5.0",
     "commander": "^14.0.0",
+    "@changesets/cli": "^2.27.7",
     "cross-spawn": "^7.0.6",
     "fs-extra": "^11.3.1",
     "inquirer": "^12.9.2",
     "ora": "^8.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

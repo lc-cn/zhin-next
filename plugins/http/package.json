@@ -18,6 +18,7 @@
   "dependencies": {
     "@koa/router": "latest",
     "koa": "latest",
+    "ws": "^8.18.3",
     "koa-basic-auth": "latest",
     "koa-bodyparser": "latest"
   },
