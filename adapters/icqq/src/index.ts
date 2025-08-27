@@ -1,4 +1,4 @@
-import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@lc-cn/icqq";
+import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@icqqjs/icqq";
 import path from "path";
 import {Bot,BotConfig,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
 declare module '@zhin.js/types'{
@@ -18,7 +18,7 @@ export interface IcqqBot{
 export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
     connected?:boolean
     constructor(private plugin:Plugin,config:IcqqBotConfig) {
-        if(!config.scope) config.scope='lc-cn'
+        if(!config.scope) config.scope='icqqjs'
         if(!config.data_dir) config.data_dir=path.join(process.cwd(),'data')
         if(config.scope.startsWith('@')) config.scope=config.scope.slice(1)
         super(config);
@@ -110,7 +110,9 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
 export namespace IcqqBot{
     export function toSegments(message:Sendable):MessageSegment[]{
         if(!Array.isArray(message)) message=[message]
-        return message.map((item):MessageSegment=>{
+        return message.filter((item,index)=>{
+            return typeof item==="string"||(item.type!=='long_msg'||index!==0)
+        }).map((item):MessageSegment=>{
             if(typeof item==="string") return {type:'text',data:{text:item}}
             const {type,...data}=item
             return {type,data}

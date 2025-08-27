@@ -3,13 +3,16 @@
     <nav>
       <title>Menus</title>
     </nav>
-    <ul>
-      <li v-for="menu in menus" :key="menu.path">
-        <router-link :to="menu.path">
-          <span>{{ menu.name }}</span>
+    <Menu :model="menus">
+      <template #item="{ item, props }">
+        <router-link v-if="item.path" v-slot="{ href, navigate }" :to="item.path" custom>
+          <a v-ripple :href="href" v-bind="props.action" @click="navigate">
+            <span :class="item.icon" />
+            <span class="ml-2">{{ item.name }}</span>
+          </a>
         </router-link>
-      </li>
-    </ul>
+      </template>
+    </Menu>
   </header>
   <main>
     <router-view/>

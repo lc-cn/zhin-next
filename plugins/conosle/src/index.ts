@@ -1,6 +1,8 @@
 import {register, useContext} from 'zhin.js';
 import WebSocket,{WebSocketServer} from 'ws';
 import {createServer,ViteDevServer,searchForWorkspaceRoot} from 'vite';
+import Components from 'unplugin-vue-components/vite';
+import {PrimeVueResolver} from '@primevue/auto-import-resolver';
 import connect from 'koa-connect';
 import vuePlugin from "@vitejs/plugin-vue";
 import * as fs from 'fs';
@@ -51,7 +53,14 @@ useContext('router', async (router) => {
     const vite = await createServer({
         root,
         base,
-        plugins: [vuePlugin()],
+        plugins: [
+            vuePlugin(),
+            Components({
+                resolvers: [
+                    PrimeVueResolver()
+                ]
+            })
+        ],
         server: {
             middlewareMode: true,
             fs: {
@@ -59,7 +68,7 @@ useContext('router', async (router) => {
             },
         },
         resolve: {
-            dedupe: ['vue', 'vue-router', 'pinia'],
+            dedupe: ['vue', 'vue-router', 'pinia','primevue'],
             alias: {
                 '@zhin.js/client': path.resolve(root, '../src'),
             },

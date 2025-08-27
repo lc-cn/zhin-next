@@ -1,5 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import PrimeVue from "primevue/config";
+import Aura from '@primeuix/themes/aura';
 import { addPage, router, useCommonStore } from '@zhin.js/client';
 import App from './App.vue';
 const pinia = createPinia();
@@ -26,7 +28,11 @@ ws.onclose = () => {
     console.log('connection closed');
 };
 const app = createApp(App);
-app.use(pinia).use(router);
+app.use(pinia).use(router).use(PrimeVue,{
+    theme: {
+        preset: Aura
+    }
+});
 app.config.globalProperties.$ws = ws;
 router.addRoute({
     path: '/',

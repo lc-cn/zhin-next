@@ -21,7 +21,7 @@ export default defineConfig(async (env)=>{
         log_level:'off',
         password:"Lcl9623.",
         sign_api_addr: process.env.ICQQ_SIGN_ADDR,
-        platform:1
+        platform:2
       }
     ],
     // 插件目录

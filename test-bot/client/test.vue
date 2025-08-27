@@ -1,10 +1,10 @@
 <script setup lang="ts">
-
+import InputText from 'primevue/inputtext';
 </script>
 
 <template>
   <section>
-    test view
+    <InputText type="text" />
   </section>
 </template>
 

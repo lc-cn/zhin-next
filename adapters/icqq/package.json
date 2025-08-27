@@ -16,7 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lc-cn/icqq": "latest"
+    "@icqqjs/icqq": "latest"
   },
   "devDependencies": {
     "typescript": "^5.3.0"

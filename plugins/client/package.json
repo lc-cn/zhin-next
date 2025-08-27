@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "pinia": "latest",
+    "primevue": "^4.3.7",
+    "@primeuix/themes": "^1.2.3",
     "vue-router": "latest"
   },
   "files": [
