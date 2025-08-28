@@ -82,6 +82,30 @@ useContext('router', async (router) => {
             },
         },
     });
+    router.all('*all', async (ctx, next) => {
+        await next();
+        const url=ctx.request.originalUrl.replace(base,'')
+        const name = ctx.path.slice(1);
+        const sendFile = (filename: string) => {
+            ctx.type = path.extname(filename);
+            if (filename.endsWith('.ts')) ctx.type = 'text/javascript';
+            return (ctx.body = fs.createReadStream(filename));
+        };
+        if (Object.keys(webServer.entries).includes(name)) {
+            return sendFile(path.resolve(process.cwd(), webServer.entries[name]));
+        }
+        const filename = path.resolve(root, name);
+        if (!filename.startsWith(root) && !filename.includes('node_modules')) {
+            return (ctx.status = 403);
+        }
+        if (fs.existsSync(filename)) {
+            const fileState = fs.statSync(filename);
+            if (fileState.isFile()) return sendFile(filename);
+        }
+        const template = fs.readFileSync(path.resolve(root, 'index.html'), 'utf8');
+        ctx.type = 'html';
+        ctx.body = await vite.transformIndexHtml(url, template);
+    });
     router.use((ctx: any, next: any) => {
         if(ctx.request.originalUrl.startsWith('/api')) return next()
         return connect(vite.middlewares)(ctx,next);
