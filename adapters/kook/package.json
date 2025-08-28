@@ -1,0 +1,28 @@
+{
+  "name": "@zhin.js/adapter-kook",
+  "version": "1.0.0",
+  "description": "zhin adapter for kook",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "kook-client": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "zhin.js": "workspace:*",
+    "@zhin.js/types": "workspace:*"
+  }
+} 

@@ -10,6 +10,14 @@ export default defineConfig(async (env)=>{
         context:'process'
       },
       {
+        name: 'zhin',
+        context:'kook',
+        token: process.env.KOOK_TOKEN,
+        mode: 'websocket',
+        logLevel:'off',
+        ignore: 'bot',
+      },
+      {
         name: process.env.ICQQ_SCAN_UIN,
         context:'icqq',
         log_level:'off',
@@ -35,6 +43,7 @@ export default defineConfig(async (env)=>{
       'adapter-icqq',
       'http',
       'console',
+      'adapter-kook',
       'adapter-process',
       'test-plugin'
     ],

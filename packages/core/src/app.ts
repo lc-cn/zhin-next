@@ -66,7 +66,7 @@ export class App extends HMR<Plugin> {
         const adapter=this.getContext<Adapter>(options.context)
         if(!adapter) throw new Error(`can't find adapter for name ${options.context}`)
         const bot=adapter.bots.get(options.bot)
-        if(!bot) throw new Error(`can't find bot ${options.bot} for adapter ${options.bot}`)
+        if(!bot) throw new Error(`can't find bot ${options.bot} for adapter ${options.context}`)
         return bot.sendMessage(options)
     }
     /** 同步加载配置文件 */

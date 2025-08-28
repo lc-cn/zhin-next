@@ -4,9 +4,9 @@ import {
     Time,
     addComponent,
     defineComponent,
-    sendMessage,
     segment,
-    MessageCommand,
+    onDispose,
+    MessageCommand, onMessage,
 } from 'zhin.js';
 import path from "node:path";
 function formatMemoSize(size:number){
@@ -69,11 +69,7 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
       return likeResult.join('\n');
     })
   addCommand(someUsers)
-    sendMessage({
-        context:'icqq',
-        bot:'1689919782',
-        type:'group',
-        id:"742600824",
-        content:'哦，我还差一个功能没迁移过来，就是@zhinjs/satori'
-    })
+})
+onDispose(()=>{
+    console.log('disposed')
 })

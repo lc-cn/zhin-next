@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 
 
 // 直接调用 CLI 的 init 命令

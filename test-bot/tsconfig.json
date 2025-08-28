@@ -25,7 +25,8 @@
       "@zhin.js/adapter-process",
       "@zhin.js/adapter-onebot11",
       "@zhin.js/console",
-      "@zhin.js/client"
+      "@zhin.js/client",
+      "@zhin.js/adapter-kook"
     ]
   },
   "include": [

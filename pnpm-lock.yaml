@@ -53,7 +53,7 @@ importers:
         version: 5.9.2
       vitepress:
         specifier: ^1.6.4
-        version: 1.6.4(@algolia/client-search@5.35.0)(@types/node@24.2.1)(axios@1.10.0)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.9.2)
+        version: 1.6.4(@algolia/client-search@5.35.0)(@types/node@24.2.1)(axios@1.11.0)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.9.2)
       vitest:
         specifier: ^1.2.1
         version: 1.6.1(@types/node@24.2.1)
@@ -76,6 +76,22 @@ importers:
       typescript:
         specifier: ^5.3.0
         version: 5.8.3
+
+  adapters/kook:
+    dependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      kook-client:
+        specifier: latest
+        version: 1.0.0
+      zhin.js:
+        specifier: workspace:*
+        version: link:../../packages/zhin
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.2
 
   adapters/onebot11:
     dependencies:
@@ -175,8 +191,11 @@ importers:
         version: link:../cli
     devDependencies:
       '@types/node':
-        specifier: ^20.10.0
-        version: 20.19.1
+        specifier: ^24.3.0
+        version: 24.3.0
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../types
       typescript:
         specifier: ^5.3.0
         version: 5.8.3
@@ -224,7 +243,7 @@ importers:
         version: 4.3.7
       '@vitejs/plugin-vue':
         specifier: ^6.0.1
-        version: 6.0.1(vite@7.1.3(@types/node@20.19.1)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.20(typescript@5.9.2))
+        version: 6.0.1(vite@7.1.3(@types/node@24.3.0)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.20(typescript@5.9.2))
       '@zhin.js/client':
         specifier: workspace:^
         version: link:../client
@@ -242,7 +261,7 @@ importers:
         version: 29.0.0(@babel/parser@7.28.3)(vue@3.5.20(typescript@5.9.2))
       vite:
         specifier: ^7.0.6
-        version: 7.1.3(@types/node@20.19.1)(tsx@4.20.3)(yaml@2.8.0)
+        version: 7.1.3(@types/node@24.3.0)(tsx@4.20.3)(yaml@2.8.0)
       vue:
         specifier: ^3.5.18
         version: 3.5.20(typescript@5.9.2)
@@ -295,6 +314,9 @@ importers:
       '@zhin.js/adapter-icqq':
         specifier: workspace:*
         version: link:../adapters/icqq
+      '@zhin.js/adapter-kook':
+        specifier: workspace:*
+        version: link:../adapters/kook
       '@zhin.js/adapter-onebot11':
         specifier: workspace:*
         version: link:../adapters/onebot11
@@ -1307,6 +1329,9 @@ packages:
   '@types/node@24.2.1':
     resolution: {integrity: sha512-DRh5K+ka5eJic8CjH7td8QpYEV6Zo10gfRkjHCO3weqZHWDtAaSTFtl4+VMqOJ4N5jcuhZ9/l+yy8rVgw7BQeQ==}
 
+  '@types/node@24.3.0':
+    resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
+
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
 
@@ -1619,6 +1644,9 @@ packages:
   axios@1.10.0:
     resolution: {integrity: sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw==}
 
+  axios@1.11.0:
+    resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
+
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
@@ -1893,6 +1921,10 @@ packages:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
     engines: {node: '>=12'}
 
+  dotenv@17.2.1:
+    resolution: {integrity: sha512-kQhDYKZecqnM0fCnzI5eIv5L4cAe/iRI+HqMbO/hbRdTAeXDG+M9FjipUxNfbARuEg4iHIbhnhs78BCHNbSxEQ==}
+    engines: {node: '>=12'}
+
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -2087,6 +2119,14 @@ packages:
   form-data@4.0.3:
     resolution: {integrity: sha512-qsITQPfmvMOSAdeyZ+12I1c+CKSstAFAwu+97zrnWAbIr5u8wfsExUzCesVLC8NgHuRUqNN4Zy6UPWUTRGslcA==}
     engines: {node: '>= 6'}
+
+  form-data@4.0.4:
+    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
+    engines: {node: '>= 6'}
+
+  formdata-node@6.0.3:
+    resolution: {integrity: sha512-8e1++BCiTzUno9v5IZ2J6bv4RU+3UKDmqWUQD0MIMVCd9AdhWkO1gw57oo1mNEX1dMq2EGI+FbWz4B92pscSQg==}
+    engines: {node: '>= 18'}
 
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
@@ -2398,6 +2438,10 @@ packages:
     resolution: {integrity: sha512-oDxVkRwPOHhGlxKIDiDB2h+/l05QPtefD7nSqRgDfZt8P+QVYFWjfeK8jANf5O2YXjk8egd7KntvXKYx82wOag==}
     engines: {node: '>= 18'}
 
+  kook-client@1.0.0:
+    resolution: {integrity: sha512-puN89tjinVaXboHnqmJgv+K6kEZj8NaEVfl0O7VKnxtb1E5MGzVwZ7IkCLxqogt6C1DAuOyoCyexH7N68zjlJA==}
+    engines: {node: '>=16'}
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -2578,6 +2622,10 @@ packages:
   negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
+
+  node-persist@4.0.4:
+    resolution: {integrity: sha512-8sPAz/7tw1mCCc8xBG4f0wi+flHkSSgQeX998iQ75Pu27evA6UUWCjSE7xnrYTg2q33oU5leJ061EKPDv6BocQ==}
+    engines: {node: '>=10.12.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -2814,6 +2862,9 @@ packages:
   readdirp@3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
+
+  reconnecting-websocket@4.4.0:
+    resolution: {integrity: sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==}
 
   regex-recursion@6.0.2:
     resolution: {integrity: sha512-0YCaSCq2VRIebiaUviZNs0cBz1kg5kVS2UKUfNIx8YVs1cN3AV7NTctO5FOKBA+UT2BPJIWZauYHPqJODG50cg==}
@@ -4274,16 +4325,16 @@ snapshots:
 
   '@types/accepts@1.3.7':
     dependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/content-disposition@0.5.9': {}
 
@@ -4292,7 +4343,7 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/express': 5.0.3
       '@types/keygrip': 1.0.6
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/cross-spawn@6.0.6':
     dependencies:
@@ -4302,7 +4353,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.0.7':
     dependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.5
@@ -4335,7 +4386,7 @@ snapshots:
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/keygrip@1.0.6': {}
 
@@ -4360,7 +4411,7 @@ snapshots:
       '@types/http-errors': 2.0.5
       '@types/keygrip': 1.0.6
       '@types/koa-compose': 3.2.8
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/koa__router@12.0.4':
     dependencies:
@@ -4391,6 +4442,10 @@ snapshots:
     dependencies:
       undici-types: 7.10.0
 
+  '@types/node@24.3.0':
+    dependencies:
+      undici-types: 7.10.0
+
   '@types/qs@6.14.0': {}
 
   '@types/range-parser@1.2.7': {}
@@ -4398,17 +4453,17 @@ snapshots:
   '@types/send@0.17.5':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/serve-static@1.15.8':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
       '@types/send': 0.17.5
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
 
   '@types/unist@3.0.3': {}
 
@@ -4518,10 +4573,10 @@ snapshots:
       vite: 5.4.19(@types/node@24.2.1)
       vue: 3.5.18(typescript@5.9.2)
 
-  '@vitejs/plugin-vue@6.0.1(vite@7.1.3(@types/node@20.19.1)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.20(typescript@5.9.2))':
+  '@vitejs/plugin-vue@6.0.1(vite@7.1.3(@types/node@24.3.0)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.20(typescript@5.9.2))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.29
-      vite: 7.1.3(@types/node@20.19.1)(tsx@4.20.3)(yaml@2.8.0)
+      vite: 7.1.3(@types/node@24.3.0)(tsx@4.20.3)(yaml@2.8.0)
       vue: 3.5.20(typescript@5.9.2)
 
   '@vitest/coverage-v8@1.6.1(vitest@1.6.1(@types/node@24.2.1))':
@@ -4709,13 +4764,13 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@vueuse/integrations@12.8.2(axios@1.10.0)(focus-trap@7.6.5)(typescript@5.9.2)':
+  '@vueuse/integrations@12.8.2(axios@1.11.0)(focus-trap@7.6.5)(typescript@5.9.2)':
     dependencies:
       '@vueuse/core': 12.8.2(typescript@5.9.2)
       '@vueuse/shared': 12.8.2(typescript@5.9.2)
       vue: 3.5.20(typescript@5.9.2)
     optionalDependencies:
-      axios: 1.10.0
+      axios: 1.11.0
       focus-trap: 7.6.5
     transitivePeerDependencies:
       - typescript
@@ -4804,6 +4859,14 @@ snapshots:
     dependencies:
       follow-redirects: 1.15.9
       form-data: 4.0.3
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.11.0:
+    dependencies:
+      follow-redirects: 1.15.9
+      form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -5046,6 +5109,8 @@ snapshots:
       path-type: 4.0.0
 
   dotenv@16.5.0: {}
+
+  dotenv@17.2.1: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -5302,6 +5367,16 @@ snapshots:
       es-set-tostringtag: 2.1.0
       hasown: 2.0.2
       mime-types: 2.1.35
+
+  form-data@4.0.4:
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
+      mime-types: 2.1.35
+
+  formdata-node@6.0.3: {}
 
   fresh@0.5.2: {}
 
@@ -5644,6 +5719,21 @@ snapshots:
       type-is: 2.0.1
       vary: 1.1.2
 
+  kook-client@1.0.0:
+    dependencies:
+      axios: 1.11.0
+      dotenv: 17.2.1
+      formdata-node: 6.0.3
+      log4js: 6.9.1
+      node-persist: 4.0.4
+      reconnecting-websocket: 4.4.0
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -5823,6 +5913,10 @@ snapshots:
       - supports-color
 
   negotiator@0.6.3: {}
+
+  node-persist@4.0.4:
+    dependencies:
+      p-limit: 3.1.0
 
   normalize-path@3.0.0: {}
 
@@ -6069,6 +6163,8 @@ snapshots:
   readdirp@3.6.0:
     dependencies:
       picomatch: 2.3.1
+
+  reconnecting-websocket@4.4.0: {}
 
   regex-recursion@6.0.2:
     dependencies:
@@ -6493,7 +6589,7 @@ snapshots:
       '@types/node': 24.2.1
       fsevents: 2.3.3
 
-  vite@7.1.3(@types/node@20.19.1)(tsx@4.20.3)(yaml@2.8.0):
+  vite@7.1.3(@types/node@24.3.0)(tsx@4.20.3)(yaml@2.8.0):
     dependencies:
       esbuild: 0.25.5
       fdir: 6.5.0(picomatch@4.0.3)
@@ -6502,12 +6598,12 @@ snapshots:
       rollup: 4.46.2
       tinyglobby: 0.2.14
     optionalDependencies:
-      '@types/node': 20.19.1
+      '@types/node': 24.3.0
       fsevents: 2.3.3
       tsx: 4.20.3
       yaml: 2.8.0
 
-  vitepress@1.6.4(@algolia/client-search@5.35.0)(@types/node@24.2.1)(axios@1.10.0)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.9.2):
+  vitepress@1.6.4(@algolia/client-search@5.35.0)(@types/node@24.2.1)(axios@1.11.0)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.9.2):
     dependencies:
       '@docsearch/css': 3.8.2
       '@docsearch/js': 3.8.2(@algolia/client-search@5.35.0)(search-insights@2.17.3)
@@ -6520,7 +6616,7 @@ snapshots:
       '@vue/devtools-api': 7.7.7
       '@vue/shared': 3.5.18
       '@vueuse/core': 12.8.2(typescript@5.9.2)
-      '@vueuse/integrations': 12.8.2(axios@1.10.0)(focus-trap@7.6.5)(typescript@5.9.2)
+      '@vueuse/integrations': 12.8.2(axios@1.11.0)(focus-trap@7.6.5)(typescript@5.9.2)
       focus-trap: 7.6.5
       mark.js: 8.11.1
       minisearch: 7.1.2

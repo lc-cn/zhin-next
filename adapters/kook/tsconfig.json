@@ -3,41 +3,23 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
-    "allowImportingTsExtensions": false,
-    "noEmit": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@zhin.js/core": [
-        "./packages/core/src/index.ts"
-      ],
-      "@zhin.js/core/*": [
-        "./packages/core/src/*"
-      ]
-    },
-    "types": [
-      "@zhin.js/types"
-    ]
+    "composite": true,
+    "verbatimModuleSyntax": false
   },
-  "include": [
-    "apps/**/*",
-    "packages/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.js"
-  ]
-}
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+} 
