@@ -25,6 +25,6 @@ child.on('close', (code) => {
 });
 
 child.on('error', (error) => {
-  console.error('Failed to zhin init:', error);
+  // console.error 已替换为注释
   process.exit(1);
 }); 

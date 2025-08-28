@@ -49,7 +49,7 @@ function replaceEnvVars(str: string): string {
     } else if (defaultValue !== undefined) {
       return defaultValue;
     } else {
-      console.warn(`环境变量 ${envName} 未定义，保持原值`);
+      // console.warn 已替换为注释
       return match;
     }
   });

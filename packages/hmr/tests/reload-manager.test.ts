@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ReloadManager } from '../src/reload-manager'
-import { ConsoleLogger } from '../src/utils'
+import { createLoggerAdapter } from '../src/logger-adapter'
 
 describe('ReloadManager', () => {
     let reloadManager: ReloadManager
-    let logger: ConsoleLogger
+    let logger: ReturnType<typeof createLoggerAdapter>
 
     beforeEach(() => {
-        logger = new ConsoleLogger('test', false)
+        logger = createLoggerAdapter('test')
         reloadManager = new ReloadManager(logger, 100) // 100ms debounce
     })
 

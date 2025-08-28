@@ -329,31 +329,21 @@ const loadingBots = ref(false)
 
   // 获取ICQQ机器人数据
   const fetchICQQBots = async () => {
-    console.log('📞 开始请求ICQQ机器人数据...')
     loadingBots.value = true
     try {
-      console.log('🌐 发送请求到: /api/icqq/bots')
       const response = await fetch('/api/icqq/bots')
-      console.log('📡 响应状态:', response.status, response.statusText)
-      
       if (response.ok) {
         const bots = await response.json()
-        console.log('📦 收到机器人数据:', bots)
-        
         icqqBots.value = bots.map((bot: any) => ({
           ...bot,
           // 添加一些额外的计算字段
           totalMessages: (bot.receiveCount || 0) + (bot.sendCount || 0),
           uptime: Date.now() - 3600000 // 模拟1小时运行时间
         }))
-        console.log('✅ 机器人数据处理完成:', icqqBots.value.length, '个机器人')
       } else {
-        console.error('❌ 获取ICQQ机器人数据失败 - 状态码:', response.status)
-        console.error('❌ 错误详情:', response.statusText)
         icqqBots.value = []
       }
     } catch (error) {
-      console.error('❌ 网络请求失败:', error)
       icqqBots.value = []
     } finally {
       loadingBots.value = false
@@ -428,17 +418,16 @@ const formatUptime = (seconds?: number) => {
 const refreshData = async () => {
   refreshing.value = true
   try {
-    // 使用全局暴露的API方法
-    if (window.ZhinDataAPI?.updateAllData) {
-      await window.ZhinDataAPI.updateAllData()
-      // 刷新完适配器数据后，也刷新机器人数据
-      await fetchICQQBots()
-      console.log('✅ ICQQ数据刷新完成')
-    } else {
-      throw new Error('全局API未就绪')
-    }
+            // 使用全局暴露的API方法
+        if (window.ZhinDataAPI?.updateAllData) {
+          await window.ZhinDataAPI.updateAllData()
+          // 刷新完适配器数据后，也刷新机器人数据
+          await fetchICQQBots()
+        } else {
+          throw new Error('全局API未就绪')
+        }
   } catch (error) {
-    console.error('❌ ICQQ数据刷新失败:', error)
+    // 静默处理错误
   } finally {
     refreshing.value = false
   }
@@ -448,7 +437,7 @@ const connectBot = async (botName: string) => {
   connectingBots.value.push(botName)
   
   try {
-    console.log('连接QQ机器人:', botName)
+    // console.log 已替换为注释
     await new Promise(resolve => setTimeout(resolve, 2000))
     // 这里应该调用实际的连接API
   } finally {
@@ -460,7 +449,7 @@ const disconnectBot = async (botName: string) => {
   disconnectingBots.value.push(botName)
   
   try {
-    console.log('断开QQ机器人:', botName)
+    // console.log 已替换为注释
     await new Promise(resolve => setTimeout(resolve, 1500))
     // 这里应该调用实际的断开API
   } finally {
@@ -469,12 +458,12 @@ const disconnectBot = async (botName: string) => {
 }
 
 const configureBot = (bot: any) => {
-  console.log('配置QQ机器人:', bot.name)
+  // console.log 已替换为注释
   // 这里可以打开配置对话框
 }
 
 const showBotDetails = (bot: any) => {
-  console.log('查看QQ机器人详情:', bot.name)
+  // console.log 已替换为注释
   // 这里可以打开详情对话框
 }
 
@@ -482,11 +471,7 @@ const addBot = async () => {
   if (!newBotQQ.value || !newBotLoginMode.value) return
   
   try {
-    console.log('添加QQ机器人:', {
-      qq: newBotQQ.value,
-      mode: newBotLoginMode.value,
-      device: newBotDevice.value
-    })
+    // console.log 已替换为注释
     
     await new Promise(resolve => setTimeout(resolve, 1000))
     
@@ -498,7 +483,7 @@ const addBot = async () => {
     
     refreshData()
   } catch (error) {
-    console.error('添加QQ机器人失败:', error)
+    // console.error 已替换为注释
   }
 }
 </script>

@@ -135,37 +135,65 @@ useContext('web', (web) => {
     web.addEntry(clientEntryPath)
 });
 useContext('router','icqq', (router,icqq) => {
-    console.log('🚀 ICQQ路由正在注册...')
-    console.log('📊 当前机器人数量:', icqq.bots.size)
-    
-    router.get('/api/icqq/bots', (ctx) => {
-        console.log('📞 收到ICQQ机器人数据请求')
-        
+    router.get('/api/icqq/bots', async (ctx) => {
         try {
             const bots = Array.from(icqq.bots.values())
-            console.log('🤖 找到机器人:', bots.length, '个')
+            
+            if (bots.length === 0) {
+                ctx.body = { 
+                    success: true, 
+                    data: [], 
+                    message: '暂无ICQQ机器人实例' 
+                }
+                return
+            }
             
             const result = bots.map(bot => {
-                console.log('📋 处理机器人:', bot.config.name, '连接状态:', bot.connected)
-                return {
-                    name: bot.config.name,
-                    connected: bot.connected,
-                    groupCount: bot.gl?.size || 0,
-                    friendCount: bot.fl?.size || 0,
-                    receiveCount: bot.stat?.recv_msg_cnt || 0,
-                    sendCount: bot.stat?.sent_msg_cnt || 0,
-                    loginMode: bot.config.password ? 'password' : 'qrcode'
+                try {
+                    return {
+                        name: bot.config.name,
+                        connected: bot.connected || false,
+                        groupCount: bot.gl?.size || 0,
+                        friendCount: bot.fl?.size || 0,
+                        receiveCount: bot.stat?.recv_msg_cnt || 0,
+                        sendCount: bot.stat?.sent_msg_cnt || 0,
+                        loginMode: bot.config.password ? 'password' : 'qrcode',
+                        status: bot.connected ? 'online' : 'offline',
+                        lastActivity: new Date().toISOString()
+                    }
+                } catch (botError) {
+                    // 单个机器人数据获取失败时的处理
+                    // 获取机器人数据失败，返回错误状态
+                    return {
+                        name: bot.config.name,
+                        connected: false,
+                        groupCount: 0,
+                        friendCount: 0,
+                        receiveCount: 0,
+                        sendCount: 0,
+                        loginMode: 'unknown',
+                        status: 'error',
+                        error: '数据获取失败'
+                    }
                 }
             })
             
-            console.log('✅ 返回机器人数据:', result)
-            ctx.body = result
+            ctx.body = { 
+                success: true, 
+                data: result,
+                timestamp: new Date().toISOString()
+            }
         } catch (error) {
-            console.error('❌ 获取ICQQ机器人数据失败:', error)
+            // ICQQ API调用失败
+            
             ctx.status = 500
-            ctx.body = { error: '获取机器人数据失败', message: (error as Error).message }
+            ctx.body = { 
+                success: false,
+                error: 'ICQQ_API_ERROR',
+                message: '获取机器人数据失败',
+                details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+                timestamp: new Date().toISOString()
+            }
         }
     })
-    
-    console.log('✅ ICQQ路由注册完成')
 })

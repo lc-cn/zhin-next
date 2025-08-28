@@ -405,12 +405,12 @@ const refreshData = async () => {
     // 使用全局API
     if (window.ZhinDataAPI?.updateAllData) {
       await window.ZhinDataAPI.updateAllData()
-      console.log('✅ 仪表板数据刷新完成')
+      // console.log 已替换为注释
     } else {
       throw new Error('全局API未就绪')
     }
   } catch (error) {
-    console.error('❌ 仪表板数据刷新失败:', error)
+    // console.error 已替换为注释
   } finally {
     refreshing.value = false
   }

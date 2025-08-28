@@ -1,17 +1,16 @@
-// ============================================================================
-// Zhin Bot Framework - HMR Edition
-// ============================================================================
-
-// 核心系统
-export type { Bot } from './bot.js';
-export { loadConfig, saveConfig, createDefaultConfig } from './config.js';
-export * from './types.js';
-export * from './config.js';
-export * from './adapter.js'
-export * from './plugin.js';
-export * from './command.js';
-export * from './utils.js'
+// Core exports
+export * from './app.js'
+export * from './bot.js'
+export * from './plugin.js'
+export * from './command.js'
 export * from './component.js'
-// HMR Bot系统 (主要API)
-export * from './app.js';
-export * from '@zhin.js/hmr';
+export * from './adapter.js'
+export * from './config.js'
+// Logger moved to @zhin.js/logger package
+export * from './types.js'
+export * from './utils.js'
+export * from './errors.js'  // 导出错误处理系统
+
+// Re-export from dependencies
+export { createApp } from './app.js'
+export { Dependency } from '@zhin.js/hmr'

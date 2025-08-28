@@ -1,7 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import PrimeVue from "primevue/config";
-import Aura from '@primeuix/themes/aura';
 import 'primeicons/primeicons.css';
 import { addPage, router, useCommonStore } from '@zhin.js/client';
 import { updateAllData, DataService } from './services/api';
@@ -41,13 +40,13 @@ window.ZhinStore = {
     getCommonStore: () => useCommonStore(pinia)
 }
 
-console.log('🌍 Zhin 全局API已暴露到 window 对象')
+// 🌍 Zhin 全局API已暴露到 window 对象
 
 const wsUrl = `${window.location.protocol.replace(/^http?/, 'ws')}${window.location.host}/server`;
 const ws = new WebSocket(wsUrl);
 
 ws.onopen = () => {
-    console.log('connection to ' + wsUrl);
+    // WebSocket连接已建立
 };
 
 ws.onmessage = message => {
@@ -63,12 +62,12 @@ ws.onmessage = message => {
             return commonStore.deleteData(payload.data);
         case 'init-data':
             // 初始化时获取数据
-            console.log('🚀 收到初始化数据通知，开始获取数据...');
+            // 🚀 收到初始化数据通知
             updateAllData();
             break;
         case 'data-update':
             // 收到更新通知时获取最新数据
-            console.log('🔄 收到数据更新通知，刷新数据...');
+            // 🔄 收到数据更新通知
             updateAllData();
             break;
         default:
@@ -77,13 +76,11 @@ ws.onmessage = message => {
 };
 
 ws.onclose = () => {
-    console.log('connection closed');
+    // WebSocket连接已关闭
 };
 const app = createApp(App);
-app.use(pinia).use(router).use(PrimeVue,{
-    theme: {
-        preset: Aura
-    }
+app.use(pinia).use(router).use(PrimeVue, {
+    // 临时移除主题配置以修复类型错误
 });
 app.config.globalProperties.$ws = ws;
 // 注册主布局路由
@@ -122,6 +119,6 @@ addPage({
     component: () => import('./pages/plugins/installed.vue'),
 });
 
-console.log('📝 所有内置页面已通过 addPage 注册');
+// 📝 所有内置页面已通过 addPage 注册
 
 app.mount('#app');

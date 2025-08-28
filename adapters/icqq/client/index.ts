@@ -9,4 +9,4 @@ addPage({
   component: () => import('./ICQQManagement.vue')
 })
 
-console.log('📱 ICQQ适配器客户端页面已注册')
+// console.log 已替换为注释

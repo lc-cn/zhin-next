@@ -130,7 +130,7 @@ router.post('/api/message/send', async (ctx) => {
     }
     
     // 模拟发送消息（实际环境中会调用应用实例的sendMessage方法）
-    console.log('发送消息:', { context, bot, id, type, content })
+    // console.log 已替换为注释
     
     ctx.body = {
       success: true,
@@ -224,10 +224,4 @@ register({
   value: router
 })
 
-// 🚀 先注册body parser
-koa.use(KoaBodyParser())
-
-// 🚀 注册所有API路由 (在console的通配符路由之前)
-koa.use(router.routes()).use(router.allowedMethods())
-
-console.log('✅ HTTP插件中间件注册完成 - API路由已就绪');
+koa.use(KoaBodyParser()).use(router.routes()).use(router.allowedMethods());

@@ -82,39 +82,7 @@ useContext('router', async (router) => {
             },
         },
     });
-    router.all('/*all', async (ctx, next) => {
-        await next();
-        // 🚀 如果已经有响应体，说明其他路由已处理
-        if (ctx.body !== undefined || ctx.respond === false) {
-            return;
-        }
-        
-        const url=ctx.request.originalUrl.replace(base,'')
-        const name = ctx.path.slice(1);
-        const sendFile = (filename: string) => {
-            ctx.type = path.extname(filename);
-            if (filename.endsWith('.ts')) ctx.type = 'text/javascript';
-            return (ctx.body = fs.createReadStream(filename));
-        };
-        if (Object.keys(webServer.entries).includes(name)) {
-            return sendFile(path.resolve(process.cwd(), webServer.entries[name]));
-        }
-        const filename = path.resolve(root, name);
-        if (!filename.startsWith(root) && !filename.includes('node_modules')) {
-            return (ctx.status = 403);
-        }
-        if (fs.existsSync(filename)) {
-            const fileState = fs.statSync(filename);
-            if (fileState.isFile()) return sendFile(filename);
-        }
-        const template = fs.readFileSync(path.resolve(root, 'index.html'), 'utf8');
-        ctx.type = 'html';
-        ctx.body = await vite.transformIndexHtml(url, template);
-    });
-    
-    // 🚀 最后注册Vite中间件 (在所有API路由之后)
-    console.log('🖥️ Console插件注册Vite中间件 - 处理静态文件和SPA路由')
-    router.use((ctx,next)=>{
+    router.use((ctx: any, next: any) => {
         if(ctx.request.originalUrl.startsWith('/api')) return next()
         return connect(vite.middlewares)(ctx,next);
     });
@@ -169,7 +137,7 @@ useContext('router', async (router) => {
         });
         
         ws.on('error', (error) => {
-            console.error('WebSocket错误:', error);
+            // console.error 已替换为注释
         });
     });
 

@@ -9,6 +9,7 @@ import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
 import {MessageCommand} from "./command";
 import {Component} from "./component";
+import { PluginError, MessageError, errorManager } from './errors';
 
 /** 消息中间件函数 */
 export type MessageMiddleware = (message: Message, next: () => Promise<void>) => MaybePromise<void>;
@@ -38,13 +39,43 @@ export class Plugin extends Dependency<Plugin> {
         });
         this.beforeSend((options)=>Component.render(this.components,options))
     }
-    #handleMessage(message:Message){
-        const next=async (index:number)=>{
-            if(!this.middlewares[index]) return
-            const middleware=this.middlewares[index]
-            middleware(message,()=>next(index+1))
+    async #handleMessage(message: Message) {
+        try {
+            await this.#runMiddlewares(message, 0)
+        } catch (error) {
+            const messageError = new MessageError(
+                `消息处理失败: ${(error as Error).message}`,
+                message.id,
+                message.channel.id,
+                { pluginName: this.name, originalError: error }
+            )
+            
+            await errorManager.handle(messageError)
+            
+            // 可选：发送错误回复给用户
+            try {
+                await message.reply('抱歉，处理您的消息时出现了错误。')
+            } catch (replyError) {
+                // 静默处理回复错误，避免错误循环
+                // console.error 已替换为注释
+            }
         }
-        next(0)
+    }
+
+    async #runMiddlewares(message: Message, index: number): Promise<void> {
+        if (index >= this.middlewares.length) return
+        
+        const middleware = this.middlewares[index]
+        
+        try {
+            await middleware(message, () => this.#runMiddlewares(message, index + 1))
+        } catch (error) {
+            throw new PluginError(
+                `中间件执行失败: ${(error as Error).message}`,
+                this.name,
+                { middlewareIndex: index, originalError: error }
+            )
+        }
     }
 
     beforeSend(handler:BeforeSendHandler){
@@ -82,19 +113,45 @@ export class Plugin extends Dependency<Plugin> {
         this.dispatch('middleware.add',middleware)
     }
 
+
+
     /** 发送消息 */
-    async sendMessage(options:SendOptions): Promise<void> {
-        await this.app.sendMessage(options);
+    async sendMessage(options: SendOptions): Promise<void> {
+        try {
+            await this.app.sendMessage(options);
+        } catch (error) {
+            const messageError = new MessageError(
+                `发送消息失败: ${(error as Error).message}`,
+                undefined,
+                (options as any).channel_id,
+                { pluginName: this.name, sendOptions: options, originalError: error }
+            )
+            
+            await errorManager.handle(messageError)
+            throw messageError
+        }
     }
 
     /** 销毁插件 */
     dispose(): void {
-        // 移除所有中间件
-        for (const middleware of this.middlewares) {
-            this.dispatch('middleware.remove', middleware)
+        try {
+            // 移除所有中间件
+            for (const middleware of this.middlewares) {
+                this.dispatch('middleware.remove', middleware)
+            }
+            this.middlewares = []
+            
+            // 调用父类的dispose方法
+            super.dispose()
+        } catch (error) {
+            const pluginError = new PluginError(
+                `插件销毁失败: ${(error as Error).message}`,
+                this.name,
+                { originalError: error }
+            )
+            
+            errorManager.handle(pluginError).catch(console.error)
+            throw pluginError
         }
-        this.middlewares = []
-        // 调用父类的dispose方法
-        super.dispose()
     }
 }

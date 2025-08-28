@@ -393,12 +393,12 @@ const refreshData = async () => {
     // 使用全局API
     if (window.ZhinDataAPI?.updateAllData) {
       await window.ZhinDataAPI.updateAllData()
-      console.log('✅ 插件数据刷新完成')
+      // console.log 已替换为注释
     } else {
       throw new Error('全局API未就绪')
     }
   } catch (error) {
-    console.error('❌ 插件数据刷新失败:', error)
+    // console.error 已替换为注释
   } finally {
     refreshing.value = false
   }
@@ -413,17 +413,17 @@ const reloadPlugin = async (pluginName: string) => {
       const result = await window.ZhinDataAPI.reloadPlugin(pluginName)
       
       if (result.success) {
-        console.log('✅ 插件重载成功:', pluginName)
+        // console.log 已替换为注释
         // 重载成功后刷新插件数据
         await refreshData()
       } else {
-        console.error('❌ 插件重载失败:', result.error)
+        // console.error 已替换为注释
       }
     } else {
       throw new Error('全局API未就绪')
     }
   } catch (error) {
-    console.error('❌ 重载插件时发生错误:', error)
+    // console.error 已替换为注释
   } finally {
     reloadingPlugins.value = reloadingPlugins.value.filter(name => name !== pluginName)
   }
@@ -431,7 +431,7 @@ const reloadPlugin = async (pluginName: string) => {
 
 const configurePlugin = (plugin: any) => {
   // 这里可以跳转到插件配置页面或显示配置对话框
-  console.log('配置插件:', plugin.name)
+  // console.log 已替换为注释
 }
 
 const showPluginDetails = (plugin: any) => {
@@ -444,14 +444,14 @@ const installPlugin = async () => {
   
   try {
     // 这里应该调用实际的安装API
-    console.log('安装插件:', newPluginName.value)
+    // console.log 已替换为注释
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     showInstallDialog.value = false
     newPluginName.value = ''
     refreshData()
   } catch (error) {
-    console.error('安装插件失败:', error)
+    // console.error 已替换为注释
   }
 }
 </script>

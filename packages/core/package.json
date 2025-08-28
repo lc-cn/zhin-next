@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@zhin.js/hmr": "workspace:*",
+    "@zhin.js/logger": "workspace:*",
     "segment-matcher": "^1.0.2",
     "yaml": "^2.3.4",
     "toml": "^3.0.0",

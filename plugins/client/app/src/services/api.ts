@@ -9,7 +9,7 @@ const apiRequest = async (endpoint: string) => {
     const response = await fetch(`${getBaseUrl()}${endpoint}`)
     return await response.json()
   } catch (error) {
-    console.error(`API request failed for ${endpoint}:`, error)
+    // console.error 已替换为注释
     return { success: false, error: error.message }
   }
 }
@@ -64,7 +64,7 @@ export const DataService = {
       })
       return await response.json()
     } catch (error) {
-      console.error('Send message failed:', error)
+      // console.error 已替换为注释
       return { success: false, error: error.message }
     }
   },
@@ -77,7 +77,7 @@ export const DataService = {
       })
       return await response.json()
     } catch (error) {
-      console.error(`Reload plugin ${pluginName} failed:`, error)
+      // console.error 已替换为注释
       return { success: false, error: error.message }
     }
   }
@@ -88,7 +88,7 @@ export const updateAllData = async () => {
   const commonStore = useCommonStore()
   
   try {
-    console.log('开始更新所有框架数据...')
+    // console.log 已替换为注释
     
     const [systemRes, pluginsRes, adaptersRes, configRes] = await Promise.all([
       DataService.getSystemStatus(),
@@ -100,33 +100,33 @@ export const updateAllData = async () => {
     // 更新系统数据
     if (systemRes.success) {
       commonStore.syncData({ key: 'system', value: systemRes.data })
-      console.log('✅ 系统数据更新成功')
+      // console.log 已替换为注释
     } else {
-      console.warn('⚠️ 系统数据更新失败:', systemRes.error)
+      // console.warn 已替换为注释
     }
 
     // 更新插件数据
     if (pluginsRes.success) {
       commonStore.syncData({ key: 'plugins', value: pluginsRes.data })
-      console.log('✅ 插件数据更新成功')
+      // console.log 已替换为注释
     } else {
-      console.warn('⚠️ 插件数据更新失败:', pluginsRes.error)
+      // console.warn 已替换为注释
     }
 
     // 更新适配器数据
     if (adaptersRes.success) {
       commonStore.syncData({ key: 'adapters', value: adaptersRes.data })
-      console.log('✅ 适配器数据更新成功')
+      // console.log 已替换为注释
     } else {
-      console.warn('⚠️ 适配器数据更新失败:', adaptersRes.error)
+      // console.warn 已替换为注释
     }
 
     // 更新配置数据
     if (configRes.success) {
       commonStore.syncData({ key: 'config', value: configRes.data })
-      console.log('✅ 配置数据更新成功')
+      // console.log 已替换为注释
     } else {
-      console.warn('⚠️ 配置数据更新失败:', configRes.error)
+      // console.warn 已替换为注释
     }
 
     return {
@@ -135,7 +135,7 @@ export const updateAllData = async () => {
     }
     
   } catch (error) {
-    console.error('❌ 更新框架数据失败:', error)
+    // console.error 已替换为注释
     return { success: false, error }
   }
 }

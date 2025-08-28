@@ -11,6 +11,7 @@ import {
     getCallerFile,
     performGC
 } from './utils';
+import { createLoggerAdapter } from './logger-adapter.js';
 import { FileWatcher } from './file-watcher';
 import { ModuleLoader } from './module-loader';
 import { PerformanceMonitor } from './performance';
@@ -33,7 +34,7 @@ const DEFAULT_HMR_OPTIONS: Required<Omit<HMROptions,'logger'>> & {
     algorithm: DEFAULT_CONFIG.HASH_ALGORITHM,
     debug: DEFAULT_CONFIG.ENABLE_DEBUG,
     version: '1.0.0',
-    logger: new ConsoleLogger('HMR', DEFAULT_CONFIG.ENABLE_DEBUG)
+    logger: createLoggerAdapter('HMR')
 };
 
 // ============================================================================

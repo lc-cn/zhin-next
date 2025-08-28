@@ -71,5 +71,5 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
   addCommand(someUsers)
 })
 // onDispose(()=>{
-//     console.log('disposed')
+//     // console.log 已替换为注释
 // })

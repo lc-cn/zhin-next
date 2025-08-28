@@ -285,5 +285,5 @@ export namespace Component {
     })
 }
 process.on('unhandledRejection',e=>{
-    console.error(e);
+    // console.error 已替换为注释
 })

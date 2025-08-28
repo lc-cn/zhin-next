@@ -8,6 +8,9 @@ export type * from './types';
 // 导出工具函数
 export * from './utils';
 
+// 导出Logger适配器
+export { LoggerAdapter, createLoggerAdapter } from './logger-adapter';
+
 // 导出基础类
 export { Dependency } from './dependency';
 

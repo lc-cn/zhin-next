@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { logger } from './logger.js';
+import { createLogger } from '@zhin.js/logger';
+
+const logger = createLogger('TypesGenerator');
 
 /**
  * 更新 tsconfig.json 的类型声明
@@ -48,7 +50,7 @@ export async function generateEnvTypes(cwd: string): Promise<void> {
             try {
                 tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
             } catch (err) {
-                console.error(err)
+                // console.error 已替换为注释
                 logger.warn('⚠️ Failed to parse tsconfig.json, creating new one');
             }
         }
@@ -69,6 +71,8 @@ export async function generateEnvTypes(cwd: string): Promise<void> {
         fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2), 'utf-8');
         logger.info('✅ Updated TypeScript types configuration');
     } catch (error) {
-        logger.warn('⚠️ Failed to update TypeScript types:', error);
+        logger.warn('⚠️ Failed to update TypeScript types', { 
+            error: error instanceof Error ? error.message : String(error) 
+        });
     }
 }

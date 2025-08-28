@@ -1,22 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { FileWatcher } from '../src/file-watcher'
-import { ConsoleLogger } from '../src/utils'
+import { createLoggerAdapter } from '../src/logger-adapter'
 import * as path from 'path'
 import * as fs from 'fs'
 
 describe('FileWatcher', () => {
     let watcher: FileWatcher
     let testDir: string
-    let logger: ConsoleLogger
+    let logger: ReturnType<typeof createLoggerAdapter>
 
     beforeEach(() => {
         testDir = path.join(process.cwd(), 'test-workspace')
         if (!fs.existsSync(testDir)) {
             fs.mkdirSync(testDir, { recursive: true })
         }
-        logger = new ConsoleLogger('test', false)
-        fs.writeFileSync(path.join(testDir, 'test.ts'), 'console.log("test")')
-        fs.writeFileSync(path.join(testDir, 'test.js'), 'console.log("test")')
+        logger = createLoggerAdapter('test')
+        fs.writeFileSync(path.join(testDir, 'test.ts'), '// console.log 已替换为注释')
+        fs.writeFileSync(path.join(testDir, 'test.js'), '// console.log 已替换为注释')
         watcher = new FileWatcher([testDir], new Set(['.ts', '.js']), logger)
     })
 
