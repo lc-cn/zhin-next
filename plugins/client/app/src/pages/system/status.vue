@@ -189,7 +189,7 @@ const commonStore = useCommonStore()
 const refreshing = ref(false)
 
 // 系统数据
-const systemData = computed(() => (commonStore.store.value as any).system)
+const systemData = computed(() => (commonStore.store as any).system)
 
 // 内存使用百分比
 const memoryUsagePercent = computed(() => {
@@ -239,9 +239,13 @@ const formatTime = (timestamp?: string) => {
 const refreshData = async () => {
   refreshing.value = true
   try {
-    const { updateAllData } = await import('../../services/api')
-    await updateAllData()
-    console.log('✅ 系统状态数据刷新完成')
+    // 使用全局API
+    if (window.ZhinDataAPI?.updateAllData) {
+      await window.ZhinDataAPI.updateAllData()
+      console.log('✅ 系统状态数据刷新完成')
+    } else {
+      throw new Error('全局API未就绪')
+    }
   } catch (error) {
     console.error('❌ 系统状态数据刷新失败:', error)
   } finally {

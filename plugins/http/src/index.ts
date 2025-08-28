@@ -1,4 +1,4 @@
-import { register } from 'zhin.js';
+import {register, useApp} from 'zhin.js';
 import { createServer, Server } from 'http';
 import Koa from 'koa';
 import auth from 'koa-basic-auth';
@@ -21,7 +21,7 @@ const server = createServer(koa.callback())
 const router = new Router(server, { prefix: process.env.routerPrefix || '' });
 const username = process.env.username || 'admin';
 const password = process.env.password || '123456';
-
+const app=useApp()
 koa.use(
   auth({
     name: username,
@@ -66,39 +66,16 @@ router.get('/api/health', async (ctx) => {
 // 插件管理 API
 router.get('/api/plugins', async (ctx) => {
   try {
-    // 模拟插件数据 - 实际环境中会从应用实例获取
-    const plugins = [
-      {
-        name: 'http',
-        status: 'active',
-        version: '1.0.0',
-        description: 'HTTP服务器插件',
-        contexts: { server: true, koa: true, router: true },
-        middlewares: 2,
-        commands: 0,
-        uptime: process.uptime()
-      },
-      {
-        name: 'console', 
-        status: 'active',
-        version: '1.0.0',
-        description: 'Web控制台插件',
-        contexts: { web: true },
-        middlewares: 0,
-        commands: 0,
-        uptime: process.uptime() - 1
-      },
-      {
-        name: 'client',
-        status: 'active', 
-        version: '1.0.0',
-        description: '客户端框架插件',
-        contexts: { client: true },
-        middlewares: 0,
-        commands: 0,
-        uptime: process.uptime() - 2
+    // 获取详细的插件数据
+    const plugins = app.dependencyList.map(dep => {
+      return {
+        name:dep.name,
+        command_count:dep.commands.length,
+        component_count:dep.components.size,
+        middleware_count:dep.middlewares.length,
+        context_count:dep.contexts.size,
       }
-    ]
+    })
     
     ctx.body = { success: true, data: plugins }
   } catch (error) {
@@ -111,56 +88,12 @@ router.get('/api/plugins', async (ctx) => {
 router.get('/api/adapters', async (ctx) => {
   try {
     // 模拟适配器数据
-    const adapters = [
-      {
-        name: 'process',
-        status: 'active',
-        description: '控制台适配器',
-        platform: 'console',
-        uptime: process.uptime(),
-        bots: [{
-          name: process.pid.toString(),
-          connected: true,
-          uptime: process.uptime(),
-          config: { 
-            context: 'process',
-            platform: 'console' 
-          }
-        }]
-      },
-      {
-        name: 'icqq',
-        status: Math.random() > 0.5 ? 'active' : 'inactive',
-        description: 'QQ 机器人适配器',
-        platform: 'qq',
-        uptime: process.uptime() - 5,
-        bots: [{
-          name: '1234567890',
-          connected: Math.random() > 0.3,
-          uptime: process.uptime() - 5,
-          config: {
-            context: 'icqq',
-            platform: 4
-          }
-        }]
-      },
-      {
-        name: 'kook',
-        status: Math.random() > 0.5 ? 'active' : 'inactive', 
-        description: 'KOOK 机器人适配器',
-        platform: 'kook',
-        uptime: process.uptime() - 3,
-        bots: [{
-          name: 'zhin',
-          connected: Math.random() > 0.3,
-          uptime: process.uptime() - 3,
-          config: {
-            context: 'kook',
-            mode: 'websocket'
-          }
-        }]
+    const adapters = app.contextList.map(ctx=>{
+      return {
+        name:ctx.name,
+        desc:ctx.description,
       }
-    ]
+    })
     
     ctx.body = { success: true, data: adapters }
   } catch (error) {
@@ -172,21 +105,7 @@ router.get('/api/adapters', async (ctx) => {
 // 框架配置信息 API
 router.get('/api/config', async (ctx) => {
   try {
-    const config = {
-      debug: process.env.NODE_ENV === 'development',
-      plugins: ['http', 'console', 'client', 'adapter-process'],
-      pluginDirs: ['./src/plugins', 'node_modules'],
-      server: {
-        port: process.env.port || '8086',
-        host: '0.0.0.0'
-      },
-      bots: [
-        {
-          name: process.pid.toString(),
-          context: 'process'
-        }
-      ]
-    }
+    const config = app.getConfig()
     
     ctx.body = { success: true, data: config }
   } catch (error) {
@@ -268,6 +187,7 @@ router.get('/api/logs', async (ctx) => {
 
 register({
   name: 'server',
+  description:"http server",
   mounted(p) {
     return new Promise<Server>((resolve) => {
       server.listen(
@@ -294,12 +214,20 @@ register({
 
 register({
   name: "koa",
+  description:"koa instance",
   value: koa
 })
 
 register({
   name: 'router',
+  description:"koa router",
   value: router
 })
 
-koa.use(KoaBodyParser()).use(router.routes()).use(router.allowedMethods());
+// 🚀 先注册body parser
+koa.use(KoaBodyParser())
+
+// 🚀 注册所有API路由 (在console的通配符路由之前)
+koa.use(router.routes()).use(router.allowedMethods())
+
+console.log('✅ HTTP插件中间件注册完成 - API路由已就绪');

@@ -96,37 +96,37 @@
             <div class="plugin-main-info">
               <div class="plugin-header">
                 <div class="plugin-icon">
-                  <i class="pi pi-puzzle-piece"></i>
+                  <i :class="getPluginIcon(plugin.name)"></i>
                 </div>
                 <div class="plugin-basic-info">
                   <h3 class="plugin-name">{{ plugin.name }}</h3>
-                  <p class="plugin-description">{{ plugin.description || '暂无描述' }}</p>
+                  <p class="plugin-description">{{ getPluginDescription(plugin.name) }}</p>
                 </div>
                 <div class="plugin-status">
                   <Tag 
-                    :value="plugin.status" 
-                    :severity="getStatusSeverity(plugin.status)"
-                    :icon="getStatusIcon(plugin.status)"
+                    value="活跃" 
+                    severity="success"
+                    icon="pi pi-check"
                   />
                 </div>
               </div>
               
               <div class="plugin-stats">
                 <div class="stat-item">
-                  <i class="pi pi-cog"></i>
-                  <span>{{ plugin.contexts ? Object.keys(plugin.contexts).length : 0 }} 上下文</span>
+                  <i class="pi pi-sitemap"></i>
+                  <span>{{ plugin.context_count || 0 }} 个上下文</span>
                 </div>
                 <div class="stat-item">
                   <i class="pi pi-code"></i>
-                  <span>{{ plugin.commands || 0 }} 命令</span>
+                  <span>{{ plugin.command_count || 0 }} 个命令</span>
                 </div>
                 <div class="stat-item">
                   <i class="pi pi-layer-group"></i>
-                  <span>{{ plugin.middlewares || 0 }} 中间件</span>
+                  <span>{{ plugin.middleware_count || 0 }} 个中间件</span>
                 </div>
                 <div class="stat-item">
-                  <i class="pi pi-clock"></i>
-                  <span>{{ formatUptime(plugin.uptime) }}</span>
+                  <i class="pi pi-th-large"></i>
+                  <span>{{ plugin.component_count || 0 }} 个组件</span>
                 </div>
               </div>
             </div>
@@ -289,10 +289,10 @@ const showInstallDialog = ref(false)
 const selectedPlugin = ref(null)
 const newPluginName = ref('')
 const filterStatus = ref('')
-const reloadingPlugins = ref([])
+const reloadingPlugins = ref<string[]>([])
 
 // 插件数据
-const pluginsData = computed(() => (commonStore.store.value as any).plugins || [])
+const pluginsData = computed(() => (commonStore.store as any).plugins || [])
 
 // 状态筛选选项
 const statusOptions = [
@@ -304,19 +304,57 @@ const statusOptions = [
 // 筛选后的插件列表
 const filteredPlugins = computed(() => {
   if (!filterStatus.value) return pluginsData.value
-  return pluginsData.value.filter(plugin => plugin.status === filterStatus.value)
+  // 由于API只返回基础数据，所有插件都视为活跃状态
+  return pluginsData.value
 })
 
 // 统计信息
 const activePluginsCount = computed(() => {
-  return pluginsData.value.filter(plugin => plugin.status === 'active').length
+  return pluginsData.value.length // 所有返回的插件都是活跃的
 })
 
 const totalCommands = computed(() => {
-  return pluginsData.value.reduce((total, plugin) => total + (plugin.commands || 0), 0)
+  return pluginsData.value.reduce((total, plugin) => total + (plugin.command_count || 0), 0)
+})
+
+const totalComponents = computed(() => {
+  return pluginsData.value.reduce((total, plugin) => total + (plugin.component_count || 0), 0)
+})
+
+const totalMiddlewares = computed(() => {
+  return pluginsData.value.reduce((total, plugin) => total + (plugin.middleware_count || 0), 0)
+})
+
+const totalContexts = computed(() => {
+  return pluginsData.value.reduce((total, plugin) => total + (plugin.context_count || 0), 0)
 })
 
 // 格式化函数
+const getPluginIcon = (name: string) => {
+  if (name.includes('adapter')) return 'pi pi-link'
+  if (name.includes('core')) return 'pi pi-star'
+  if (name.includes('cli')) return 'pi pi-terminal'
+  if (name.includes('http')) return 'pi pi-globe'
+  if (name.includes('console')) return 'pi pi-desktop'
+  if (name.includes('client')) return 'pi pi-mobile'
+  return 'pi pi-puzzle-piece'
+}
+
+const getPluginDescription = (name: string) => {
+  const descriptions = {
+    'core': '核心框架功能',
+    'cli': '命令行工具',
+    'http': 'HTTP服务器',
+    'console': 'Web控制台',
+    'client': '客户端界面',
+    'hmr': '热模块重载',
+    'icqq': 'ICQQ适配器',
+    'kook': 'KOOK适配器',
+    'process': '进程适配器'
+  }
+  return descriptions[name] || `${name} 插件`
+}
+
 const formatUptime = (seconds?: number) => {
   if (!seconds) return '0秒'
   
@@ -352,9 +390,13 @@ const getStatusIcon = (status: string) => {
 const refreshData = async () => {
   refreshing.value = true
   try {
-    const { updateAllData } = await import('../../services/api')
-    await updateAllData()
-    console.log('✅ 插件数据刷新完成')
+    // 使用全局API
+    if (window.ZhinDataAPI?.updateAllData) {
+      await window.ZhinDataAPI.updateAllData()
+      console.log('✅ 插件数据刷新完成')
+    } else {
+      throw new Error('全局API未就绪')
+    }
   } catch (error) {
     console.error('❌ 插件数据刷新失败:', error)
   } finally {
@@ -366,15 +408,19 @@ const reloadPlugin = async (pluginName: string) => {
   reloadingPlugins.value.push(pluginName)
   
   try {
-    const { DataService } = await import('../../services/api')
-    const result = await DataService.reloadPlugin(pluginName)
-    
-    if (result.success) {
-      console.log('✅ 插件重载成功:', pluginName)
-      // 重载成功后刷新插件数据
-      await refreshData()
+    // 使用全局API
+    if (window.ZhinDataAPI?.reloadPlugin) {
+      const result = await window.ZhinDataAPI.reloadPlugin(pluginName)
+      
+      if (result.success) {
+        console.log('✅ 插件重载成功:', pluginName)
+        // 重载成功后刷新插件数据
+        await refreshData()
+      } else {
+        console.error('❌ 插件重载失败:', result.error)
+      }
     } else {
-      console.error('❌ 插件重载失败:', result.error)
+      throw new Error('全局API未就绪')
     }
   } catch (error) {
     console.error('❌ 重载插件时发生错误:', error)
@@ -456,8 +502,9 @@ const installPlugin = async () => {
 }
 
 .stats-total .stats-icon { background: var(--blue-500); }
-.stats-active .stats-icon { background: var(--green-500); }
-.stats-commands .stats-icon { background: var(--purple-500); }
+.stats-commands .stats-icon { background: var(--orange-500); }
+.stats-components .stats-icon { background: var(--purple-500); }
+.stats-contexts .stats-icon { background: var(--cyan-500); }
 
 .stats-icon {
   width: 48px;

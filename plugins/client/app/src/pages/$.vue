@@ -1,87 +1,14 @@
 <template>
   <div class="layout-container">
-    <!-- 顶部导航栏 -->
-    <Toolbar class="layout-topbar">
-      <template #start>
-        <Button 
-          icon="pi pi-bars" 
-          class="layout-menu-toggle"
-          text
-          @click="toggleSidebar"
-          :aria-label="sidebarVisible ? '收起菜单' : '展开菜单'"
-        />
+    <!-- PC端固定左侧菜单 -->
+    <div v-if="!isMobile" class="layout-sidebar-fixed">
+      <div class="layout-sidebar-header">
         <div class="layout-brand">
           <i class="pi pi-bolt text-primary text-2xl mr-2"></i>
           <span class="layout-brand-text">Zhin Bot</span>
         </div>
-      </template>
+      </div>
       
-      <template #end>
-        <div class="layout-topbar-actions">
-          <!-- 全屏切换 -->
-          <Button 
-            :icon="isFullscreen ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
-            text
-            rounded
-            @click="toggleFullscreen"
-            v-tooltip="isFullscreen ? '退出全屏' : '全屏'"
-          />
-          
-          <!-- 主题切换 -->
-          <Button 
-            :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
-            text
-            rounded
-            @click="toggleTheme"
-            v-tooltip="isDark ? '浅色主题' : '深色主题'"
-          />
-          
-          <!-- 用户菜单 -->
-          <Button 
-            icon="pi pi-user"
-            text
-            rounded
-            @click="toggleUserMenu"
-            aria-haspopup="true"
-            aria-controls="user-menu"
-            v-tooltip="'用户菜单'"
-          />
-          <OverlayPanel ref="userMenu" id="user-menu">
-            <div class="user-menu">
-              <div class="user-info mb-3">
-                <i class="pi pi-user-circle text-4xl text-primary"></i>
-                <div class="ml-3">
-                  <div class="font-medium">管理员</div>
-                  <div class="text-sm text-color-secondary">admin@zhin.bot</div>
-                </div>
-              </div>
-              <Divider />
-              <div class="flex flex-column gap-2">
-                <Button icon="pi pi-cog" label="系统设置" text class="justify-content-start" />
-                <Button icon="pi pi-question-circle" label="帮助文档" text class="justify-content-start" />
-                <Button icon="pi pi-sign-out" label="退出登录" text class="justify-content-start" />
-              </div>
-            </div>
-          </OverlayPanel>
-        </div>
-      </template>
-    </Toolbar>
-
-    <!-- 侧边栏 -->
-    <Sidebar 
-      v-model:visible="sidebarVisible" 
-      :class="['layout-sidebar', { 'layout-sidebar-desktop': !isMobile }]"
-      :modal="isMobile"
-      :dismissable="isMobile"
-      position="left"
-    >
-      <template #header>
-        <div class="layout-sidebar-header">
-          <span class="layout-sidebar-title">导航菜单</span>
-        </div>
-      </template>
-      
-      <!-- 菜单内容 -->
       <div class="layout-sidebar-content">
         <PanelMenu 
           :model="processedMenus" 
@@ -118,10 +45,10 @@
         </PanelMenu>
         
         <!-- 菜单底部信息 -->
-        <div class="layout-sidebar-footer mt-auto">
+        <div class="layout-sidebar-footer">
           <div class="layout-system-info">
-            <div class="text-sm text-color-secondary">系统信息</div>
-            <div class="flex justify-content-between mt-2">
+            <div class="text-sm text-color-secondary mb-2">系统信息</div>
+            <div class="flex justify-content-between mb-1">
               <span class="text-xs">运行时间</span>
               <span class="text-xs">{{ uptime }}</span>
             </div>
@@ -132,10 +59,129 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header class="layout-topbar" :class="{ 'layout-topbar-with-sidebar': !isMobile }">
+      <!-- 移动端左侧内容 -->
+      <div v-if="isMobile" class="layout-topbar-start">
+        <Button 
+          icon="pi pi-bars" 
+          class="layout-menu-toggle"
+          text
+          @click="toggleMobileSidebar"
+          :aria-label="mobileSidebarVisible ? '收起菜单' : '展开菜单'"
+        />
+        <div class="layout-brand">
+          <i class="pi pi-bolt text-primary text-2xl mr-2"></i>
+          <span class="layout-brand-text">Zhin Bot</span>
+        </div>
+      </div>
+      
+      <!-- 右侧操作按钮 -->
+      <div class="layout-topbar-actions">
+        <!-- 全屏切换 -->
+        <Button 
+          :icon="isFullscreen ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
+          text
+          rounded
+          @click="toggleFullscreen"
+          v-tooltip="isFullscreen ? '退出全屏' : '全屏'"
+        />
+        
+        <!-- 主题切换 -->
+        <Button 
+          :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
+          text
+          rounded
+          @click="toggleTheme"
+          v-tooltip="isDark ? '浅色主题' : '深色主题'"
+        />
+        
+        <!-- 用户菜单 -->
+        <Button 
+          icon="pi pi-user"
+          text
+          rounded
+          @click="toggleUserMenu"
+          aria-haspopup="true"
+          aria-controls="user-menu"
+          v-tooltip="'用户菜单'"
+        />
+        <OverlayPanel ref="userMenu" id="user-menu">
+          <div class="user-menu">
+            <div class="user-info mb-3">
+              <i class="pi pi-user-circle text-4xl text-primary"></i>
+              <div class="ml-3">
+                <div class="font-medium">管理员</div>
+                <div class="text-sm text-color-secondary">admin@zhin.bot</div>
+              </div>
+            </div>
+            <Divider />
+            <div class="flex flex-column gap-2">
+              <Button icon="pi pi-cog" label="系统设置" text class="justify-content-start" />
+              <Button icon="pi pi-question-circle" label="帮助文档" text class="justify-content-start" />
+              <Button icon="pi pi-sign-out" label="退出登录" text class="justify-content-start" />
+            </div>
+          </div>
+        </OverlayPanel>
+      </div>
+    </header>
+
+    <!-- 移动端覆盖式侧边栏 -->
+    <Sidebar 
+      v-if="isMobile"
+      v-model:visible="mobileSidebarVisible" 
+      class="layout-mobile-sidebar"
+      position="left"
+    >
+      <template #header>
+        <div class="layout-brand mb-4">
+          <i class="pi pi-bolt text-primary text-2xl mr-2"></i>
+          <span class="layout-brand-text">Zhin Bot</span>
+        </div>
+      </template>
+      
+      <!-- 移动端菜单内容 -->
+      <div class="layout-mobile-sidebar-content">
+        <PanelMenu 
+          :model="processedMenus" 
+          class="layout-menu"
+          @item-click="onMobileMenuClick"
+        >
+          <template #item="{ item }">
+            <router-link 
+              v-if="item.path && !item.items" 
+              v-slot="{ href, navigate, isActive }" 
+              :to="item.path" 
+              custom
+            >
+              <a 
+                v-ripple 
+                :href="href" 
+                :class="['layout-menu-item', { 'layout-menu-item-active': isActive }]"
+                @click="navigate"
+              >
+                <i :class="item.icon || 'pi pi-circle'" class="layout-menu-icon"></i>
+                <span class="layout-menu-label">{{ item.label }}</span>
+                <Badge v-if="item.badge" :value="item.badge" class="ml-auto" />
+              </a>
+            </router-link>
+            <span 
+              v-else-if="item.items"
+              :class="['layout-menu-category', { 'layout-menu-category-expanded': item.expanded }]"
+            >
+              <i :class="item.icon || 'pi pi-folder'" class="layout-menu-icon"></i>
+              <span class="layout-menu-label">{{ item.label }}</span>
+              <i class="pi pi-chevron-right layout-menu-arrow"></i>
+            </span>
+          </template>
+        </PanelMenu>
+      </div>
     </Sidebar>
 
     <!-- 主内容区域 -->
-    <div class="layout-main" :class="{ 'layout-main-expanded': !sidebarVisible || isMobile }">
+    <main class="layout-main" :class="{ 'layout-main-with-sidebar': !isMobile }">
       <div class="layout-content">
         <!-- 面包屑导航 -->
         <div class="layout-breadcrumb">
@@ -145,13 +191,13 @@
         <!-- 页面内容 -->
         <div class="layout-content-wrapper">
           <router-view v-slot="{ Component }">
-            <Transition name="fade" mode="out-in">
+            <Transition name="page-fade" mode="out-in">
               <component :is="Component" />
             </Transition>
           </router-view>
         </div>
       </div>
-    </div>
+    </main>
 
     <!-- 返回顶部按钮 -->
     <Transition name="fade">
@@ -176,8 +222,8 @@ import { useRouter, useRoute } from 'vue-router'
 const userMenu = ref()
 
 // 响应式状态
-const sidebarVisible = ref(true)
 const isMobile = ref(false)
+const mobileSidebarVisible = ref(false)
 const isFullscreen = ref(false)
 const isDark = ref(false)
 const showBackToTop = ref(false)
@@ -243,9 +289,12 @@ const findMenuByPath = (path: string) => {
 
 // 响应式检测
 const checkMobile = () => {
+  const wasMobile = isMobile.value
   isMobile.value = window.innerWidth < 768
-  if (isMobile.value) {
-    sidebarVisible.value = false
+  
+  // 当从移动端切换到桌面端时，关闭移动端侧边栏
+  if (wasMobile && !isMobile.value && mobileSidebarVisible.value) {
+    mobileSidebarVisible.value = false
   }
 }
 
@@ -264,8 +313,8 @@ const updateSystemInfo = () => {
 }
 
 // 事件处理
-const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+const toggleMobileSidebar = () => {
+  mobileSidebarVisible.value = !mobileSidebarVisible.value
 }
 
 const toggleUserMenu = (event: Event) => {
@@ -294,9 +343,12 @@ const toggleTheme = () => {
 }
 
 const onMenuClick = (event: any) => {
-  if (isMobile.value) {
-    sidebarVisible.value = false
-  }
+  // PC端菜单点击不需要处理，保持菜单显示
+}
+
+const onMobileMenuClick = (event: any) => {
+  // 移动端菜单点击后关闭侧边栏
+  mobileSidebarVisible.value = false
 }
 
 const scrollToTop = () => {
@@ -331,9 +383,38 @@ onMounted(() => {
 /* ============================================================================ */
 .layout-container {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background: var(--surface-ground);
+}
+
+/* ============================================================================ */
+/* PC端固定侧边栏 */
+/* ============================================================================ */
+.layout-sidebar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--surface-card);
+  border-right: 1px solid var(--surface-border);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-50);
+}
+
+.layout-sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ============================================================================ */
@@ -344,13 +425,25 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 999;
   height: 60px;
   padding: 0 1rem;
   backdrop-filter: blur(10px);
-  background: rgba(var(--surface-0-rgb), 0.8);
+  background: rgba(var(--surface-0-rgb), 0.9);
   border-bottom: 1px solid var(--surface-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.layout-topbar-with-sidebar {
+  left: 280px;
+}
+
+.layout-topbar-start {
+  display: flex;
+  align-items: center;
 }
 
 .layout-menu-toggle {
@@ -390,50 +483,19 @@ onMounted(() => {
 }
 
 /* ============================================================================ */
-/* 侧边栏 */
+/* 移动端侧边栏 */
 /* ============================================================================ */
-.layout-sidebar {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  width: 280px;
-  height: calc(100vh - 60px);
-  background: var(--surface-card);
-  border-right: 1px solid var(--surface-border);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  z-index: 999;
+.layout-mobile-sidebar {
+  width: 280px !important;
 }
 
-/* 桌面版侧边栏 */
-.layout-sidebar-desktop {
-  position: fixed !important;
-  transform: translateX(0) !important;
-  visibility: visible !important;
-}
-
-/* 侧边栏头部 */
-.layout-sidebar-header {
-  padding: 1.5rem 1rem 1rem;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.layout-sidebar-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* 侧边栏内容 */
-.layout-sidebar-content {
+.layout-mobile-sidebar-content {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: calc(100% - 80px);
-  padding: 0;
-  overflow: hidden;
 }
+
+
 
 /* 菜单样式 */
 .layout-menu {
@@ -521,6 +583,7 @@ onMounted(() => {
 
 /* 侧边栏底部 */
 .layout-sidebar-footer {
+  margin-top: auto;
   padding: 1rem;
   border-top: 1px solid var(--surface-border);
   background: var(--surface-50);
@@ -537,15 +600,15 @@ onMounted(() => {
 /* 主内容区域 */
 /* ============================================================================ */
 .layout-main {
+  flex: 1;
   margin-top: 60px;
-  margin-left: 280px;
   min-height: calc(100vh - 60px);
-  transition: all 0.3s ease;
   background: var(--surface-ground);
+  transition: all 0.3s ease;
 }
 
-.layout-main-expanded {
-  margin-left: 0;
+.layout-main-with-sidebar {
+  margin-left: 280px;
 }
 
 .layout-content {
@@ -595,18 +658,27 @@ onMounted(() => {
     padding: 1.5rem;
   }
   
-  .layout-sidebar {
+  .layout-sidebar-fixed {
     width: 260px;
   }
   
-  .layout-main {
+  .layout-topbar-with-sidebar {
+    left: 260px;
+  }
+  
+  .layout-main-with-sidebar {
     margin-left: 260px;
   }
 }
 
 /* 移动设备 */
 @media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
   .layout-topbar {
+    left: 0;
     padding: 0 0.75rem;
   }
   
@@ -618,7 +690,7 @@ onMounted(() => {
     margin-left: 0;
   }
   
-  .layout-main-expanded {
+  .layout-main-with-sidebar {
     margin-left: 0;
   }
   
@@ -673,6 +745,21 @@ onMounted(() => {
 /* ============================================================================ */
 
 /* 页面切换动画 */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.3s ease;
@@ -680,12 +767,12 @@ onMounted(() => {
 
 .fade-enter-from {
   opacity: 0;
-  transform: translateX(10px);
+  transform: scale(0.95);
 }
 
 .fade-leave-to {
   opacity: 0;
-  transform: translateX(-10px);
+  transform: scale(0.95);
 }
 
 /* 按钮悬停效果 */

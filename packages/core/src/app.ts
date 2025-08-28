@@ -254,6 +254,7 @@ export function registerAdapter<T extends Adapter>(adapter:T){
     const plugin = usePlugin();
     plugin.register({
         name:adapter.name,
+        description:`adapter for ${adapter.name}`,
         async mounted(plugin){
            await adapter.start(plugin)
             return adapter

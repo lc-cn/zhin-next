@@ -48,27 +48,27 @@
       </div>
       
       <div class="col-12 md:col-3">
-        <div class="quick-stat-card stat-adapters">
+        <div class="quick-stat-card stat-contexts">
           <div class="stat-icon">
-            <i class="pi pi-link"></i>
+            <i class="pi pi-sitemap"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-number">{{ adaptersData?.length || 0 }}</div>
-            <div class="stat-label">适配器</div>
-            <div class="stat-sub">{{ activeAdaptersCount }} 个活跃</div>
+            <div class="stat-number">{{ totalContexts }}</div>
+            <div class="stat-label">上下文</div>
+            <div class="stat-sub">{{ activeContexts }} 个活跃</div>
           </div>
         </div>
       </div>
       
       <div class="col-12 md:col-3">
-        <div class="quick-stat-card stat-bots">
+        <div class="quick-stat-card stat-commands">
           <div class="stat-icon">
-            <i class="pi pi-android"></i>
+            <i class="pi pi-code"></i>
           </div>
           <div class="stat-content">
-            <div class="stat-number">{{ totalBots }}</div>
-            <div class="stat-label">机器人</div>
-            <div class="stat-sub">{{ connectedBots }} 个在线</div>
+            <div class="stat-number">{{ totalCommands }}</div>
+            <div class="stat-label">命令</div>
+            <div class="stat-sub">来自所有插件</div>
           </div>
         </div>
       </div>
@@ -177,7 +177,7 @@
                 <Button 
                   label="查看全部插件" 
                   text 
-                  @click="$router.push('/plugins/installed')"
+                  @click="router.push('/plugins/installed')"
                   size="small"
                 />
               </div>
@@ -186,65 +186,90 @@
         </Card>
       </div>
 
-      <!-- 适配器状态 -->
+      <!-- 上下文状态 -->
       <div class="col-12">
         <Card class="dashboard-card">
           <template #title>
             <div class="card-title">
-              <i class="pi pi-link mr-2"></i>
-              适配器状态
+              <i class="pi pi-sitemap mr-2"></i>
+              上下文状态
             </div>
           </template>
           <template #content>
-            <div class="adapters-overview">
-              <div 
-                v-for="adapter in adaptersData" 
-                :key="adapter.name"
-                class="adapter-overview-item"
-              >
-                <div class="adapter-header-mini">
-                  <div class="adapter-icon-mini" :class="`adapter-icon-${adapter.platform}`">
-                    <i :class="getPlatformIcon(adapter.platform)"></i>
-                  </div>
-                  <div class="adapter-info-mini">
-                    <h4 class="adapter-name-mini">{{ adapter.name }}</h4>
-                    <div class="adapter-meta-mini">
-                      <Tag 
-                        :value="adapter.status" 
-                        :severity="getStatusSeverity(adapter.status)"
-                        size="small"
-                      />
-                      <span class="platform-mini">{{ getPlatformName(adapter.platform) }}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="bots-mini">
+            <div class="contexts-overview">
+              <!-- 核心上下文 -->
+              <div class="context-category">
+                <h4 class="context-category-title">
+                  <i class="pi pi-star mr-2"></i>
+                  核心上下文
+                </h4>
+                <div class="context-items">
                   <div 
-                    v-for="bot in adapter.bots?.slice(0, 3)" 
-                    :key="bot.name"
-                    class="bot-mini"
-                    :class="{ 'bot-online': bot.connected, 'bot-offline': !bot.connected }"
+                    v-for="context in coreContexts" 
+                    :key="context.name"
+                    class="context-item-mini core-context"
                   >
-                    <div class="bot-avatar-mini">
-                      <i class="pi pi-user"></i>
+                    <div class="context-icon-mini">
+                      <i :class="getContextIcon(context.name)"></i>
                     </div>
-                    <span class="bot-name-mini">{{ bot.name }}</span>
-                  </div>
-                  
-                  <div v-if="(adapter.bots?.length || 0) > 3" class="more-bots-mini">
-                    +{{ (adapter.bots?.length || 0) - 3 }} 更多
+                    <div class="context-name-mini">{{ context.name }}</div>
+                    <Tag value="活跃" severity="success" size="small" />
                   </div>
                 </div>
               </div>
               
-              <div v-if="!adaptersData?.length" class="no-adapters">
-                <i class="pi pi-link text-2xl text-color-secondary mb-2"></i>
-                <p class="text-color-secondary">暂无适配器</p>
+              <!-- 服务上下文 -->
+              <div class="context-category">
+                <h4 class="context-category-title">
+                  <i class="pi pi-server mr-2"></i>
+                  服务上下文
+                </h4>
+                <div class="context-items">
+                  <div 
+                    v-for="context in serviceContexts" 
+                    :key="context.name"
+                    class="context-item-mini service-context"
+                  >
+                    <div class="context-icon-mini">
+                      <i :class="getContextIcon(context.name)"></i>
+                    </div>
+                    <div class="context-name-mini">{{ context.name }}</div>
+                    <Tag value="活跃" severity="success" size="small" />
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 适配器上下文 -->
+              <div v-if="adaptersData?.length" class="context-category">
+                <h4 class="context-category-title">
+                  <i class="pi pi-link mr-2"></i>
+                  适配器上下文
+                </h4>
+                <div class="context-items">
+                  <div 
+                    v-for="adapter in adaptersData" 
+                    :key="adapter.name"
+                    class="context-item-mini adapter-context"
+                  >
+                    <div class="context-icon-mini" :class="`adapter-icon-${adapter.platform}`">
+                      <i :class="getPlatformIcon(adapter.platform)"></i>
+                    </div>
+                    <div class="context-name-mini">{{ adapter.name }}</div>
+                    <Tag 
+                      :value="adapter.status" 
+                      :severity="getStatusSeverity(adapter.status)"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div class="view-all-contexts">
                 <Button 
-                  label="添加适配器" 
-                  size="small" 
-                  @click="$router.push('/adapters')"
+                  label="查看所有上下文" 
+                  text
+                  @click="router.push('/contexts/overview')"
+                  size="small"
                 />
               </div>
             </div>
@@ -258,9 +283,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useCommonStore } from '@zhin.js/client'
-import { updateAllData } from '../services/api'
+import { useRouter } from 'vue-router'
 
 const commonStore = useCommonStore()
+const router = useRouter()
 const refreshing = ref(false)
 // 数据
 const systemData = computed(() => (commonStore.store as any).system)
@@ -269,21 +295,23 @@ const adaptersData = computed(() => (commonStore.store as any).adapters || [])
 
 // 统计数据
 const activePluginsCount = computed(() => {
-  return pluginsData.value.filter(plugin => plugin.status === 'active').length
+  return pluginsData.value.length // 所有返回的插件都是活跃的
 })
 
-const activeAdaptersCount = computed(() => {
-  return adaptersData.value.filter(adapter => adapter.status === 'active').length
+// 上下文统计（基于真实数据）
+const totalContexts = computed(() => {
+  // 核心上下文 + 服务上下文 + 从插件提供的上下文
+  const pluginContexts = pluginsData.value.reduce((total, plugin) => total + (plugin.context_count || 0), 0)
+  return 3 + 4 + pluginContexts // 3个核心 + 4个服务 + 插件上下文
 })
 
-const totalBots = computed(() => {
-  return adaptersData.value.reduce((total, adapter) => total + (adapter.bots?.length || 0), 0)
+const activeContexts = computed(() => {
+  // 所有上下文都是活跃的
+  return totalContexts.value
 })
 
-const connectedBots = computed(() => {
-  return adaptersData.value.reduce((total, adapter) => {
-    return total + (adapter.bots?.filter(bot => bot.connected).length || 0)
-  }, 0)
+const totalCommands = computed(() => {
+  return pluginsData.value.reduce((total, plugin) => total + (plugin.command_count || 0), 0)
 })
 
 const memoryUsagePercent = computed(() => {
@@ -344,11 +372,43 @@ const getPlatformName = (platform: string) => {
 }
 
 // 刷新数据
+// 模拟的上下文数据
+const coreContexts = [
+  { name: 'app' },
+  { name: 'logger' },
+  { name: 'config' }
+]
+
+const serviceContexts = [
+  { name: 'server' },
+  { name: 'koa' },
+  { name: 'router' },
+  { name: 'web' }
+]
+
+const getContextIcon = (contextName: string) => {
+  const icons = {
+    'app': 'pi pi-bolt',
+    'logger': 'pi pi-file-edit',
+    'config': 'pi pi-cog',
+    'server': 'pi pi-server',
+    'koa': 'pi pi-globe',
+    'router': 'pi pi-directions',
+    'web': 'pi pi-desktop'
+  }
+  return icons[contextName] || 'pi pi-circle'
+}
+
 const refreshData = async () => {
   refreshing.value = true
   try {
-    await updateAllData()
-    console.log('✅ 仪表板数据刷新完成')
+    // 使用全局API
+    if (window.ZhinDataAPI?.updateAllData) {
+      await window.ZhinDataAPI.updateAllData()
+      console.log('✅ 仪表板数据刷新完成')
+    } else {
+      throw new Error('全局API未就绪')
+    }
   } catch (error) {
     console.error('❌ 仪表板数据刷新失败:', error)
   } finally {
@@ -449,8 +509,8 @@ const refreshData = async () => {
 }
 
 .stat-plugins .stat-icon { background: var(--blue-500); }
-.stat-adapters .stat-icon { background: var(--purple-500); }
-.stat-bots .stat-icon { background: var(--green-500); }
+.stat-contexts .stat-icon { background: var(--purple-500); }
+.stat-commands .stat-icon { background: var(--green-500); }
 .stat-memory .stat-icon { background: var(--orange-500); }
 
 .stat-icon {
@@ -593,111 +653,90 @@ const refreshData = async () => {
   border-top: 1px solid var(--surface-border);
 }
 
-/* 适配器概览 */
-.adapters-overview {
+/* 上下文概览 */
+.contexts-overview {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
-.adapter-overview-item {
+.context-category {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1.5rem;
-  background: var(--surface-50);
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
 }
 
-.adapter-header-mini {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.adapter-icon-mini {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: white;
-}
-
-.adapter-icon-qq { background: var(--blue-500); }
-.adapter-icon-kook { background: var(--purple-500); }
-.adapter-icon-console { background: var(--gray-500); }
-
-.adapter-name-mini {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.125rem;
+.context-category-title {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-color);
+  display: flex;
+  align-items: center;
 }
 
-.adapter-meta-mini {
+.context-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.context-item-mini {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  padding: 1rem;
+  background: var(--surface-50);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
 }
 
-.platform-mini {
-  font-size: 0.75rem;
-  color: var(--text-color-secondary);
+.context-item-mini:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
-.bots-mini {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+.core-context {
+  border-left: 3px solid var(--blue-500);
 }
 
-.bot-mini {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
+.service-context {
+  border-left: 3px solid var(--green-500);
 }
 
-.bot-online {
-  background: var(--green-50);
-  color: var(--green-700);
-  border: 1px solid var(--green-200);
+.adapter-context {
+  border-left: 3px solid var(--purple-500);
 }
 
-.bot-offline {
-  background: var(--red-50);
-  color: var(--red-700);
-  border: 1px solid var(--red-200);
-}
-
-.bot-avatar-mini {
-  width: 20px;
-  height: 20px;
-  background: currentColor;
-  border-radius: 50%;
+.context-icon-mini {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.625rem;
+  font-size: 1rem;
   color: white;
 }
 
-.more-bots-mini {
-  font-size: 0.75rem;
-  color: var(--text-color-secondary);
-  padding: 0.5rem;
+.adapter-icon-qq .context-icon-mini { background: var(--blue-500); }
+.adapter-icon-kook .context-icon-mini { background: var(--purple-500); }
+.adapter-icon-console .context-icon-mini { background: var(--gray-500); }
+
+.context-name-mini {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+  text-align: center;
 }
 
-.no-adapters {
+.view-all-contexts {
   text-align: center;
-  padding: 2rem;
+  padding: 1rem;
+  border-top: 1px solid var(--surface-border);
 }
 
 @media (max-width: 768px) {
@@ -724,12 +763,8 @@ const refreshData = async () => {
     text-align: center;
   }
   
-  .adapter-overview-item {
-    padding: 1rem;
-  }
-  
-  .bots-mini {
-    justify-content: center;
+  .context-items {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 </style>

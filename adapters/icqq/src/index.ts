@@ -1,6 +1,6 @@
 import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@icqqjs/icqq";
 import path from "path";
-import {Bot,BotConfig,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
+import {Bot,BotConfig,useContext,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
 declare module '@zhin.js/types'{
     interface GlobalContext{
         icqq:Adapter<IcqqBot>
@@ -128,3 +128,44 @@ export namespace IcqqBot{
     }
 }
 registerAdapter(new Adapter('icqq',IcqqBot))
+
+useContext('web', (web) => {
+    // 注册ICQQ适配器的客户端入口文件
+    const clientEntryPath = path.resolve(import.meta.dirname, '../client/index.ts')
+    web.addEntry(clientEntryPath)
+});
+useContext('router','icqq', (router,icqq) => {
+    console.log('🚀 ICQQ路由正在注册...')
+    console.log('📊 当前机器人数量:', icqq.bots.size)
+    
+    router.get('/api/icqq/bots', (ctx) => {
+        console.log('📞 收到ICQQ机器人数据请求')
+        
+        try {
+            const bots = Array.from(icqq.bots.values())
+            console.log('🤖 找到机器人:', bots.length, '个')
+            
+            const result = bots.map(bot => {
+                console.log('📋 处理机器人:', bot.config.name, '连接状态:', bot.connected)
+                return {
+                    name: bot.config.name,
+                    connected: bot.connected,
+                    groupCount: bot.gl?.size || 0,
+                    friendCount: bot.fl?.size || 0,
+                    receiveCount: bot.stat?.recv_msg_cnt || 0,
+                    sendCount: bot.stat?.sent_msg_cnt || 0,
+                    loginMode: bot.config.password ? 'password' : 'qrcode'
+                }
+            })
+            
+            console.log('✅ 返回机器人数据:', result)
+            ctx.body = result
+        } catch (error) {
+            console.error('❌ 获取ICQQ机器人数据失败:', error)
+            ctx.status = 500
+            ctx.body = { error: '获取机器人数据失败', message: (error as Error).message }
+        }
+    })
+    
+    console.log('✅ ICQQ路由注册完成')
+})

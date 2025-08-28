@@ -137,6 +137,36 @@ describe('App类测试', () => {
     it('当上下文不存在时应该抛出错误', () => {
       expect(() => app.getContext('non-existent')).toThrow("can't find Context of non-existent")
     })
+
+    it('应该正确设置和获取上下文描述', async () => {
+      // 创建测试插件
+      const plugin = app.createDependency('test-plugin-desc', 'test-plugin-desc.ts')
+      
+      // 注册带描述的上下文  
+      const context = {
+        name: 'test-context',
+        description: '这是一个测试上下文，用于验证描述字段功能',
+        mounted: () => ({ testValue: 'test' }),
+        dispose: () => {}
+      }
+      plugin.register(context)
+      
+      // 等待插件挂载
+      await plugin.mounted()
+      
+      // 使用上下文来验证功能
+      plugin.useContext('test-context', () => {
+        // 验证上下文可以正常获取（先测试基本功能）
+        const retrievedContext = app.getContext('test-context')
+        expect(retrievedContext).toEqual({ testValue: 'test' })
+        
+        // 验证上下文列表包含描述信息
+        const contextList = app.contextList
+        const testContext = contextList.find(ctx => ctx.name === 'test-context')
+        expect(testContext).toBeDefined()
+        expect(testContext?.description).toBe('这是一个测试上下文，用于验证描述字段功能')
+      })
+    })
   })
 
   describe('消息处理测试', () => {

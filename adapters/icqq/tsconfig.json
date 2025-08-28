@@ -18,7 +18,10 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "types": [
+      "@zhin.js/http"
+    ]
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

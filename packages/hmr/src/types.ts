@@ -15,6 +15,7 @@ export interface Logger {
 /** Context 接口 */
 export interface Context<R = any,T extends Dependency=Dependency> {
     name: string;
+    description:string
     value?: R;
     mounted?: (parent: T) => R | Promise<R>;
     dispose?: (value: R) => void;

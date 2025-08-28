@@ -11,6 +11,8 @@
 - 🔄 请求体解析 (JSON)
 - 🌍 可配置的服务器设置
 - 📊 路由管理和中间件支持
+- 📋 内置 API 端点 (系统状态、插件管理、适配器信息)
+- 📝 上下文描述信息支持
 
 ## 技术架构
 
@@ -87,7 +89,39 @@ declare module '@zhin.js/types' {
 
 ## API 使用
 
-### HTTP 路由
+### 内置 API 端点
+
+插件提供以下内置 API：
+
+#### 适配器管理 API
+- `GET /api/adapters` - 获取所有上下文列表
+
+**响应格式:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "icqq-adapter",
+      "desc": "ICQQ适配器，用于连接QQ平台"
+    },
+    {
+      "name": "web-console", 
+      "desc": "Web控制台服务，提供管理界面"
+    }
+  ]
+}
+```
+
+#### 其他 API
+- `GET /api/system/status` - 系统状态信息
+- `GET /api/plugins` - 插件列表
+- `GET /api/config` - 配置信息
+- `POST /api/message/send` - 发送消息
+- `POST /api/plugins/:name/reload` - 重载插件
+- `GET /api/health` - 健康检查
+
+### 自定义 HTTP 路由
 
 ```javascript
 import { useContext } from 'zhin.js'

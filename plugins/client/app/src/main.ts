@@ -2,11 +2,47 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import PrimeVue from "primevue/config";
 import Aura from '@primeuix/themes/aura';
+import 'primeicons/primeicons.css';
 import { addPage, router, useCommonStore } from '@zhin.js/client';
-import { updateAllData } from './services/api';
+import { updateAllData, DataService } from './services/api';
 import App from './App.vue';
 
+// 全局暴露数据管理方法，供外部模块使用
+declare global {
+    interface Window {
+        ZhinDataAPI: {
+            updateAllData: () => Promise<void>
+            getSystemStatus: () => Promise<any>
+            getPlugins: () => Promise<any>
+            getAdapters: () => Promise<any>
+            reloadPlugin: (pluginName: string) => Promise<any>
+            sendMessage: (payload: any) => Promise<any>
+        }
+        ZhinStore: {
+            getCommonStore: () => any
+        }
+    }
+}
+
 const pinia = createPinia();
+
+// 暴露全局API，供外部模块和适配器使用
+window.ZhinDataAPI = {
+    updateAllData: () => updateAllData().then(() => Promise.resolve()),
+    getSystemStatus: DataService.getSystemStatus,
+    getPlugins: DataService.getPlugins,
+    getAdapters: DataService.getAdapters,
+    reloadPlugin: DataService.reloadPlugin,
+    sendMessage: DataService.sendMessage,
+}
+
+// 暴露全局Store访问器
+window.ZhinStore = {
+    getCommonStore: () => useCommonStore(pinia)
+}
+
+console.log('🌍 Zhin 全局API已暴露到 window 对象')
+
 const wsUrl = `${window.location.protocol.replace(/^http?/, 'ws')}${window.location.host}/server`;
 const ws = new WebSocket(wsUrl);
 
@@ -50,15 +86,42 @@ app.use(pinia).use(router).use(PrimeVue,{
     }
 });
 app.config.globalProperties.$ws = ws;
+// 注册主布局路由
 router.addRoute({
     path: '/',
     name: 'Zhin',
     component: () => import('./pages/$.vue'),
 });
+
+// 注册所有内置页面（addPage 会自动添加路由和菜单）
 addPage({
     parentName: 'Zhin',
-    path: '/',
+    path: '/dashboard',
     name: 'Dashboard',
     component: () => import('./pages/dashboard.vue'),
 });
+
+addPage({
+    parentName: 'Zhin',
+    path: '/system/status',
+    name: 'Status',
+    component: () => import('./pages/system/status.vue'),
+});
+
+addPage({
+    parentName: 'Zhin',
+    path: '/contexts/overview',
+    name: 'Overview',
+    component: () => import('./pages/contexts/overview.vue'),
+});
+
+addPage({
+    parentName: 'Zhin',
+    path: '/plugins/installed',
+    name: 'Installed',
+    component: () => import('./pages/plugins/installed.vue'),
+});
+
+console.log('📝 所有内置页面已通过 addPage 注册');
+
 app.mount('#app');

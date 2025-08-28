@@ -152,7 +152,7 @@ addCommand(new MessageCommand('send')
 
 ### 上下文系统 API
 
-基于实际的 register 和 useContext 实现：
+基于实际的 register 和 useContext 实现，现已支持上下文描述信息：
 
 ```typescript
 import { register, useContext } from 'zhin.js'
@@ -160,6 +160,7 @@ import { register, useContext } from 'zhin.js'
 // 🔧 注册上下文服务
 register({
   name: 'database',
+  description: '数据库服务，提供数据查询和存储功能', // 📝 新增：上下文描述
   async mounted(plugin) {
     // 创建数据库连接
     const db = await createConnection()
@@ -212,6 +213,51 @@ useContext('icqq', (p) => {
   addCommand(likeCommand)
 })
 ```
+
+#### 上下文描述信息
+
+从框架最新版本开始，支持为上下文添加描述信息，用于更好的系统管理和文档化：
+
+```typescript
+// 📝 带描述的上下文注册
+register({
+  name: 'redis-cache',
+  description: 'Redis 缓存服务，提供高性能数据缓存功能',
+  async mounted(plugin) {
+    const redis = await createRedisConnection()
+    return {
+      set: (key: string, value: any, ttl?: number) => redis.set(key, value, ttl),
+      get: (key: string) => redis.get(key)
+    }
+  }
+})
+
+// 🌐 HTTP API - 获取所有上下文及其描述
+// GET /api/adapters
+{
+  "success": true,
+  "data": [
+    {
+      "name": "redis-cache",
+      "desc": "Redis 缓存服务，提供高性能数据缓存功能"
+    },
+    {
+      "name": "icqq-adapter", 
+      "desc": "ICQQ适配器，用于连接QQ平台"
+    },
+    {
+      "name": "web-console",
+      "desc": "Web控制台服务，提供管理界面"
+    }
+  ]
+}
+```
+
+**描述字段的用途：**
+- 📋 在Web管理界面中显示上下文的详细说明
+- 🔍 帮助开发者理解各个上下文的作用和功能
+- 📊 为系统监控和调试提供更多信息
+- 📚 自动生成系统文档时的描述信息
 
 ### 组件系统 API
 

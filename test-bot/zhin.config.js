@@ -40,9 +40,9 @@ export default defineConfig(async (env)=>{
     ],
     // 要加载的插件列表
     plugins: [
-      'adapter-icqq',
-      'http',
-      'console',
+      'http',           // 🚀 HTTP先加载，注册基础API路由
+      'adapter-icqq',   // 🤖 ICQQ适配器注册 /api/icqq/* 路由
+      'console',        // 🖥️ 控制台最后加载，处理静态文件
       'adapter-kook',
       'adapter-process',
       'test-plugin'

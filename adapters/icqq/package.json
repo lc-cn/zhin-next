@@ -5,6 +5,11 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "client",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,6 +28,17 @@
   },
   "peerDependencies": {
     "zhin.js": "workspace:*",
-    "@zhin.js/types": "workspace:*"
+    "@zhin.js/client": "workspace:*",
+    "@zhin.js/http": "workspace:*",
+    "@zhin.js/types": "workspace:*",
+    "@zhin.js/console": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@zhin.js/client": {
+      "optional": true
+    },
+    "@zhin.js/console": {
+      "optional": true
+    }
   }
 } 

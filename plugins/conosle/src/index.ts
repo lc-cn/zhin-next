@@ -68,7 +68,7 @@ useContext('router', async (router) => {
             },
         },
         resolve: {
-            dedupe: ['vue', 'vue-router', 'pinia','primevue'],
+            dedupe: ['vue', 'vue-router', 'pinia','primevue','primeicons'],
             alias: {
                 '@zhin.js/client': path.resolve(root, '../src'),
             },
@@ -82,8 +82,13 @@ useContext('router', async (router) => {
             },
         },
     });
-    router.all('*all', async (ctx, next) => {
+    router.all('/*all', async (ctx, next) => {
         await next();
+        // 🚀 如果已经有响应体，说明其他路由已处理
+        if (ctx.body !== undefined || ctx.respond === false) {
+            return;
+        }
+        
         const url=ctx.request.originalUrl.replace(base,'')
         const name = ctx.path.slice(1);
         const sendFile = (filename: string) => {
@@ -106,7 +111,13 @@ useContext('router', async (router) => {
         ctx.type = 'html';
         ctx.body = await vite.transformIndexHtml(url, template);
     });
-    router.use(connect(vite.middlewares));
+    
+    // 🚀 最后注册Vite中间件 (在所有API路由之后)
+    console.log('🖥️ Console插件注册Vite中间件 - 处理静态文件和SPA路由')
+    router.use((ctx,next)=>{
+        if(ctx.request.originalUrl.startsWith('/api')) return next()
+        return connect(vite.middlewares)(ctx,next);
+    });
 
     const webServer:WebServer={
         vite,
@@ -145,55 +156,9 @@ useContext('router', async (router) => {
 
     // WebSocket 连接处理
     webServer.ws.on('connection', (ws: WebSocket) => {
-        console.log('新的WebSocket连接已建立');
-        
         // 发送初始数据
         ws.send(JSON.stringify(createSyncMsg('entries', Object.values(webServer.entries))));
-        
-        // 发送菜单数据
-        const menus = [
-            {
-                name: 'Dashboard',
-                path: '/dashboard',
-                icon: 'pi pi-home',
-                parentName: 'Zhin'
-            },
-            {
-                name: 'System',
-                path: '/system',
-                icon: 'pi pi-cog',
-                parentName: 'Zhin',
-                children: [
-                    { name: 'Status', path: '/system/status', icon: 'pi pi-info-circle' },
-                    { name: 'Logs', path: '/system/logs', icon: 'pi pi-file' }
-                ]
-            },
-            {
-                name: 'Plugins',
-                path: '/plugins',
-                icon: 'pi pi-th-large',
-                parentName: 'Zhin',
-                children: [
-                    { name: 'Installed', path: '/plugins/installed', icon: 'pi pi-check' },
-                    { name: 'Available', path: '/plugins/available', icon: 'pi pi-download' }
-                ]
-            },
-            {
-                name: 'Adapters', 
-                path: '/adapters',
-                icon: 'pi pi-link',
-                parentName: 'Zhin'
-            },
-            {
-                name: 'Messages',
-                path: '/messages',
-                icon: 'pi pi-comments',
-                parentName: 'Zhin'
-            }
-        ];
-        
-        ws.send(JSON.stringify(createSyncMsg('menus', menus)));
-        
+
         // 通知客户端进行数据初始化
         ws.send(JSON.stringify({
             type: 'init-data',
@@ -201,7 +166,6 @@ useContext('router', async (router) => {
         }));
         
         ws.on('close', () => {
-            console.log('WebSocket连接已关闭');
         });
         
         ws.on('error', (error) => {
@@ -220,6 +184,7 @@ useContext('router', async (router) => {
     });
     register({
         name:'web',
+        description:"web服务",
         value:webServer
     })
 });
