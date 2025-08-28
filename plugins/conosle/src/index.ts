@@ -126,8 +126,97 @@ useContext('router', async (router) => {
         },
         ws:router.ws('/server')
     }
+    // 数据推送函数
+    const broadcastToAll = (message: any) => {
+        for (const ws of webServer.ws.clients || []) {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+            }
+        }
+    }
+
+    // 推送数据更新通知
+    const notifyDataUpdate = () => {
+        broadcastToAll({
+            type: 'data-update',
+            timestamp: Date.now()
+        });
+    }
+
+    // WebSocket 连接处理
     webServer.ws.on('connection', (ws: WebSocket) => {
+        console.log('新的WebSocket连接已建立');
+        
+        // 发送初始数据
         ws.send(JSON.stringify(createSyncMsg('entries', Object.values(webServer.entries))));
+        
+        // 发送菜单数据
+        const menus = [
+            {
+                name: 'Dashboard',
+                path: '/dashboard',
+                icon: 'pi pi-home',
+                parentName: 'Zhin'
+            },
+            {
+                name: 'System',
+                path: '/system',
+                icon: 'pi pi-cog',
+                parentName: 'Zhin',
+                children: [
+                    { name: 'Status', path: '/system/status', icon: 'pi pi-info-circle' },
+                    { name: 'Logs', path: '/system/logs', icon: 'pi pi-file' }
+                ]
+            },
+            {
+                name: 'Plugins',
+                path: '/plugins',
+                icon: 'pi pi-th-large',
+                parentName: 'Zhin',
+                children: [
+                    { name: 'Installed', path: '/plugins/installed', icon: 'pi pi-check' },
+                    { name: 'Available', path: '/plugins/available', icon: 'pi pi-download' }
+                ]
+            },
+            {
+                name: 'Adapters', 
+                path: '/adapters',
+                icon: 'pi pi-link',
+                parentName: 'Zhin'
+            },
+            {
+                name: 'Messages',
+                path: '/messages',
+                icon: 'pi pi-comments',
+                parentName: 'Zhin'
+            }
+        ];
+        
+        ws.send(JSON.stringify(createSyncMsg('menus', menus)));
+        
+        // 通知客户端进行数据初始化
+        ws.send(JSON.stringify({
+            type: 'init-data',
+            timestamp: Date.now()
+        }));
+        
+        ws.on('close', () => {
+            console.log('WebSocket连接已关闭');
+        });
+        
+        ws.on('error', (error) => {
+            console.error('WebSocket错误:', error);
+        });
+    });
+
+    // 定时通知客户端更新数据
+    const dataUpdateInterval = setInterval(() => {
+        notifyDataUpdate();
+    }, 5000); // 每5秒通知一次更新
+
+    // 插件卸载时清理定时器
+    process.on('exit', () => {
+        clearInterval(dataUpdateInterval);
     });
     register({
         name:'web',

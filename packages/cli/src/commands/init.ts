@@ -152,27 +152,36 @@ async function createProjectStructure(projectPath: string, projectName: string, 
   await fs.ensureDir(path.join(projectPath, 'dist'));
   await fs.ensureDir(path.join(projectPath, 'data'));
   
+  // 检查是否在工作区中
+  const isInWorkspace = await checkIfInWorkspace();
+  const versionSuffix = isInWorkspace ? 'workspace:*' : 'latest';
+  
   // 创建 package.json
   const packageJson = {
     name: projectName,
+    private: true,
     version: '0.1.0',
     description: `${projectName} 机器人`,
     type: 'module',
     main: 'src/index.ts',
     scripts: {
-      dev: options.runtime === 'bun' ? 'zhin dev --bun' : 'zhin dev',
+      dev: 'zhin dev',
       start: options.runtime === 'bun' ? 'zhin start --bun' : 'zhin start',
       daemon: options.runtime === 'bun' ? 'zhin start --bun --daemon' : 'zhin start --daemon',
       build: 'zhin build',
       stop: 'zhin stop'
     },
     dependencies: {
-      '@zhin.js/core': 'workspace:*'
+      'zhin.js': versionSuffix,
+      '@zhin.js/adapter-process': versionSuffix,
+      '@zhin.js/http': versionSuffix,
+      '@zhin.js/console': versionSuffix
     },
     devDependencies: {
-      '@zhin.js/cli': 'workspace:*',
+      '@zhin.js/cli': versionSuffix,
+      '@zhin.js/types': versionSuffix,
       'typescript': '^5.0.0',
-      ...(options.runtime === 'node' && { 'tsx': '^4.0.0' })
+      'tsx': '^4.0.0'
     },
     engines: {
       node: '>=18.0.0'
@@ -200,10 +209,14 @@ async function createProjectStructure(projectPath: string, projectName: string, 
       declaration: false,
       sourceMap: true,
       baseUrl: './src',
-      paths: {
-        '@zhin.js/core': ['../../packages/core/src/index.ts'],
-        '@zhin.js/core/*': ['../../packages/core/src/*']
-      }
+      types: [
+        '@types/node',
+        '@zhin.js/types',
+        'zhin.js',
+        '@zhin.js/http',
+        '@zhin.js/adapter-process',
+        '@zhin.js/console'
+      ]
     },
     include: ['src/**/*'],
     exclude: ['dist', 'node_modules']
@@ -215,7 +228,7 @@ async function createProjectStructure(projectPath: string, projectName: string, 
   await createConfigFile(projectPath, options.config!);
   
   // 创建主入口文件
-  const indexContent = `import { createApp } from '@zhin.js/core';
+  const indexContent = `import { createApp } from 'zhin.js';
 
 // 启动机器人
 async function main() {
@@ -230,8 +243,8 @@ async function main() {
           process.exit(0);
         };
 
-        process.on('SIGINT', shutdown);
-        process.on('SIGTERM', shutdown);
+        process.on('SIGINT', () => shutdown('SIGINT'));
+        process.on('SIGTERM', () => shutdown('SIGTERM'));
     } catch (error) {
         console.error('机器人启动失败:', error);
         process.exit(1);
@@ -246,45 +259,75 @@ main().catch(console.error);
   
   // 创建示例插件
   const pluginContent = `import {
+  useLogger,
+  onMessage,
+  addCommand,
+  addMiddleware,
+  MessageCommand,
+  useContext,
   onDispose,
-  addMiddleware, useContext, sendMessage, beforeSend, onGroupMessage,
-} from '@zhin.js/core';
-import * as process from "node:process";
+} from 'zhin.js';
 
-onDispose(async ()=>{
-  console.log('插件已销毁')
-})
+const logger = useLogger();
 
-addMiddleware(async (message, next)=>{ // 添加中间件到插件
-  // 在这里处理消息
-  return next()
-})
-
-let hasChanged=false
-beforeSend((options)=>{
-  if(!hasChanged){
-    options.content='bar'
-    hasChanged=true
-  }
-  return options
-})
-
-onGroupMessage((m)=>{
-  if(m.channel.id==='629336764'){
-    m.reply('hello')
-  }
-})
-
-// 依赖process上下文
-useContext('process',()=>{
-  sendMessage({
-    context:'process',
-    bot:\`\${process.pid}\`,
-    id:process.title,
-    type:'private',
-    content:'foo'
+// 添加命令
+addCommand(new MessageCommand('hello')
+  .action(async (message) => {
+    logger.info('Hello command called by:', message.sender.name);
+    return '你好！欢迎使用 Zhin 机器人框架！';
   })
-})
+);
+
+addCommand(new MessageCommand('status')
+  .action(() => {
+    const uptime = process.uptime() * 1000;
+    const memory = process.memoryUsage();
+    return [
+      '🤖 机器人状态',
+      \`⏱️ 运行时间: \${formatTime(uptime)}\`,
+      \`📊 内存使用: \${(memory.rss / 1024 / 1024).toFixed(2)}MB\`,
+      \`🔧 Node.js: \${process.version}\`
+    ].join('\\n');
+  })
+);
+
+// 添加中间件
+addMiddleware(async (message, next) => {
+  logger.info(\`收到消息: \${message.raw}\`);
+  await next();
+});
+
+// 监听消息
+onMessage(async (message) => {
+  if (message.raw.includes('帮助')) {
+    await message.reply('可用命令：hello, status\\n输入命令即可使用！');
+  }
+});
+
+// 使用 process 上下文
+useContext('process', () => {
+  logger.info('Process 适配器已就绪，可以在控制台输入消息进行测试');
+});
+
+// 插件销毁时的清理
+onDispose(() => {
+  logger.info('测试插件已销毁');
+});
+
+// 工具函数
+function formatTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return \`\${days}天 \${hours % 24}小时\`;
+  if (hours > 0) return \`\${hours}小时 \${minutes % 60}分钟\`;
+  if (minutes > 0) return \`\${minutes}分钟 \${seconds % 60}秒\`;
+  return \`\${seconds}秒\`;
+}
+
+logger.info('测试插件已加载');
 `;
   
   await fs.writeFile(path.join(projectPath, 'src', 'plugins', 'test-plugin.ts'), pluginContent);
@@ -487,6 +530,30 @@ MIT License
 `;
     await fs.writeFile(path.join(projectPath, 'pnpm-workspace.yaml'), workspaceContent);
   }
+  
+  // 创建环境变量示例文件
+  const envExampleContent = `# Zhin Bot 环境变量配置示例
+# 复制为 .env 文件并根据需要修改
+
+# 调试模式
+DEBUG=true
+
+# 插件目录 (可选)
+# PLUGIN_DIR=./src/plugins
+
+# KOOK 机器人配置 (如果使用 KOOK 适配器)
+# KOOK_TOKEN=your-kook-token
+
+# ICQQ 机器人配置 (如果使用 ICQQ 适配器)  
+# ICQQ_SCAN_UIN=your-qq-number
+# ICQQ_LOGIN_UIN=your-qq-number
+# ICQQ_SIGN_ADDR=http://localhost:8080
+
+# OneBot 机器人配置 (如果使用 OneBot 适配器)
+# BOT_URL=ws://localhost:8080
+# ACCESS_TOKEN=your-access-token
+`;
+  await fs.writeFile(path.join(projectPath, '.env.example'), envExampleContent);
 }
 
 async function createConfigFile(projectPath: string, format: string) {
@@ -515,12 +582,6 @@ function getConfigContent(format: string): string {
           {
             name: `${process.pid}`,
             context: 'process'
-          },
-          {
-            name: '1689919782',
-            context: 'icqq',
-            log_level: 'off',
-            platform: 4
           }
         ],
         plugin_dirs: [
@@ -528,8 +589,9 @@ function getConfigContent(format: string): string {
           'node_modules'
         ],
         plugins: [
-          'icqq',
-          'process',
+          'adapter-process',
+          'http',
+          'console',
           'test-plugin'
         ],
         debug: false
@@ -542,10 +604,6 @@ function getConfigContent(format: string): string {
 bots:
   - name: \${process.pid}
     context: process
-  - name: '1689919782'
-    context: icqq
-    log_level: off
-    platform: 4
 
 # 插件目录
 plugin_dirs:
@@ -554,8 +612,9 @@ plugin_dirs:
 
 # 要加载的插件列表
 plugins:
-  - icqq
-  - process
+  - adapter-process
+  - http
+  - console
   - test-plugin
 
 # 调试模式
@@ -570,92 +629,80 @@ debug: false
 name = "\${process.pid}"
 context = "process"
 
-[[bots]]
-name = "1689919782"
-context = "icqq"
-log_level = "off"
-platform = 4
-
 # 插件目录
 plugin_dirs = ["./src/plugins", "node_modules"]
 
 # 要加载的插件列表
-plugins = ["icqq", "process", "test-plugin"]
+plugins = ["adapter-process", "http", "console", "test-plugin"]
 
 # 调试模式
 debug = false
 `;
       
     case 'ts':
-      return `import { defineConfig } from '@zhin.js/core';
+      return `import { defineConfig } from 'zhin.js';
 
-export default defineConfig(async (env)=>{
+export default defineConfig(async (env) => {
   return {
     // 机器人配置
     bots: [
       {
         name: \`\${process.pid}\`,
         context: 'process'
-      },
-      {
-        name: '1689919782',
-        context: 'icqq',
-        log_level: 'off',
-        platform: 4
       }
     ],
+    
     // 插件目录
     plugin_dirs: [
       env.PLUGIN_DIR || './src/plugins',
       'node_modules'
     ],
+    
     // 要加载的插件列表
     plugins: [
-      'icqq',
-      'process',
+      'adapter-process',
+      'http',
+      'console',
       'test-plugin'
     ],
 
     // 调试模式
     debug: env.DEBUG === 'true'
-  }
-})
+  };
+});
 `;
       
     case 'js':
-      return `import { defineConfig } from '@zhin.js/core';
+      return `import { defineConfig } from 'zhin.js';
 
-export default defineConfig(async (env)=>{
+export default defineConfig(async (env) => {
   return {
     // 机器人配置
     bots: [
       {
         name: \`\${process.pid}\`,
         context: 'process'
-      },
-      {
-        name: '1689919782',
-        context: 'icqq',
-        log_level: 'off',
-        platform: 4
       }
     ],
+    
     // 插件目录
     plugin_dirs: [
       env.PLUGIN_DIR || './src/plugins',
       'node_modules'
     ],
+    
     // 要加载的插件列表
     plugins: [
-      'icqq',
-      'process',
+      'adapter-process',
+      'http',
+      'console',
       'test-plugin'
     ],
 
     // 调试模式
     debug: env.DEBUG === 'true'
-  }
-})
+  };
+});
 `;
 
     default:
@@ -672,12 +719,6 @@ function getConfigExample(format: string): string {
     {
       "name": "\${process.pid}",
       "context": "process"
-    },
-    {
-      "name": "1689919782",
-      "context": "icqq",
-      "log_level": "off",
-      "platform": 4
     }
   ],
   "plugin_dirs": [
@@ -685,8 +726,9 @@ function getConfigExample(format: string): string {
     "node_modules"
   ],
   "plugins": [
-    "icqq",
-    "process",
+    "adapter-process",
+    "http",
+    "console",
     "test-plugin"
   ],
   "debug": false
@@ -701,10 +743,6 @@ function getConfigExample(format: string): string {
 bots:
   - name: \${process.pid}
     context: process
-  - name: '1689919782'
-    context: icqq
-    log_level: off
-    platform: 4
 
 # 插件目录
 plugin_dirs:
@@ -713,8 +751,9 @@ plugin_dirs:
 
 # 要加载的插件列表
 plugins:
-  - icqq
-  - process
+  - adapter-process
+  - http
+  - console
   - test-plugin
 
 # 调试模式
@@ -730,17 +769,11 @@ debug: false
 name = "\${process.pid}"
 context = "process"
 
-[[bots]]
-name = "1689919782"
-context = "icqq"
-log_level = "off"
-platform = 4
-
 # 插件目录
 plugin_dirs = ["./src/plugins", "node_modules"]
 
 # 要加载的插件列表
-plugins = ["icqq", "process", "test-plugin"]
+plugins = ["adapter-process", "http", "console", "test-plugin"]
 
 # 调试模式
 debug = false
@@ -748,79 +781,102 @@ debug = false
 `;
     case 'ts':
       return `\`\`\`typescript
-import { defineConfig } from '@zhin.js/core';
+import { defineConfig } from 'zhin.js';
 
-export default defineConfig(async (env)=>{
+export default defineConfig(async (env) => {
   return {
     // 机器人配置
     bots: [
       {
         name: \`\${process.pid}\`,
         context: 'process'
-      },
-      {
-        name: '1689919782',
-        context: 'icqq',
-        log_level: 'off',
-        platform: 4
       }
     ],
+    
     // 插件目录
     plugin_dirs: [
       env.PLUGIN_DIR || './src/plugins',
       'node_modules'
     ],
+    
     // 要加载的插件列表
     plugins: [
-      'icqq',
-      'process',
+      'adapter-process',
+      'http',
+      'console',
       'test-plugin'
     ],
 
     // 调试模式
     debug: env.DEBUG === 'true'
-  }
-})
+  };
+});
 \`\`\`
 `;
     case 'js':
       return `\`\`\`javascript
-import { defineConfig } from '@zhin.js/core';
+import { defineConfig } from 'zhin.js';
 
-export default defineConfig(async (env)=>{
+export default defineConfig(async (env) => {
   return {
     // 机器人配置
     bots: [
       {
         name: \`\${process.pid}\`,
         context: 'process'
-      },
-      {
-        name: '1689919782',
-        context: 'icqq',
-        log_level: 'off',
-        platform: 4
       }
     ],
+    
     // 插件目录
     plugin_dirs: [
       env.PLUGIN_DIR || './src/plugins',
       'node_modules'
     ],
+    
     // 要加载的插件列表
     plugins: [
-      'icqq',
-      'process',
+      'adapter-process',
+      'http',
+      'console',
       'test-plugin'
     ],
 
     // 调试模式
     debug: env.DEBUG === 'true'
-  }
-})
+  };
+});
 \`\`\`
 `;
     default:
       throw new Error(`不支持的配置格式: ${format}`);
   }
+}
+
+async function checkIfInWorkspace(): Promise<boolean> {
+  let currentDir = process.cwd();
+  
+  while (currentDir !== path.dirname(currentDir)) {
+    // 检查 pnpm-workspace.yaml
+    const pnpmWorkspacePath = path.join(currentDir, 'pnpm-workspace.yaml');
+    if (fs.existsSync(pnpmWorkspacePath)) {
+      return true;
+    }
+    
+    // 检查 package.json 中的 workspaces 字段
+    const packageJsonPath = path.join(currentDir, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      try {
+        const packageJson = fs.readJsonSync(packageJsonPath);
+        if (packageJson.workspaces) {
+          return true;
+        }
+      } catch {
+        // 忽略错误，继续向上查找
+      }
+    }
+    
+    currentDir = path.dirname(currentDir);
+  }
+  
+  return false;
 } 

@@ -12,25 +12,25 @@ export default defineConfig(async (env)=>{
       {
         name: 'zhin',
         context:'kook',
-        token: process.env.KOOK_TOKEN,
+        token: env.KOOK_TOKEN,
         mode: 'websocket',
         logLevel:'off',
         ignore: 'bot',
       },
       {
-        name: process.env.ICQQ_SCAN_UIN,
+        name: env.ICQQ_SCAN_UIN,
         context:'icqq',
         log_level:'off',
         platform:4
       },
-      {
-        name: process.env.ICQQ_LOGIN_UIN,
-        context:'icqq',
-        log_level:'off',
-        password:"Lcl9623.",
-        sign_api_addr: process.env.ICQQ_SIGN_ADDR,
-        platform:2
-      }
+      // {
+      //   name: env.ICQQ_LOGIN_UIN,
+      //   context:'icqq',
+      //   log_level:'off',
+      //   password:"Lcl9623.",
+      //   sign_api_addr: env.ICQQ_SIGN_ADDR,
+      //   platform:2
+      // }
     ],
     // 插件目录
     plugin_dirs: [

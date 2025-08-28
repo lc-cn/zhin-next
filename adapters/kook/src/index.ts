@@ -70,7 +70,6 @@ export class KookBot extends Client implements Bot<Required<KookBotConfig>>{
             }
             case "channel":{
                 const result=await this.sendChannelMsg(options.id,KookBot.toSendable(options.content))
-                console.log(result)
                 this.plugin.logger.info(`send ${options.type}(${options.id}):${result['msg_id' as 'message_id']}`)
                 break;
             }
