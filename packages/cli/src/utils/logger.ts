@@ -25,7 +25,11 @@ switch (logLevel.toLowerCase()) {
 export const logger = {
   info: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.info(message, { args })
+      // 对于多个参数，直接拼接到消息中，这样更自然
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.info(fullMessage)
     } else {
       cliLogger.info(message)
     }
@@ -33,7 +37,10 @@ export const logger = {
   
   success: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.success(message, { args })
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.success(fullMessage)
     } else {
       cliLogger.success(message)
     }
@@ -41,7 +48,10 @@ export const logger = {
   
   warn: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.warn(message, { args })
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.warn(fullMessage)
     } else {
       cliLogger.warn(message)
     }
@@ -49,7 +59,10 @@ export const logger = {
   
   error: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.error(message, { args })
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.error(fullMessage)
     } else {
       cliLogger.error(message)
     }
@@ -57,7 +70,10 @@ export const logger = {
   
   log: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.info(message, { args })
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.info(fullMessage)
     } else {
       cliLogger.info(message)
     }
@@ -65,7 +81,10 @@ export const logger = {
 
   debug: (message: string, ...args: any[]) => {
     if (args.length > 0) {
-      cliLogger.debug(message, { args })
+      const fullMessage = message + ' ' + args.map(arg => 
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ')
+      cliLogger.debug(fullMessage)
     } else {
       cliLogger.debug(message)
     }
