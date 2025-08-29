@@ -14,7 +14,7 @@ function formatMemoSize(size:number){
 }
 addCommand(new MessageCommand('send')
     .action((_,result)=>result.remaining))
-addCommand(new MessageCommand('status')
+addCommand(new MessageCommand('zt')
     .action(()=>{
         return [
             '-------状态-------',
@@ -70,6 +70,6 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
     })
   addCommand(someUsers)
 })
-// onDispose(()=>{
-//     // console.log 已替换为注释
-// })
+onDispose(()=>{
+    // console.log 已替换为注释
+})

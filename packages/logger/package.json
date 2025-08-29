@@ -2,15 +2,15 @@
   "name": "@zhin.js/logger",
   "version": "0.1.0",
   "description": "Structured logging system for Zhin Bot Framework",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "type": "module",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
     }
   },
   "scripts": {
@@ -37,7 +37,7 @@
     "typescript": "^5.7.2"
   },
   "files": [
-    "dist"
+    "lib"
   ],
   "publishConfig": {
     "access": "public"

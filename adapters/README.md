@@ -42,10 +42,10 @@ cd adapters/my-adapter
   "name": "@zhin.js/adapter-my-adapter",
   "version": "0.1.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
-    "dist"
+    "lib"
   ],
   "scripts": {
     "build": "tsc"

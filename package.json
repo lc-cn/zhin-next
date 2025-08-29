@@ -30,7 +30,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "create": "node packages/create-zhin/dist/index.js",
+    "create": "node packages/create-zhin/lib/index.js",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

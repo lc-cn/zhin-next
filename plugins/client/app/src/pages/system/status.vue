@@ -1,177 +1,174 @@
 <template>
-  <div class="system-status">
-    <!-- 页面标题 -->
-    <div class="page-header mb-4">
-      <div class="flex align-items-center">
-        <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
-        <div>
-          <h1 class="page-title">系统状态</h1>
-          <p class="page-subtitle">实时监控 Zhin Bot 框架运行状态</p>
+  <div class="page-layout">
+    <!-- 页面头部 -->
+    <Card class="page-header-card">
+      <template #content>
+        <div class="flex-row justify-between">
+          <div class="flex-row">
+            <div class="icon-container icon-primary">
+              <i class="pi pi-info-circle"></i>
+            </div>
+            <div class="flex-column">
+              <h1>系统状态</h1>
+              <p>实时监控 Zhin Bot 框架运行状态</p>
+            </div>
+          </div>
+          <Button 
+            icon="pi pi-refresh" 
+            label="刷新" 
+            @click="refreshData" 
+            :loading="refreshing"
+            severity="secondary"
+            outlined
+          />
         </div>
-      </div>
-      <div class="page-actions">
-        <Button 
-          icon="pi pi-refresh" 
-          label="刷新" 
-          @click="refreshData" 
-          :loading="refreshing"
-        />
-      </div>
+      </template>
+    </Card>
+
+    <!-- 统计卡片 -->
+    <div class="stats-container">
+      <Card class="stats-card">
+        <template #content>
+          <div class="flex-row gap-large">
+            <div class="icon-container icon-uptime">
+              <i class="pi pi-clock"></i>
+            </div>
+            <div class="flex-column flex-1">
+              <div class="stat-value">{{ formatUptime(systemData?.uptime) }}</div>
+              <div class="stat-label">运行时间</div>
+              <div class="stat-sub">系统持续运行</div>
+            </div>
+          </div>
+        </template>
+      </Card>
+      
+      <Card class="stats-card">
+        <template #content>
+          <div class="flex-row gap-large">
+            <div class="icon-container icon-platform">
+              <i class="pi pi-desktop"></i>
+            </div>
+            <div class="flex-column flex-1">
+              <div class="stat-value">{{ systemData?.platform }}</div>
+              <div class="stat-label">运行平台</div>
+              <div class="stat-sub">操作系统</div>
+            </div>
+          </div>
+        </template>
+      </Card>
+      
+      <Card class="stats-card">
+        <template #content>
+          <div class="flex-row gap-large">
+            <div class="icon-container icon-nodejs">
+              <i class="pi pi-code"></i>
+            </div>
+            <div class="flex-column flex-1">
+              <div class="stat-value">{{ systemData?.nodeVersion }}</div>
+              <div class="stat-label">Node.js</div>
+              <div class="stat-sub">运行时版本</div>
+            </div>
+          </div>
+        </template>
+      </Card>
     </div>
 
-    <!-- 概览卡片 -->
-    <div class="grid mb-4">
-      <div class="col-12 md:col-3">
-        <div class="overview-card">
-          <div class="overview-content">
-            <div class="overview-icon bg-blue-500">
-              <i class="pi pi-clock text-white"></i>
-            </div>
-            <div class="overview-info">
-              <div class="overview-value">{{ formatUptime(systemData?.uptime) }}</div>
-              <div class="overview-label">运行时间</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-12 md:col-3">
-        <div class="overview-card">
-          <div class="overview-content">
-            <div class="overview-icon bg-green-500">
-              <i class="pi pi-microchip text-white"></i>
-            </div>
-            <div class="overview-info">
-              <div class="overview-value">{{ formatMemory(systemData?.memory.heapUsed) }}</div>
-              <div class="overview-label">内存使用</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-12 md:col-3">
-        <div class="overview-card">
-          <div class="overview-content">
-            <div class="overview-icon bg-orange-500">
-              <i class="pi pi-server text-white"></i>
-            </div>
-            <div class="overview-info">
-              <div class="overview-value">{{ systemData?.platform }}</div>
-              <div class="overview-label">操作系统</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-12 md:col-3">
-        <div class="overview-card">
-          <div class="overview-content">
-            <div class="overview-icon bg-purple-500">
-              <i class="pi pi-code text-white"></i>
-            </div>
-            <div class="overview-info">
-              <div class="overview-value">{{ systemData?.nodeVersion }}</div>
-              <div class="overview-label">Node.js</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 详细信息 -->
-    <div class="grid">
-      <!-- 系统信息 -->
-      <div class="col-12 lg:col-6">
-        <Card class="detail-card">
+    <!-- 主要内容区域 -->
+    <div class="layout-container">
+      <!-- 左侧：系统信息 -->
+      <div class="layout-main">
+        <Card class="content-card">
           <template #title>
-            <div class="flex align-items-center">
-              <i class="pi pi-desktop mr-2"></i>
-              系统信息
-            </div>
+            <i class="pi pi-desktop"></i>
+            <span>系统信息</span>
           </template>
           <template #content>
-            <div class="system-details">
+            <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">进程 ID</span>
-                <span class="detail-value">{{ systemData?.pid }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">平台</span>
-                <span class="detail-value">{{ systemData?.platform }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Node.js 版本</span>
-                <span class="detail-value">{{ systemData?.nodeVersion }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">最后更新</span>
-                <span class="detail-value">{{ formatTime(systemData?.timestamp) }}</span>
-              </div>
-            </div>
-          </template>
-        </Card>
-      </div>
-
-      <!-- 内存信息 -->
-      <div class="col-12 lg:col-6">
-        <Card class="detail-card">
-          <template #title>
-            <div class="flex align-items-center">
-              <i class="pi pi-chart-bar mr-2"></i>
-              内存信息
-            </div>
-          </template>
-          <template #content>
-            <div class="memory-details">
-              <div class="memory-item">
-                <div class="flex justify-content-between align-items-center mb-2">
-                  <span>堆内存使用</span>
-                  <span class="text-primary font-semibold">
-                    {{ formatMemory(systemData?.memory.heapUsed) }}
-                  </span>
+                <div class="icon-container icon-small icon-blue">
+                  <i class="pi pi-hashtag"></i>
                 </div>
-                <ProgressBar 
-                  :value="memoryUsagePercent" 
-                  :showValue="false"
-                  class="memory-progress"
-                />
+                <div class="flex-column flex-1">
+                  <div class="detail-label">进程 ID</div>
+                  <div class="detail-value">{{ systemData?.pid }}</div>
+                </div>
               </div>
               
               <div class="detail-item">
-                <span class="detail-label">堆内存总量</span>
-                <span class="detail-value">{{ formatMemory(systemData?.memory.heapTotal) }}</span>
+                <div class="icon-container icon-small icon-green">
+                  <i class="pi pi-clock"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">运行时间</div>
+                  <div class="detail-value">{{ formatUptime(systemData?.uptime) }}</div>
+                </div>
               </div>
+              
               <div class="detail-item">
-                <span class="detail-label">常驻集大小</span>
-                <span class="detail-value">{{ formatMemory(systemData?.memory.rss) }}</span>
+                <div class="icon-container icon-small icon-purple">
+                  <i class="pi pi-desktop"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">操作系统</div>
+                  <div class="detail-value">{{ systemData?.platform }}</div>
+                </div>
               </div>
+              
               <div class="detail-item">
-                <span class="detail-label">外部内存</span>
-                <span class="detail-value">{{ formatMemory(systemData?.memory.external) }}</span>
+                <div class="icon-container icon-small icon-orange">
+                  <i class="pi pi-code"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">Node.js 版本</div>
+                  <div class="detail-value">{{ systemData?.nodeVersion }}</div>
+                </div>
               </div>
             </div>
           </template>
         </Card>
       </div>
 
-      <!-- CPU信息 -->
-      <div class="col-12">
-        <Card class="detail-card">
+      <!-- 右侧：内存使用 -->
+      <div class="layout-sidebar">
+        <Card class="content-card">
           <template #title>
-            <div class="flex align-items-center">
-              <i class="pi pi-microchip mr-2"></i>
-              CPU 使用情况
-            </div>
+            <i class="pi pi-chart-bar"></i>
+            <span>内存使用</span>
           </template>
           <template #content>
-            <div class="cpu-details">
+            <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">用户时间 (μs)</span>
-                <span class="detail-value">{{ formatNumber(systemData?.cpu.user) }}</span>
+                <div class="icon-container icon-small icon-blue">
+                  <i class="pi pi-chart-line"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">已用内存</div>
+                  <div class="detail-value">{{ formatMemory(systemData?.memory.heapUsed) }}</div>
+                </div>
               </div>
+              
               <div class="detail-item">
-                <span class="detail-label">系统时间 (μs)</span>
-                <span class="detail-value">{{ formatNumber(systemData?.cpu.system) }}</span>
+                <div class="icon-container icon-small icon-green">
+                  <i class="pi pi-chart-pie"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">总内存</div>
+                  <div class="detail-value">{{ formatMemory(systemData?.memory.heapTotal) }}</div>
+                </div>
+              </div>
+              
+              <div class="detail-item">
+                <div class="icon-container icon-small icon-purple">
+                  <i class="pi pi-percentage"></i>
+                </div>
+                <div class="flex-column flex-1">
+                  <div class="detail-label">使用率</div>
+                  <div class="detail-value">{{ memoryUsagePercent }}%</div>
+                  <ProgressBar 
+                    :value="memoryUsagePercent" 
+                    :showValue="false"
+                  />
+                </div>
               </div>
             </div>
           </template>
@@ -202,19 +199,15 @@ const memoryUsagePercent = computed(() => {
 const formatUptime = (seconds?: number) => {
   if (!seconds) return '0秒'
   
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
+  const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = Math.floor(seconds % 60)
   
-  if (days > 0) {
-    return `${days}天 ${hours}小时`
-  } else if (hours > 0) {
-    return `${hours}小时 ${minutes}分钟`
+  if (hours > 0) {
+    return `${hours}小时${minutes}分钟`
   } else if (minutes > 0) {
-    return `${minutes}分钟 ${secs}秒`
+    return `${minutes}分钟`
   } else {
-    return `${secs}秒`
+    return `${Math.floor(seconds)}秒`
   }
 }
 
@@ -226,23 +219,12 @@ const formatMemory = (bytes?: number) => {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`
 }
 
-const formatNumber = (num?: number) => {
-  if (!num) return '0'
-  return num.toLocaleString()
-}
-
-const formatTime = (timestamp?: string) => {
-  if (!timestamp) return '未知'
-  return new Date(timestamp).toLocaleString('zh-CN')
-}
-
+// 刷新数据
 const refreshData = async () => {
   refreshing.value = true
   try {
-    // 使用全局API
     if (window.ZhinDataAPI?.updateAllData) {
       await window.ZhinDataAPI.updateAllData()
-      // console.log 已替换为注释
     } else {
       throw new Error('全局API未就绪')
     }
@@ -255,158 +237,5 @@ const refreshData = async () => {
 </script>
 
 <style scoped>
-.system-status {
-  padding: 1.5rem;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 2rem;
-  background: var(--surface-card);
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.page-title {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.page-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: var(--text-color-secondary);
-  font-size: 1rem;
-}
-
-.page-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.overview-card {
-  background: var(--surface-card);
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
-  height: 100%;
-}
-
-.overview-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.overview-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.overview-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-  line-height: 1;
-}
-
-.overview-label {
-  font-size: 0.875rem;
-  color: var(--text-color-secondary);
-  margin-top: 0.25rem;
-}
-
-.detail-card {
-  height: 100%;
-}
-
-.detail-card :deep(.p-card-body) {
-  padding: 1.5rem;
-}
-
-.detail-card :deep(.p-card-title) {
-  margin-bottom: 1rem;
-  color: var(--text-color);
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.system-details, .memory-details, .cpu-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.detail-item:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  color: var(--text-color-secondary);
-  font-size: 0.875rem;
-}
-
-.detail-value {
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-.memory-item {
-  padding: 1rem;
-  background: var(--surface-50);
-  border-radius: 8px;
-}
-
-.memory-progress {
-  height: 8px;
-}
-
-.memory-progress :deep(.p-progressbar-value) {
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-color-text));
-}
-
-@media (max-width: 768px) {
-  .system-status {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.5rem;
-  }
-  
-  .page-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .overview-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.75rem;
-  }
-  
-  .overview-icon {
-    margin: 0 auto;
-  }
-}
+/* 页面特定样式 - 所有样式已移至 common.css，使用PrimeVue组件类名控制 */
 </style>

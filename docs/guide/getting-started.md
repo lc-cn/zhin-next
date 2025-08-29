@@ -76,7 +76,7 @@ my-awesome-bot/
 │   ├── index.ts           # 🎯 主入口文件
 │   └── plugins/           # 🧩 插件目录
 │       └── test-plugin.ts # 📋 示例插件
-├── dist/                  # 📦 构建输出目录
+├── lib/                  # 📦 构建输出目录
 ├── data/                  # 💾 数据存储目录
 ├── .env.example          # 🔐 环境变量示例
 ├── zhin.config.js        # ⚙️ 机器人配置文件
@@ -90,7 +90,7 @@ my-awesome-bot/
 
 - **`src/`** - 存放所有源代码，支持 TypeScript
 - **`src/plugins/`** - 插件目录，每个 `.ts` 文件都是一个插件
-- **`dist/`** - 编译后的 JavaScript 文件（生产环境使用）
+- **`lib/`** - 编译后的 JavaScript 文件（生产环境使用）
 - **`data/`** - 存放机器人运行时数据（日志、缓存、会话等）
 - **`.env.example`** - 环境变量模板，复制为 `.env` 后配置敏感信息
 

@@ -1,10 +1,11 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import PrimeVue from "primevue/config";
-import 'primeicons/primeicons.css';
 import { addPage, router, useCommonStore } from '@zhin.js/client';
 import { updateAllData, DataService } from './services/api';
 import App from './App.vue';
+// 引入通用样式
+import './styles/common.css';
 
 // 全局暴露数据管理方法，供外部模块使用
 declare global {
@@ -111,6 +112,8 @@ addPage({
     name: 'Overview',
     component: () => import('./pages/contexts/overview.vue'),
 });
+
+
 
 addPage({
     parentName: 'Zhin',

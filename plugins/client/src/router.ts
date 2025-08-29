@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useCommonStore } from './store';
-import { MenuWithComponent, ToolInfo } from './types';
+import { useCommonStore } from './store.js';
+import { MenuWithComponent, ToolInfo } from './types.js';
 export const router = createRouter({
   history: createWebHistory(),
   routes: [],

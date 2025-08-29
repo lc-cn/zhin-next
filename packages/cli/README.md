@@ -34,7 +34,7 @@ my-bot/
 │   ├── index.ts          # 主入口文件
 │   └── plugins/          # 插件目录
 │       └── test-plugin.ts # 示例插件
-├── dist/                 # 构建输出目录
+├── lib/                 # 构建输出目录
 ├── data/                 # 数据存储目录
 ├── zhin.config.[ext]     # 配置文件
 ├── package.json         # 项目配置

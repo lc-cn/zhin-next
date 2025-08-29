@@ -4,15 +4,15 @@
   "description": "Create a new zhin bot project",
   "type": "module",
   "bin": {
-    "create-zhin": "./dist/index.js"
+    "create-zhin": "./lib/index.js"
   },
   "files": [
-    "dist"
+    "lib"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf lib",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {

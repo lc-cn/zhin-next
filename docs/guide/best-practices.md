@@ -523,7 +523,7 @@ describe('基础功能测试', () => {
 module.exports = {
   apps: [{
     name: 'zhin-bot',
-    script: './dist/index.js',
+    script: './lib/index.js',
     instances: 1,
     autorestart: true,
     watch: false,

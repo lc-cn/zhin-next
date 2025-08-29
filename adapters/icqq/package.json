@@ -3,22 +3,22 @@
   "version": "1.0.0",
   "description": "zhin adapter for icqq",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "dist",
+    "lib",
     "client",
     "README.md"
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf lib"
   },
   "dependencies": {
     "@icqqjs/icqq": "latest"
@@ -37,7 +37,13 @@
     "@zhin.js/client": {
       "optional": true
     },
+    "@zhin.js/http": {
+      "optional": true
+    },
     "@zhin.js/console": {
+      "optional": true
+    },
+    "@zhin.js/types": {
       "optional": true
     }
   }

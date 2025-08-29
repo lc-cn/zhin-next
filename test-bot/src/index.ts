@@ -16,7 +16,7 @@ async function main() {
         process.on('SIGINT', () => shutdown('SIGINT'));
         process.on('SIGTERM', () => shutdown('SIGTERM'));
     } catch (error) {
-        // console.error 已替换为注释
+        console.error(error)
         process.exit(1);
     }
 }
