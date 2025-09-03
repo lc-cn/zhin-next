@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import WebSocket, {WebSocketServer} from 'ws';
 import {EventEmitter} from "events";
 import {
   Bot,
@@ -11,28 +11,47 @@ import {
   Group,
   MessageSegment,
   SendOptions,
-  MessageType
+  MessageType, segment, useContext
 } from 'zhin.js';
+import type {Router} from '@zhin.js/http'
+import {IncomingMessage} from "http";
+import {clearInterval} from "node:timers";
 
 declare module 'zhin.js'{
   interface RegisteredAdapters{
-    onebot11:Adapter<OneBot11WsClient>
+    'onebot11':Adapter<OneBot11WsClient>
+    'onebot11.wss':Adapter<OneBot11WsServer>
   }
 }
 // ============================================================================
 // OneBot11 配置和类型
 // ============================================================================
 
-export interface OneBotV11Config extends BotConfig {
+export interface OneBot11Config extends BotConfig {
   context: 'onebot11';
-  url: string;
+  type:string
   access_token?: string;
+}
+export interface OneBot11WsClientConfig extends OneBot11Config{
+  type:'ws'
+  url: string;
   reconnect_interval?: number;
   heartbeat_interval?: number;
+}
+export interface OneBot11WsServerConfig extends OneBot11Config{
+  type:'ws_reverse'
+  path:string
+  heartbeat_interval?: number;
+}
+export interface OneBot11HTTPConfig extends OneBot11Config{
+  type:'http_sse'
+  port:number
+  path:string
 }
 
 interface OneBot11Message {
   post_type: string;
+  self_id:string
   message_type?: string;
   sub_type?: string;
   message_id: number;
@@ -57,7 +76,7 @@ interface ApiResponse<T = any> {
 // OneBot11 适配器实现
 // ============================================================================
 
-export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Message,OneBotV11Config> {
+export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Message,OneBot11WsClientConfig> {
   private ws?: WebSocket;
   $connected?:boolean
   private reconnectTimer?: NodeJS.Timeout;
@@ -69,7 +88,7 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
     timeout: NodeJS.Timeout;
   }>();
 
-  constructor(public plugin:Plugin,public $config: OneBotV11Config) {
+  constructor(public plugin:Plugin,public $config: OneBot11WsClientConfig) {
     super();
     this.$connected=false
   }
@@ -145,7 +164,7 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
         name:onebotMsg.user_id.toString()
       },
       $channel:{
-        id:(onebotMsg.group_id||onebotMsg.user_id).toString(),
+        id:[onebotMsg.self_id,(onebotMsg.group_id||onebotMsg.user_id)].join(':'),
         type:onebotMsg.group_id?'group':'private'
       },
       $content: onebotMsg.message,
@@ -166,21 +185,21 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
 
   async $sendMessage(options: SendOptions): Promise<void> {
     options=await this.plugin.app.handleBeforeSend(options)
-    this.plugin.logger.info(`send ${options.type}(${options.id}):`,options.content)
     const messageData: any = {
       message: options.content
     };
-
     if (options.type==='group') {
       await this.callApi('send_group_msg', {
         group_id: parseInt(options.id),
         ...messageData
       });
+      this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
     } else if (options.type==='private') {
       await this.callApi('send_private_msg', {
         user_id: parseInt(options.id),
         ...messageData
       });
+      this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
     } else {
       throw new Error('Either group_id or user_id must be provided');
     }
@@ -233,7 +252,7 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
   private handleOneBot11Message(onebotMsg: OneBot11Message): void {
     const message = this.$formatMessage(onebotMsg);
     this.plugin.dispatch('message.receive',message)
-    this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):`,message.$content)
+    this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
     this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
   }
 
@@ -263,4 +282,196 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
     }, interval);
   }
 }
+export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Message,OneBot11WsServerConfig> {
+  $connected?:boolean
+  #wss?:WebSocketServer
+  #clientMap:Map<string,WebSocket>=new Map<string,WebSocket>()
+  private heartbeatTimer?: NodeJS.Timeout;
+  private requestId = 0;
+  private pendingRequests = new Map<string, {
+    resolve: (value: any) => void;
+    reject: (error: Error) => void;
+    timeout: NodeJS.Timeout;
+  }>();
+
+  constructor(public plugin:Plugin,public router:Router,public $config: OneBot11WsServerConfig) {
+    super();
+    this.$connected=false
+  }
+  async $connect(): Promise<void> {
+    this.#wss=this.router.ws(this.$config.path,{verifyClient:(info:{ origin: string; secure: boolean; req: IncomingMessage })=>{
+        const {
+          req: { headers },
+        } = info;
+        const authorization = headers['authorization'] || '';
+        if (this.$config.access_token && authorization !== `Bearer ${this.$config.access_token}`) {
+          this.plugin.logger.error('鉴权失败');
+          return false;
+        }
+        return true;
+      }})
+    this.$connected=true;
+    this.#wss.on('connection', (client,req) => {
+      this.startHeartbeat();
+      this.plugin.logger.info(`已连接到协议端：${req.socket.remoteAddress}`);
+      client.on('error', err => {
+        this.plugin.logger.error('连接出错：', err);
+      });
+      client.on('close', code => {
+        this.plugin.logger.error(`与连接端(${req.socket.remoteAddress})断开，错误码：${code}`);
+        for(const [key,value] of this.#clientMap){
+          if(client===value) this.#clientMap.delete(key)
+        }
+      });
+      client.on('message',(data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          this.handleWebSocketMessage(client,message);
+        } catch (error) {
+          this.emit('error',error)
+        }
+      })
+    });
+  }
+
+  async $disconnect(): Promise<void> {
+    this.#wss?.close();
+    if(this.heartbeatTimer){
+      clearInterval(this.heartbeatTimer)
+      delete this.heartbeatTimer;
+    }
+  }
+  $formatMessage(onebotMsg: OneBot11Message){
+    const message=Message.from(onebotMsg,{
+      $id: onebotMsg.message_id.toString(),
+      $adapter:'onebot11',
+      $bot:`${this.$config.name}`,
+      $sender:{
+        id:onebotMsg.user_id.toString(),
+        name:onebotMsg.user_id.toString()
+      },
+      $channel:{
+        id:(onebotMsg.group_id||onebotMsg.user_id).toString(),
+        type:onebotMsg.group_id?'group':'private'
+      },
+      $content: onebotMsg.message,
+      $raw: onebotMsg.raw_message,
+      $timestamp: onebotMsg.time,
+      $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+        if(quote) content.unshift({type:'reply',data:{message_id:message.$id}})
+        this.plugin.dispatch('message.send',{
+          ...message.$channel,
+          context:'onebot11',
+          bot:`${this.$config.name}`,
+          content
+        })
+      }
+    })
+    return message
+  }
+
+  async $sendMessage(options: SendOptions): Promise<void> {
+    options=await this.plugin.app.handleBeforeSend(options)
+    const messageData: any = {
+      message: options.content
+    };
+    if (options.type==='group') {
+      const [self_id,id]=options.id.split(':')
+      await this.callApi(self_id,'send_group_msg', {
+        group_id: parseInt(id),
+        ...messageData
+      });
+      this.plugin.logger.info(`send ${options.type}(${id}):${segment.raw(options.content)}`)
+    } else if (options.type==='private') {
+      const [self_id,id]=options.id.split(':')
+      await this.callApi(self_id,'send_private_msg', {
+        user_id: parseInt(id),
+        ...messageData
+      });
+      this.plugin.logger.info(`send ${options.type}(${id}):${segment.raw(options.content)}`)
+    } else {
+      throw new Error('Either group_id or user_id must be provided');
+    }
+  }
+  private async callApi(self_id:string,action: string, params: any = {}): Promise<any> {
+    const client=this.#clientMap.get(self_id)
+    if (!client || client.readyState !== WebSocket.OPEN) {
+      throw new Error('WebSocket is not connected');
+    }
+
+    const echo = `req_${++this.requestId}`;
+    const message = {
+      action,
+      params,
+      echo
+    };
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(echo);
+        reject(new Error(`API call timeout: ${action}`));
+      }, 30000); // 30秒超时
+
+      this.pendingRequests.set(echo, { resolve, reject, timeout });
+      client.send(JSON.stringify(message));
+    });
+  }
+
+  private handleWebSocketMessage(client:WebSocket,message: any): void {
+    // 处理API响应
+    if (message.echo && this.pendingRequests.has(message.echo)) {
+      const request = this.pendingRequests.get(message.echo)!;
+      this.pendingRequests.delete(message.echo);
+      clearTimeout(request.timeout);
+
+      const response = message as ApiResponse;
+      if (response.status === 'ok') {
+        return request.resolve(response.data);
+      }
+      return request.reject(new Error(`API error: ${response.retcode}`));
+    }
+    switch (message.post_type){
+      case 'message':
+        return this.handleMessage(message);
+      case 'meta_event':
+        return this.handleMetaEvent(client,message)
+    }
+    // 处理事件消息
+    if (message.post_type === 'message') {
+    } else if (message.post_type === 'meta_event' && message.meta_event_type === 'heartbeat') {
+      // 心跳消息，暂时忽略
+    }
+  }
+  private handleMetaEvent(client:WebSocket,message:any){
+    switch (message.sub_type){
+      case 'heartbeat':
+        break;
+      case 'connect':
+        this.#clientMap.set(message.self_id,client);
+        break;
+    }
+  }
+  private handleMessage(onebotMsg: OneBot11Message): void {
+    const message = this.$formatMessage(onebotMsg);
+    this.plugin.dispatch('message.receive',message)
+    this.plugin.logger.info(`recv ${message.$channel.type}(${onebotMsg.group_id||onebotMsg.user_id}):${segment.raw(message.$content)}`)
+    this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
+  }
+
+  private startHeartbeat(): void {
+    const interval = this.$config.heartbeat_interval || 30000;
+    this.heartbeatTimer = setInterval(() => {
+      for(const client of this.#wss?.clients||[]){
+        if (client && client.readyState === WebSocket.OPEN) {
+          client.ping();
+        }
+      }
+    }, interval);
+  }
+}
 registerAdapter(new Adapter('onebot11',OneBot11WsClient))
+useContext('router',(router)=>{
+  registerAdapter(new Adapter('onebot11.wss',(p,c:OneBot11WsServerConfig)=>{
+    return new OneBot11WsServer(p,router,c)
+  }));
+})

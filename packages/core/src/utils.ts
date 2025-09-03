@@ -129,6 +129,15 @@ export namespace segment{
             return result;
         },[] as MessageSegment[])
     }
+    export function raw(content:SendContent){
+        if(!Array.isArray(content)) content=[content]
+        return content.map(item=>{
+            if(typeof item==='string') return item
+            const {type,data}=item
+            if(type==='text') return data.text
+            return data.text?`{${type}}(${data.text})`:`{${type}}`;
+        }).join('')
+    }
     export function toString(content:SendContent){
         if(!Array.isArray(content)) content=[content]
         return content.map(item=>{

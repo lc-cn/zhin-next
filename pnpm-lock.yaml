@@ -104,6 +104,9 @@ importers:
 
   adapters/onebot11:
     dependencies:
+      '@zhin.js/http':
+        specifier: workspace:*
+        version: link:../../plugins/http
       '@zhin.js/types':
         specifier: workspace:*
         version: link:../../packages/types

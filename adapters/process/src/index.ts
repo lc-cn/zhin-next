@@ -1,6 +1,18 @@
 import {EventEmitter} from "events";
 import * as process from 'node:process'
-import {Bot,Adapter,Plugin,BotConfig,registerAdapter, useLogger, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
+import {
+    Bot,
+    Adapter,
+    Plugin,
+    BotConfig,
+    registerAdapter,
+    useLogger,
+    Message,
+    SendOptions,
+    MessageSegment,
+    SendContent,
+    segment
+} from "zhin.js";
 
 declare module 'zhin.js'{
     interface RegisteredAdapters{
@@ -17,7 +29,7 @@ export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:n
         const content=data.toString().trim()
         const ts=Date.now()
         const message =this.$formatMessage({content,ts});
-        logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${ProcessBot.contentToString(message.$content)}`)
+        logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
         this.plugin.dispatch('message.receive',message)
         this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
@@ -66,7 +78,7 @@ export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:n
     async $sendMessage(options: SendOptions){
         options=await this.plugin.app.handleBeforeSend(options)
         if(!this.$connected) return
-        logger.info(`send ${options.type}(${options.id}):${ProcessBot.contentToString(options.content)}`)
+        logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
     }
 }
 export namespace ProcessBot{

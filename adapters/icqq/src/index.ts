@@ -1,6 +1,18 @@
 import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@icqqjs/icqq";
 import path from "path";
-import {Bot,BotConfig,useContext,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
+import {
+    Bot,
+    BotConfig,
+    useContext,
+    Adapter,
+    Plugin,
+    registerAdapter,
+    Message,
+    SendOptions,
+    MessageSegment,
+    SendContent,
+    segment
+} from "zhin.js";
 declare module 'zhin.js'{
     interface RegisteredAdapters{
         icqq:Adapter<IcqqBot>
@@ -27,7 +39,7 @@ export class IcqqBot extends Client implements Bot<PrivateMessageEvent|GroupMess
     private handleIcqqMessage(msg: PrivateMessageEvent|GroupMessageEvent): void {
         const message =this.$formatMessage(msg) ;
         this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${msg.raw_message}`)
+        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
         this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
     async $connect(): Promise<void> {
@@ -98,12 +110,12 @@ export class IcqqBot extends Client implements Bot<PrivateMessageEvent|GroupMess
         switch (options.type){
             case 'private':{
                 const result= await this.sendPrivateMsg(Number(options.id),IcqqBot.toSendable(options.content))
-                this.plugin.logger.info(`send ${options.type}(${options.id}):${result.message_id}`)
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
                 break;
             }
             case "group":{
                 const result=await this.sendGroupMsg(Number(options.id),IcqqBot.toSendable(options.content))
-                this.plugin.logger.info(`send ${options.type}(${options.id}):${result.message_id}`)
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
                 break;
             }
             default:

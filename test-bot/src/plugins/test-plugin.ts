@@ -11,7 +11,6 @@ import path from "node:path";
 function formatMemoSize(size:number){
     return `${(size/1024/1024).toFixed(2)}MB`
 }
-const plugin=usePlugin();
 addCommand(new MessageCommand('send')
     .action((_,result)=>result.remaining))
 addCommand(new MessageCommand('zt')
@@ -62,11 +61,8 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
       }
       return likeResult.join('\n');
     })
-  addCommand(someUsers)
+  addCommand(someUsers);
 })
 const testCommand=new MessageCommand('test')
-    .scope('icqq')
-    .action(async (m)=>{
-        return plugin.prompt(m).text('请输入文本')
-    })
+    .action(async (m)=>usePrompt(m).text('请输入文本'))
 addCommand(testCommand)

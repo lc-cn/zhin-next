@@ -1,6 +1,17 @@
 import { Client, PrivateMessageEvent,MessageSegment as MessageElem,ChannelMessageEvent, Sendable} from "kook-client";
 import path from "path";
-import {Bot,BotConfig,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
+import {
+    Bot,
+    BotConfig,
+    Adapter,
+    Plugin,
+    registerAdapter,
+    Message,
+    SendOptions,
+    MessageSegment,
+    SendContent,
+    segment
+} from "zhin.js";
 declare module 'zhin.js'{
     interface RegisteredAdapters{
         kook:Adapter<KookBot>
@@ -23,7 +34,7 @@ export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMe
     private handleKookMessage(msg: PrivateMessageEvent|ChannelMessageEvent): void {
         const message=this.$formatMessage(msg)
         this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${msg.raw_message}`)
+        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
         this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
     $formatMessage(msg: PrivateMessageEvent | ChannelMessageEvent){
@@ -71,12 +82,12 @@ export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMe
         switch (options.type){
             case 'private':{
                 const result= await this.sendPrivateMsg(options.id,KookBot.toSendable(options.content))
-                this.plugin.logger.info(`send ${options.type}(${options.id}):${result['msg_id' as 'message_id']}`)
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
                 break;
             }
             case "channel":{
                 const result=await this.sendChannelMsg(options.id,KookBot.toSendable(options.content))
-                this.plugin.logger.info(`send ${options.type}(${options.id}):${result['msg_id' as 'message_id']}`)
+                this.plugin.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
                 break;
             }
             default:

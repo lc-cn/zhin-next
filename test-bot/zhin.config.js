@@ -23,6 +23,12 @@ export default defineConfig(async (env)=>{
         log_level:'off',
         platform:4
       },
+      {
+        name: env.ONEBOT_QQ,
+        context:'onebot11',
+        url:'wss://napcat.liucl.cn/ws',
+        access_token:env.ONEBOT_TOKEN
+      },
       // {
       //   name: env.ICQQ_LOGIN_UIN,
       //   context:'icqq',
@@ -42,6 +48,7 @@ export default defineConfig(async (env)=>{
     plugins: [
       'http',           // 🚀 HTTP先加载，注册基础API路由
       'adapter-icqq',   // 🤖 ICQQ适配器注册 /api/icqq/* 路由
+      'adapter-onebot11',
       'console',        // 🖥️ 控制台最后加载，处理静态文件
       'adapter-kook',
       'adapter-process',
