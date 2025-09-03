@@ -4,16 +4,18 @@
 
 
 import {MaybePromise} from '@zhin.js/types'
-import {  BeforeSendHandler, SendOptions} from "./types";
+import {AdapterMessage, BeforeSendHandler, RegisteredAdapter, SendOptions} from "./types.js";
 import {Message} from './message.js'
 import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
 import {MessageCommand} from "./command.js";
 import {Component} from "./component.js";
 import { PluginError, MessageError, errorManager } from './errors.js';
+import {remove} from "./utils.js";
+import {Prompt} from "./prompt.js";
 
 /** 消息中间件函数 */
-export type MessageMiddleware = (message: Message<any>, next: () => Promise<void>) => MaybePromise<void>;
+export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (message: Message<AdapterMessage<P>>, next: () => Promise<void>) => MaybePromise<void>;
 
 
 // ============================================================================
@@ -109,9 +111,15 @@ export class Plugin extends Dependency<Plugin> {
         this.dispatch('command.add',command);
     }
     /** 添加中间件 */
-    addMiddleware(middleware: MessageMiddleware): void {
+    addMiddleware(middleware: MessageMiddleware) {
         this.middlewares.push(middleware);
         this.dispatch('middleware.add',middleware)
+        return ()=>{
+            remove(this.middlewares,middleware)
+        }
+    }
+    prompt<P extends RegisteredAdapter>(message:Message<AdapterMessage<P>>){
+        return new Prompt<P>(this,message)
     }
 
 

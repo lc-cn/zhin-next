@@ -1,4 +1,4 @@
-import {register, useContext} from 'zhin.js';
+import {register, useContext, useLogger} from 'zhin.js';
 import WebSocket,{WebSocketServer} from 'ws';
 import {createServer,ViteDevServer,searchForWorkspaceRoot} from 'vite';
 import Components from 'unplugin-vue-components/vite';
@@ -47,6 +47,7 @@ const createDeleteMsg = (key: string, value: any) => {
         },
     };
 };
+const logger=useLogger();
 useContext('router', async (router) => {
     const root = path.join(process.cwd(),'node_modules','@zhin.js','client','app');
     const base='/vite/'
@@ -177,6 +178,13 @@ useContext('router', async (router) => {
     register({
         name:'web',
         description:"web服务",
-        value:webServer
+        async mounted(){
+            return webServer
+        },
+        async dispose(server){
+            await server.vite.close();
+            server.ws.close()
+        }
     })
+
 });

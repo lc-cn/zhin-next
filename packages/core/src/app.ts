@@ -318,6 +318,11 @@ export function onPrivateMessage(handler: (message: Message) => void | Promise<v
 export function onMessage<T extends RegisteredAdapter>(handler: (message: Message<AdapterMessage<T>>) => void | Promise<void>): void {
     onEvent('message.receive', handler);
 }
+/** 获取下一条消息 */
+export function usePrompt<P extends RegisteredAdapter>(message:Message<AdapterMessage<P>>){
+    const plugin=usePlugin()
+    return plugin.prompt<P>(message)
+}
 
 /** 监听插件挂载事件 */
 export function onMounted(hook: (plugin: Plugin) => Promise<void> | void): void {
