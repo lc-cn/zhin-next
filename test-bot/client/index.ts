@@ -1,4 +1,4 @@
-import {addPage} from '@zhin.js/client'
+import {addPage} from '@zhin.js/client';
 addPage({
     parentName:'Zhin',
     path:'/test',

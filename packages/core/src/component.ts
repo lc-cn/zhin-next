@@ -1,5 +1,6 @@
-import {getValueWithRuntime, compiler, segment} from './utils';
-import {Dict, Message, SendContent, SendOptions} from './types';
+import {getValueWithRuntime, compiler, segment} from './utils.js';
+import {Dict, SendContent, SendOptions} from './types.js';
+import {Message} from "./message.js";
 import {MaybePromise} from "@zhin.js/types";
 export const CapWithChild = Symbol('CapWithChild');
 export const CapWithClose = Symbol('CapWithClose');

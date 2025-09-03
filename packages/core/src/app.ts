@@ -3,9 +3,11 @@ import * as fs from 'fs'
 import {SideEffect, GlobalContext} from '@zhin.js/types'
 import { HMR, Context, Logger, getCallerFile, getCallerFiles } from '@zhin.js/hmr';
 import {
+    AdapterMessage,
     AppConfig,
-    Message, BeforeSendHandler,SendOptions,
+    BeforeSendHandler, RegisteredAdapter, SendOptions,
 } from './types.js';
+import {Message} from "./message.js";
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { generateEnvTypes } from './types-generator.js';
@@ -72,7 +74,7 @@ export class App extends HMR<Plugin> {
         if(!adapter) throw new Error(`can't find adapter for name ${options.context}`)
         const bot=adapter.bots.get(options.bot)
         if(!bot) throw new Error(`can't find bot ${options.bot} for adapter ${options.context}`)
-        return bot.sendMessage(options)
+        return bot.$sendMessage(options)
     }
     /** 同步加载配置文件 */
     static loadConfigSync(): AppConfig {
@@ -313,7 +315,7 @@ export function onPrivateMessage(handler: (message: Message) => void | Promise<v
 }
 
 /** 监听所有消息 */
-export function onMessage(handler: (message: Message) => void | Promise<void>): void {
+export function onMessage<T extends RegisteredAdapter>(handler: (message: Message<AdapterMessage<T>>) => void | Promise<void>): void {
     onEvent('message.receive', handler);
 }
 

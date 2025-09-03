@@ -1,6 +1,6 @@
 import * as path from 'path';
-import { Dependency } from './dependency';
-import {HMROptions, Logger} from './types';
+import { Dependency } from './dependency.js';
+import {HMROptions, Logger} from './types.js';
 import { 
     ConsoleLogger, 
     DEFAULT_WATCHABLE_EXTENSIONS, 
@@ -10,12 +10,12 @@ import {
     createError,
     getCallerFile,
     performGC
-} from './utils';
+} from './utils.js';
 import { createLoggerAdapter } from './logger-adapter.js';
-import { FileWatcher } from './file-watcher';
-import { ModuleLoader } from './module-loader';
-import { PerformanceMonitor } from './performance';
-import { ReloadManager } from './reload-manager';
+import { FileWatcher } from './file-watcher.js';
+import { ModuleLoader } from './module-loader.js';
+import { PerformanceMonitor } from './performance.js';
+import { ReloadManager } from './reload-manager.js';
 import { fileURLToPath } from 'url';
 
 // ============================================================================

@@ -4,15 +4,16 @@
 
 
 import {MaybePromise} from '@zhin.js/types'
-import { Message, BeforeSendHandler, SendOptions} from "./types";
+import {  BeforeSendHandler, SendOptions} from "./types";
+import {Message} from './message.js'
 import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
-import {MessageCommand} from "./command";
-import {Component} from "./component";
-import { PluginError, MessageError, errorManager } from './errors';
+import {MessageCommand} from "./command.js";
+import {Component} from "./component.js";
+import { PluginError, MessageError, errorManager } from './errors.js';
 
 /** 消息中间件函数 */
-export type MessageMiddleware = (message: Message, next: () => Promise<void>) => MaybePromise<void>;
+export type MessageMiddleware = (message: Message<any>, next: () => Promise<void>) => MaybePromise<void>;
 
 
 // ============================================================================
@@ -33,7 +34,7 @@ export class Plugin extends Dependency<Plugin> {
         this.addMiddleware(async (message,next)=>{
             for(const command of this.commands){
                 const result=await command.handle(message);
-                if(result) message.reply(result);
+                if(result) message.$reply(result);
             }
             return next()
         });
@@ -45,8 +46,8 @@ export class Plugin extends Dependency<Plugin> {
         } catch (error) {
             const messageError = new MessageError(
                 `消息处理失败: ${(error as Error).message}`,
-                message.id,
-                message.channel.id,
+                message.$id,
+                message.$channel.id,
                 { pluginName: this.name, originalError: error }
             )
             
@@ -54,7 +55,7 @@ export class Plugin extends Dependency<Plugin> {
             
             // 可选：发送错误回复给用户
             try {
-                await message.reply('抱歉，处理您的消息时出现了错误。')
+                await message.$reply('抱歉，处理您的消息时出现了错误。')
             } catch (replyError) {
                 // 静默处理回复错误，避免错误循环
                 // console.error 已替换为注释

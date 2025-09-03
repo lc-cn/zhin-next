@@ -6,6 +6,7 @@ export * from './command.js'
 export * from './component.js'
 export * from './adapter.js'
 export * from './config.js'
+export * from './message.js'
 // Logger moved to @zhin.js/logger package
 export * from './types.js'
 export * from './utils.js'

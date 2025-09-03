@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { EventEmitter } from 'events';
-import { Logger } from './types';
-import { resolvePath,isBun } from './utils';
+import { Logger } from './types.js';
+import { resolvePath,isBun } from './utils.js';
 /**
  * 文件监听管理器
  * 负责监听目录变化和文件变化检测

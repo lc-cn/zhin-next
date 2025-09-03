@@ -180,8 +180,12 @@ async function createProjectStructure(projectPath: string, projectName: string, 
     devDependencies: {
       '@zhin.js/cli': versionSuffix,
       '@zhin.js/types': versionSuffix,
-      'typescript': '^5.0.0',
-      'tsx': '^4.0.0'
+      'typescript': 'latest',
+      ...(options.runtime === 'bun' ? {
+        'bun': 'latest'
+      } : {
+        'tsx': 'latest'
+      })
     },
     engines: {
       node: '>=18.0.0'

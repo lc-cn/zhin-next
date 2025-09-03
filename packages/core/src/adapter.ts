@@ -1,7 +1,6 @@
 import {BotConfig} from "./types";
 import {Bot} from "./bot";
 import {Plugin} from "./plugin";
-
 export class Adapter<R extends Bot=Bot>{
     public bots:Map<string,R>=new Map<string, R>()
     #botFactory:Adapter.BotFactory<R>
@@ -20,7 +19,7 @@ export class Adapter<R extends Bot=Bot>{
                     bot = this.#botFactory(plugin,config) as R
                 }
                 try {
-                    await bot.connect()
+                    await bot.$connect()
                     plugin.logger.info(`bot ${config.name} of adapter ${this.name} connected`)
                     this.bots.set(config.name,bot)
                 } catch (error) {
@@ -39,7 +38,7 @@ export class Adapter<R extends Bot=Bot>{
         try {
             for(const [name,bot] of this.bots){
                 try {
-                    await bot.disconnect()
+                    await bot.$disconnect()
                     plugin.logger.info(`bot ${name} of adapter ${this.name} disconnected`)
                     this.bots.delete(name)
                 } catch (error) {
@@ -55,8 +54,8 @@ export class Adapter<R extends Bot=Bot>{
     }
 }
 export namespace Adapter {
-    export type BotBotConstructor<T extends Bot>=T extends Bot<infer R> ? {
-        new(plugin:Plugin,config:R):T
+    export type BotBotConstructor<T extends Bot>=T extends Bot<infer F,infer S> ? {
+        new(plugin:Plugin,config:S):T
     }: {
         new(plugin:Plugin,config:BotConfig):T
     }
@@ -64,6 +63,6 @@ export namespace Adapter {
         return fn.prototype &&
             fn.prototype.constructor === fn
     }
-    export type BotCreator<T extends Bot>=T extends Bot<infer R> ? (plugin:Plugin,config: R) => T : (plugin:Plugin,config: BotConfig) => T
+    export type BotCreator<T extends Bot>=T extends Bot<infer F,infer S> ? (plugin:Plugin,config: S) => T : (plugin:Plugin,config: BotConfig) => T
     export type BotFactory<T extends Bot> = BotBotConstructor<T>|BotCreator<T>
 }

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
-import { Logger } from './types';
-import { Dependency } from './dependency';
-import { HMR } from './hmr';
+import { Logger } from './types.js';
+import { Dependency } from './dependency.js';
+import { HMR } from './hmr.js';
 import * as path from 'path';
 import * as fs from 'fs';
 

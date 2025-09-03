@@ -2,7 +2,7 @@
 // 基础类型定义
 // ============================================================================
 
-import type { Dependency } from './dependency';
+import type { Dependency } from './dependency.js';
 
 /** 日志记录器接口 */
 export interface Logger {

@@ -3,10 +3,10 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { pathToFileURL } from 'url';
 import { EventEmitter } from 'events';
-import { Dependency } from './dependency';
-import { HMR } from './hmr';
-import { Logger } from './types';
-import {createError, ERROR_MESSAGES, isBun, isCommonJS, performGC} from './utils';
+import { Dependency } from './dependency.js';
+import { HMR } from './hmr.js';
+import { Logger } from './types.js';
+import {createError, ERROR_MESSAGES, isBun, isCommonJS, performGC} from './utils.js';
 
 /**
  * 模块加载器

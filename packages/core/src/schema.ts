@@ -1,4 +1,4 @@
-import { isEmpty } from './utils';
+import { isEmpty } from './utils.js';
 
 export class Schema<S = any, T = S> {
     public [Symbol.toStringTag] = 'Schema';

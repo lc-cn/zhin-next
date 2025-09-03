@@ -9,6 +9,13 @@ export const evaluate = <S, T = any>(exp: string, context: S) => execute<S, T>(`
 const evalCache: Record<string, Function> = Object.create(null);
 export const execute = <S, T = any>(exp: string, context: S):T => {
     const fn = evalCache[exp] || (evalCache[exp] = toFunction(exp));
+    context={
+        ...context,
+        process:undefined,
+        global:undefined,
+        Buffer:undefined,
+        crypto:undefined
+    }
     try {
         return fn.apply(context, [context]);
     } catch {

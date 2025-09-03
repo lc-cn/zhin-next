@@ -4,9 +4,7 @@ import {
     Time,
     addComponent,
     defineComponent,
-    segment,
-    onDispose,
-    MessageCommand, sendMessage,
+    MessageCommand,
 } from 'zhin.js';
 import path from "node:path";
 function formatMemoSize(size:number){
@@ -32,23 +30,16 @@ const testComponent=defineComponent({
     }
 })
 const testComponent2=defineComponent({
-    name:'foo',
+    name:'fetch',
     props:{
-        face:{
-            type:Number,
-            default:1
+        url:{
+            type:String,
+            default:""
         }
     },
-    async render({face}){
-        return [
-            segment.escape(`这是子组件<face id='${face}/>`),
-            {
-                type:'face',
-                data:{
-                    id:face
-                }
-            }
-        ]
+    async render({url}){
+        const result:string=await fetch(url).then(r=>r.text())
+        return result
     }
 })
 addComponent(testComponent)
@@ -59,17 +50,15 @@ useContext('web',(web)=>{
 // 依赖icqq上下文
 useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
   const someUsers = new MessageCommand('赞[space][...atUsers:at]', { at: 'qq' })
+    .scope('icqq')
     .action(async (m, { params }) => {
-      if (!params.atUsers?.length) params.atUsers = [+m.sender.id];
+      if (!params.atUsers?.length) params.atUsers = [+m.$sender.id];
       const likeResult: string[] = []
       for (const user_id of params.atUsers) {
-        const userResult = await p.bots.get(m.bot)?.sendLike(user_id, 10);
+        const userResult = await p.bots.get(m.$bot)?.sendLike(user_id, 10);
         likeResult.push(`为用户(${user_id})赞${userResult ? '成功' : '失败'}`)
       }
       return likeResult.join('\n');
     })
   addCommand(someUsers)
-})
-onDispose(()=>{
-    // console.log 已替换为注释
 })

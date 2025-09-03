@@ -1,8 +1,8 @@
 import { Client, PrivateMessageEvent,MessageSegment as MessageElem,ChannelMessageEvent, Sendable} from "kook-client";
 import path from "path";
 import {Bot,BotConfig,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
-declare module '@zhin.js/types'{
-    interface GlobalContext{
+declare module 'zhin.js'{
+    interface RegisteredAdapters{
         kook:Adapter<KookBot>
     }
 }
@@ -11,56 +11,62 @@ export interface KookBotConfig extends BotConfig,Client.Config{
     name:`${number}`
 }
 export interface KookBot{
-    readonly config:Required<KookBotConfig>
+    $config:KookBotConfig
 }
-export class KookBot extends Client implements Bot<Required<KookBotConfig>>{
-    connected?:boolean
+export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMessageEvent,KookBotConfig>{
+    $connected?:boolean
     constructor(private plugin:Plugin,config:KookBotConfig) {
         if(!config.data_dir) config.data_dir=path.join(process.cwd(),'data')
         super(config);
+        this.$config=config;
     }
     private handleKookMessage(msg: PrivateMessageEvent|ChannelMessageEvent): void {
-        const message: Message = {
-            id: msg.message_id.toString(),
-            adapter:'kook',
-            bot:`${this.config.name}`,
-            sender:{
+        const message=this.$formatMessage(msg)
+        this.plugin.dispatch('message.receive',message)
+        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${msg.raw_message}`)
+        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
+    }
+    $formatMessage(msg: PrivateMessageEvent | ChannelMessageEvent){
+        const message=Message.from(msg,{
+            $id: msg.message_id.toString(),
+            $adapter:'kook',
+            $bot:`${this.$config.name}`,
+            $sender:{
                 id:msg.author_id.toString(),
                 name:msg.author.info.nickname.toString(),
             },
-            channel:{
+            $channel:{
                 id:msg.message_type==='channel'?msg.channel_id.toString():msg.author_id.toString(),
                 type:msg.message_type
             },
-            content: KookBot.toSegments(msg.message),
-            raw: msg.raw_message,
-            timestamp: msg.timestamp,
-            reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
-                if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
+            $content: KookBot.toSegments(msg.message),
+            $raw: msg.raw_message,
+            $timestamp: msg.timestamp,
+            $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+                if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.$id:quote}})
                 this.plugin.dispatch('message.send',{
-                    ...message.channel,
+                    ...message.$channel,
                     context:'kook',
-                    bot:`${this.config.name}`,
+                    bot:`${this.$config.name}`,
                     content
                 })
             }
-        };
-        this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):${msg.raw_message}`)
-        this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
+        });
+        return message
     }
-    async connect(): Promise<void> {
+
+    async $connect(): Promise<void> {
         await super.connect()
         this.on('message',(m)=>this.handleKookMessage(m))
-        this.connected=true
+        this.$connected=true
     }
 
-    async disconnect(): Promise<void> {
+    async $disconnect(): Promise<void> {
         await super.disconnect()
-        this.connected=false;
+        this.$connected=false;
     }
 
-    async sendMessage(options: SendOptions): Promise<void> {
+    async $sendMessage(options: SendOptions): Promise<void> {
         options=await this.plugin.app.handleBeforeSend(options)
         switch (options.type){
             case 'private':{

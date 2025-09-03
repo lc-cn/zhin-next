@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { Logger } from './types';
+import { Logger } from './types.js';
 import { fileURLToPath } from 'url';
 
 // ============================================================================

@@ -2,9 +2,9 @@
 layout: home
 
 hero:
-  name: "Zhin"
-  text: "现代化的 TypeScript 机器人框架"
-  tagline: 🔥 热重载 • 🎯 类型安全 • 🧩 插件化 • 🚀 高性能
+  name: "Zhin.js"
+  text: "TypeScript 机器人框架"
+  tagline: 多平台支持 • 插件系统 • 热重载 • Web 控制台
   image:
     src: /logo.png
     alt: Zhin
@@ -18,165 +18,155 @@ hero:
 
 features:
   - icon: 🔥
-    title: 企业级热重载
-    details: 基于自研 HMR 系统，支持插件、配置、代码的实时热更新，开发体验极致流畅。
+    title: 热重载支持
+    details: 开发时代码修改自动生效，无需重启机器人，保持连接状态。
   
   - icon: 🎯
-    title: 完整 TypeScript 支持
-    details: 全链路类型安全，智能代码提示，完善的类型定义，让开发更高效更可靠。
+    title: TypeScript 编写
+    details: 完全使用 TypeScript 开发，提供完整的类型提示和错误检查。
   
   - icon: 🧩
-    title: 强大的插件系统
-    details: 依赖注入、上下文管理、中间件、组件化，构建复杂应用架构轻而易举。
+    title: 插件系统
+    details: 支持插件化开发，热插拔插件，扩展功能灵活便捷。
   
   - icon: 🌐
-    title: 多平台适配器
-    details: 内置支持 QQ(ICQQ)、KOOK、OneBot v11、本地控制台，轻松扩展新平台。
+    title: 多平台适配
+    details: 支持 QQ(ICQQ)、KOOK、OneBot v11、控制台等多个聊天平台。
   
   - icon: 📦
-    title: 完整开发工具链
-    details: CLI 脚手架、项目模板、开发服务器、构建工具，从开发到部署一站式解决。
+    title: 完整工具链
+    details: 提供 CLI 工具、项目模板、开发服务器、构建系统。
   
-  - icon: ⚡
-    title: 高性能架构
-    details: 支持 Node.js/Bun 双运行时，异步处理，智能缓存，低资源占用高并发处理。
+  - icon: 🖥️
+    title: Web 控制台
+    details: 基于 Vue 3 的管理界面，实时查看状态，管理插件和配置。
 
 ---
 
 ## ⚡ 快速开始
 
 ```bash
-# 🎯 一键创建项目
-npm create zhin my-awesome-bot
+# 创建新项目
+pnpm create zhin my-bot
 
-# 📁 进入项目目录  
-cd my-awesome-bot
+# 进入项目目录
+cd my-bot
 
-# 📦 安装依赖
+# 安装依赖
 pnpm install
 
-# 🚀 启动开发服务器（支持热重载）
+# 启动开发服务器
 pnpm dev
 ```
 
-**几分钟内，你就有了一个功能完整的机器人！**
+## 🌟 主要特性
 
-## 🌟 核心特性
+### 🔥 热重载开发
 
-### 🔥 开发体验至上
+开发时修改代码会自动重新加载：
 
-- **实时热重载** - 代码修改即时生效，无需重启
-- **智能类型提示** - 完整 TypeScript 支持，开发效率倍增  
-- **友好错误信息** - 详细堆栈跟踪和错误定位
-- **可视化调试** - 内置 Web 控制台，实时查看运行状态
+- 插件代码修改会热更新
+- 配置文件修改会重新加载  
+- 保持机器人连接状态
 
-### 🧩 强大的插件架构
-
-- **依赖注入系统** - 优雅的服务管理和资源共享
-- **中间件机制** - 灵活的消息处理管道
-- **组件化开发** - 可复用的 UI 组件和模板系统
-- **上下文管理** - 智能的生命周期和资源管理
-
-### 🌐 多平台生态
-
-| 平台 | 适配器 | 状态 | 特性 |
-|------|--------|------|------|
-| QQ | `@zhin.js/adapter-icqq` | ✅ 稳定 | 群聊、私聊、媒体消息 |
-| KOOK | `@zhin.js/adapter-kook` | ✅ 稳定 | 语音频道、文字频道 |
-| OneBot v11 | `@zhin.js/adapter-onebot11` | ✅ 稳定 | 跨平台协议支持 |
-| 控制台 | `@zhin.js/adapter-process` | ✅ 稳定 | 本地测试和调试 |
-
-➡️ **[查看所有官方适配器详情](./official/adapters.md)**
-
-### 🧩 官方插件生态
-
-| 插件 | 功能 | 状态 | 描述 |
-|------|------|------|------|
-| HTTP | `@zhin.js/http` | ✅ 稳定 | Web服务器和API |
-| Console | `@zhin.js/console` | ✅ 稳定 | 可视化管理界面 |
-| Client | `@zhin.js/client` | ✅ 稳定 | Vue3客户端框架 |
-
-➡️ **[查看所有官方插件详情](./official/plugins.md)**
-
-### ⚡ 现代化技术栈
-
-- **双运行时支持** - Node.js 和 Bun，性能与兼容性并重
-- **ES Module** - 原生模块系统，更快的加载速度
-- **异步优先** - 全异步架构，高并发处理能力
-- **智能缓存** - 内置缓存机制，降低资源消耗
-
-## 🎯 典型使用场景
+### 🧩 插件化架构
 
 ```typescript
-// 🤖 简单的问答机器人
-import { onMessage, addCommand, MessageCommand } from 'zhin.js'
+// 简单的插件示例
+import { addCommand, MessageCommand } from 'zhin.js'
 
-onMessage(async (message) => {
-  if (message.raw === '你好') {
-    await message.reply('你好！我是 Zhin 机器人 👋')
-  }
+addCommand(new MessageCommand('hello')
+  .action(() => 'Hello, World!'))
+```
+
+### 🌐 多平台支持
+
+| 平台 | 适配器 | 状态 |
+|------|--------|------|
+| QQ | `@zhin.js/adapter-icqq` | ✅ 可用 |
+| KOOK | `@zhin.js/adapter-kook` | ✅ 可用 |
+| OneBot v11 | `@zhin.js/adapter-onebot11` | ✅ 可用 |
+| 控制台 | `@zhin.js/adapter-process` | ✅ 可用 |
+
+### 🖥️ Web 控制台
+
+启动后访问 `http://localhost:3000/console` 使用 Web 管理界面：
+
+- 查看机器人运行状态
+- 管理插件启用/禁用
+- 实时日志查看
+- 系统配置管理
+
+## 🛠️ 技术架构
+
+### 核心组件
+
+- **App**: 应用主类，继承 HMR 支持热重载
+- **Plugin**: 插件基类，处理消息和命令
+- **Adapter**: 适配器基类，连接不同平台
+- **Context**: 上下文系统，依赖注入和状态管理
+
+### 项目结构
+
+```
+zhin-next/
+├── adapters/       # 平台适配器
+├── packages/       # 核心包
+│   ├── cli/       # 命令行工具
+│   ├── core/      # 框架核心
+│   ├── hmr/       # 热重载系统
+│   └── ...
+├── plugins/        # 功能插件
+│   ├── http/      # HTTP 服务
+│   ├── console/   # Web 控制台
+│   └── client/    # Vue 客户端
+└── test-bot/       # 示例机器人
+```
+
+## 📝 配置示例
+
+```javascript
+// zhin.config.js
+import { defineConfig } from 'zhin.js'
+
+export default defineConfig({
+  bots: [
+    {
+      name: 'my-bot',
+      context: 'icqq',  // 使用 QQ 适配器
+      // QQ 相关配置...
+    }
+  ],
+  plugins: [
+    'http',           // HTTP 服务器
+    'console',        // Web 控制台
+    'adapter-icqq',   // QQ 适配器
+    'my-plugin'       // 自定义插件
+  ]
 })
-
-// 📊 状态查询命令
-addCommand(new MessageCommand('status')
-  .action(() => {
-    return `🤖 机器人运行状态：
-    ⏱️ 运行时间: ${formatUptime(process.uptime())}
-    📊 内存使用: ${formatMemory(process.memoryUsage().rss)}
-    🔧 Node.js: ${process.version}`
-  })
-)
 ```
 
-## 🏢 生产就绪特性
+## 🎯 使用场景
 
-- **🔧 完整 CLI 工具** - 开发、构建、部署一条龙
-- **📝 配置管理** - 支持 JS/TS/JSON/YAML/TOML 多种格式
-- **📊 性能监控** - 内置性能指标和监控面板
-- **🔒 类型安全** - 端到端类型检查，减少运行时错误
-- **🐳 容器化支持** - 开箱即用的 Docker 部署方案
+- **聊天机器人**: 多平台聊天机器人开发
+- **自动化工具**: 基于聊天平台的自动化任务
+- **API 服务**: 提供 HTTP API 接口
+- **数据处理**: 实时消息处理和分析
 
-## 🚀 立即体验
+## 📚 文档
 
-<div class="demo-container">
+- [快速开始](./guide/getting-started) - 了解基本使用
+- [插件开发](./plugin/) - 学习插件开发
+- [适配器开发](./adapter/) - 适配新平台
+- [API 参考](./api/) - 详细 API 文档
 
-**1. 创建项目**
-```bash
-npm create zhin my-bot && cd my-bot
-```
+## 🤝 参与贡献
 
-**2. 体验热重载**
-```bash
-pnpm dev  # 启动开发服务器
-```
+欢迎提交 Issue 和 Pull Request！
 
-**3. 在控制台输入消息测试**
-```
-> hello
-< 你好！欢迎使用 Zhin 机器人框架！
+- [GitHub Issues](https://github.com/zhinjs/zhin/issues) - 报告问题
+- [GitHub Discussions](https://github.com/zhinjs/zhin/discussions) - 讨论交流
 
-> status  
-< 🤖 机器人状态
-  ⏱️ 运行时间: 5分钟32秒
-  📊 内存使用: 45.23MB
-```
+## 📄 许可证
 
-</div>
-
-## 🌟 加入社区
-
-<div class="community-links">
-  
-- 💬 [GitHub Discussions](https://github.com/zhinjs/zhin/discussions) - 讨论和交流
-- 🐛 [GitHub Issues](https://github.com/zhinjs/zhin/issues) - 问题反馈  
-- 📖 [开发文档](./guide/getting-started) - 详细教程
-- 🎯 [插件生态](https://github.com/zhinjs/awesome-zhin) - 优秀插件推荐
-
-</div>
-
----
-
-<div class="footer-note">
-  <p>🎉 <strong>Zhin</strong> 让机器人开发变得简单而愉快！</p>
-  <p>从快速原型到生产部署，我们为每个开发阶段提供最佳体验。</p>
-</div>
+MIT License

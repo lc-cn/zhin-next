@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import { Logger } from './types';
-import { performGC } from './utils';
+import { Logger } from './types.js';
+import { performGC } from './utils.js';
 
 /**
  * 重载管理器

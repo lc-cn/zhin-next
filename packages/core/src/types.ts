@@ -1,5 +1,17 @@
 import {MaybePromise}from '@zhin.js/types'
+import {MessageChannel} from "./message.js";
+import {Adapter} from "./adapter.js";
+import {Bot} from "./bot.js";
+declare module '@zhin.js/types'{
+  interface GlobalContext extends RegisteredAdapters{}
+}
+export interface RegisteredAdapters extends Record<string, Adapter>{
 
+}
+export type ObjectItem<T extends object>=T[keyof T]
+export type RegisteredAdapter=keyof RegisteredAdapters
+export type AdapterMessage<T extends keyof RegisteredAdapters>=RegisteredAdapters[T] extends Adapter<infer R>?BotMessage<R>:{}
+export type BotMessage<T extends Bot>=T extends Bot<infer R>?R:{}
 export interface MessageSegment {
   type: string;
   data: Record<string, any>;
@@ -11,23 +23,6 @@ export interface MessageSender{
   name?: string;
 }
 export type Dict<V=any,K extends string|symbol=string>=Record<K, V>;
-export type MessageComponent<T extends object>=(props:T&{children:SendContent})=>MaybePromise<SendContent>
-export interface MessageChannel{
-  id: string;
-  type: 'group' | 'private' | 'channel';
-}
-export interface Message {
-  id: string;
-  adapter:string
-  bot:string
-  content: MessageSegment[];
-  sender: MessageSender;
-  reply(content:SendContent,quote?:boolean|string):Promise<void>
-  channel: MessageChannel;
-  timestamp: number;
-  raw: string;
-}
-
 export interface User {
   user_id: string;
   nickname: string;

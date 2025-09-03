@@ -1,8 +1,8 @@
 import { Config, Client, PrivateMessageEvent, GroupMessageEvent, Sendable, MessageElem} from "@icqqjs/icqq";
 import path from "path";
 import {Bot,BotConfig,useContext,Adapter,Plugin,registerAdapter, Message, SendOptions, MessageSegment, SendContent} from "zhin.js";
-declare module '@zhin.js/types'{
-    interface GlobalContext{
+declare module 'zhin.js'{
+    interface RegisteredAdapters{
         icqq:Adapter<IcqqBot>
     }
 }
@@ -13,47 +13,24 @@ export interface IcqqBotConfig extends BotConfig,Config{
     scope?:string
 }
 export interface IcqqBot{
-    readonly config:Required<IcqqBotConfig>
+    $config:IcqqBotConfig
 }
-export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
-    connected?:boolean
+export class IcqqBot extends Client implements Bot<PrivateMessageEvent|GroupMessageEvent,IcqqBotConfig>{
+    $connected?:boolean
     constructor(private plugin:Plugin,config:IcqqBotConfig) {
         if(!config.scope) config.scope='icqqjs'
         if(!config.data_dir) config.data_dir=path.join(process.cwd(),'data')
         if(config.scope.startsWith('@')) config.scope=config.scope.slice(1)
         super(config);
+        this.$config=config
     }
     private handleIcqqMessage(msg: PrivateMessageEvent|GroupMessageEvent): void {
-        const message: Message = {
-            id: msg.message_id.toString(),
-            adapter:'icqq',
-            bot:`${this.config.name}`,
-            sender:{
-                id:msg.sender.user_id.toString(),
-                name:msg.sender.nickname.toString(),
-            },
-            channel:{
-                id:msg.message_type==='group'?msg.group_id.toString():msg.from_id.toString(),
-                type:msg.message_type
-            },
-            content: IcqqBot.toSegments(msg.message),
-            raw: msg.raw_message,
-            timestamp: msg.time,
-            reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
-                if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.id:quote}})
-                this.plugin.dispatch('message.send',{
-                    ...message.channel,
-                    context:'icqq',
-                    bot:`${this.uin}`,
-                    content
-                })
-            }
-        };
+        const message =this.$formatMessage(msg) ;
         this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.channel.type}(${message.channel.id}):${msg.raw_message}`)
-        this.plugin.dispatch(`message.${message.channel.type}.receive`,message)
+        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${msg.raw_message}`)
+        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
-    async connect(): Promise<void> {
+    async $connect(): Promise<void> {
         this.on('message',this.handleIcqqMessage.bind(this))
         this.on('system.login.device',async (e:unknown)=>{
             await this.sendSmsCode()
@@ -76,19 +53,47 @@ export class IcqqBot extends Client implements Bot<Required<IcqqBotConfig>>{
         })
         return new Promise((resolve)=>{
             this.once('system.online',()=>{
-                this.connected=true;
+                this.$connected=true;
                 resolve()
             })
-            this.login(Number(this.config.name),this.config.password)
+            this.login(Number(this.$config.name),this.$config.password)
         })
     }
 
-    async disconnect(): Promise<void> {
+    async $disconnect(): Promise<void> {
         await this.logout()
-        this.connected=false;
+        this.$connected=false;
+    }
+    $formatMessage(msg:PrivateMessageEvent|GroupMessageEvent){
+        const result= Message.from(msg,{
+            $id: msg.message_id.toString(),
+            $adapter:'icqq',
+            $bot:`${this.$config.name}`,
+            $sender:{
+                id:msg.sender.user_id.toString(),
+                name:msg.sender.nickname.toString(),
+            },
+            $channel:{
+                id:msg.message_type==='group'?msg.group_id.toString():msg.from_id.toString(),
+                type:msg.message_type
+            },
+            $content: IcqqBot.toSegments(msg.message),
+            $raw: msg.raw_message,
+            $timestamp: msg.time,
+            $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+                if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?result.$id:quote}})
+                this.plugin.dispatch('message.send',{
+                    ...result.$channel,
+                    context:'icqq',
+                    bot:`${this.uin}`,
+                    content
+                })
+            }
+        })
+        return result
     }
 
-    async sendMessage(options: SendOptions): Promise<void> {
+    async $sendMessage(options: SendOptions): Promise<void> {
         options=await this.plugin.app.handleBeforeSend(options)
         switch (options.type){
             case 'private':{
@@ -151,21 +156,21 @@ useContext('router','icqq', (router,icqq) => {
             const result = bots.map(bot => {
                 try {
                     return {
-                        name: bot.config.name,
-                        connected: bot.connected || false,
+                        name: bot.$config.name,
+                        connected: bot.$connected || false,
                         groupCount: bot.gl?.size || 0,
                         friendCount: bot.fl?.size || 0,
                         receiveCount: bot.stat?.recv_msg_cnt || 0,
                         sendCount: bot.stat?.sent_msg_cnt || 0,
-                        loginMode: bot.config.password ? 'password' : 'qrcode',
-                        status: bot.connected ? 'online' : 'offline',
+                        loginMode: bot.$config.password ? 'password' : 'qrcode',
+                        status: bot.$connected ? 'online' : 'offline',
                         lastActivity: new Date().toISOString()
                     }
                 } catch (botError) {
                     // 单个机器人数据获取失败时的处理
                     // 获取机器人数据失败，返回错误状态
                     return {
-                        name: bot.config.name,
+                        name: bot.$config.name,
                         connected: false,
                         groupCount: 0,
                         friendCount: 0,

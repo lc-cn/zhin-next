@@ -6,7 +6,7 @@ import KoaBodyParser from 'koa-bodyparser';
 import { Router } from './router.js';
 import * as process from 'process';
 
-export * from './router';
+export * from './router.js';
 
 declare module '@zhin.js/types'{
   interface GlobalContext {

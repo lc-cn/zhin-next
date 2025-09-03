@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Contexts, GlobalContext, SideEffect} from '@zhin.js/types';
-import {Context, DependencyOptions,} from './types'
-import { createError, ERROR_MESSAGES, DEFAULT_CONFIG, performGC } from './utils';
+import {Context, DependencyOptions,} from './types.js'
+import { createError, ERROR_MESSAGES, DEFAULT_CONFIG, performGC } from './utils.js';
 // ============================================================================
 // 依赖基类
 // ============================================================================
