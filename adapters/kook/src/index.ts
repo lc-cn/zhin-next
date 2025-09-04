@@ -31,12 +31,7 @@ export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMe
         super(config);
         this.$config=config;
     }
-    private handleKookMessage(msg: PrivateMessageEvent|ChannelMessageEvent): void {
-        const message=this.$formatMessage(msg)
-        this.plugin.dispatch('message.receive',message)
-        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
-        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
-    }
+
     $formatMessage(msg: PrivateMessageEvent | ChannelMessageEvent){
         const message=Message.from(msg,{
             $id: msg.message_id.toString(),
@@ -93,6 +88,13 @@ export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMe
             default:
                 throw new Error(`unsupported channel type ${options.type}`)
         }
+    }
+
+    private handleKookMessage(msg: PrivateMessageEvent|ChannelMessageEvent): void {
+        const message=this.$formatMessage(msg)
+        this.plugin.dispatch('message.receive',message)
+        this.plugin.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
+        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
 
 }

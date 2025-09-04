@@ -77,8 +77,8 @@ interface ApiResponse<T = any> {
 // ============================================================================
 
 export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Message,OneBot11WsClientConfig> {
-  private ws?: WebSocket;
   $connected?:boolean
+  private ws?: WebSocket;
   private reconnectTimer?: NodeJS.Timeout;
   private heartbeatTimer?: NodeJS.Timeout;
   private requestId = 0;
@@ -311,6 +311,7 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
         return true;
       }})
     this.$connected=true;
+    this.plugin.logger.info(`ws server start at path:${this.$config.path}`)
     this.#wss.on('connection', (client,req) => {
       this.startHeartbeat();
       this.plugin.logger.info(`已连接到协议端：${req.socket.remoteAddress}`);
@@ -471,7 +472,5 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
 }
 registerAdapter(new Adapter('onebot11',OneBot11WsClient))
 useContext('router',(router)=>{
-  registerAdapter(new Adapter('onebot11.wss',(p,c:OneBot11WsServerConfig)=>{
-    return new OneBot11WsServer(p,router,c)
-  }));
+  registerAdapter(new Adapter('onebot11.wss',(p,c:OneBot11WsServerConfig)=>new OneBot11WsServer(p,router,c)));
 })

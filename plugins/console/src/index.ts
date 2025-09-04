@@ -14,9 +14,13 @@ declare module '@zhin.js/types' {
         web: WebServer;
     }
 }
+export type WebEntry=string|{
+    production:string
+    development:string
+}
 export type WebServer = {
     vite:ViteDevServer,
-    addEntry(entry: string): () => void;
+    addEntry(entry: WebEntry): () => void;
     entries: Record<string, string>;
     ws:WebSocketServer
 };
@@ -117,7 +121,8 @@ useContext('router', async (router) => {
         entries: {},
         addEntry(entry) {
             const hash = Date.now().toString(16);
-            this.entries[hash] = `/vite/@fs/${entry}`;
+            const entryFile=typeof entry==="string"?entry:entry[(process.env.NODE_ENV as 'development'|'production')||'development'];
+            this.entries[hash] = `/vite/@fs/${entryFile}`;
             for (const ws of this.ws.clients || []) {
                 ws.send(JSON.stringify(createAddMsg('entries', this.entries[hash])));
             }

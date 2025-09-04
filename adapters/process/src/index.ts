@@ -1,18 +1,5 @@
 import {EventEmitter} from "events";
-import * as process from 'node:process'
-import {
-    Bot,
-    Adapter,
-    Plugin,
-    BotConfig,
-    registerAdapter,
-    useLogger,
-    Message,
-    SendOptions,
-    MessageSegment,
-    SendContent,
-    segment
-} from "zhin.js";
+import {Bot, Adapter, Plugin, BotConfig, registerAdapter, useLogger, Message, SendOptions, MessageSegment, segment} from "zhin.js";
 
 declare module 'zhin.js'{
     interface RegisteredAdapters{
@@ -25,27 +12,22 @@ export interface ProcessConfig extends BotConfig {
 const logger=useLogger()
 export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:number},ProcessConfig>{
     $connected?:boolean
-    #listenInput:(data:Buffer<ArrayBufferLike>)=>void=function (this:ProcessBot,data){
-        const content=data.toString().trim()
-        const ts=Date.now()
-        const message =this.$formatMessage({content,ts});
-        logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
-        this.plugin.dispatch('message.receive',message)
-        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
-    }
 
     constructor(private plugin:Plugin,public $config:ProcessConfig) {
         super();
         this.#listenInput=this.#listenInput.bind(this)
     }
+
     async $connect(): Promise<void> {
         process.stdin.on('data',this.#listenInput);
         this.$connected=true
     }
+
     async $disconnect(){
         process.stdin.off('data',this.#listenInput)
         this.$connected=false
     }
+
     $formatMessage({content,ts}:{content:string,ts:number}) {
         const message=Message.from({content,ts},{
             $id: `${ts}`,
@@ -80,16 +62,14 @@ export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:n
         if(!this.$connected) return
         logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
     }
-}
-export namespace ProcessBot{
-    export function contentToString(content:SendContent):string{
-        if(!Array.isArray(content)) content=[content]
-        return content.map(item=>{
-            if(typeof item==="string") return item
-            if(item.type==='text') return item.data.text
-            const {type,data}=item
-            return `[${type}]:${JSON.stringify(data)}`
-        }).join('')
+
+    #listenInput:(data:Buffer<ArrayBufferLike>)=>void=function (this:ProcessBot,data){
+        const content=data.toString().trim()
+        const ts=Date.now()
+        const message =this.$formatMessage({content,ts});
+        logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
+        this.plugin.dispatch('message.receive',message)
+        this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
 }
 

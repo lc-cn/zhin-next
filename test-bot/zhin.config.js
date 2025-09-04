@@ -25,15 +25,15 @@ export default defineConfig(async (env)=>{
       },
       {
         name: env.ONEBOT_QQ,
-        context:'onebot11',
-        url:'wss://napcat.liucl.cn/ws',
+        context:'onebot11.wss',
+        path:'/ws',
         access_token:env.ONEBOT_TOKEN
       },
       // {
       //   name: env.ICQQ_LOGIN_UIN,
       //   context:'icqq',
       //   log_level:'off',
-      //   password:"Lcl9623.",
+      //   password:env.ICQQ_PASSWORD,
       //   sign_api_addr: env.ICQQ_SIGN_ADDR,
       //   platform:2
       // }

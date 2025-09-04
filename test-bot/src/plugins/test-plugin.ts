@@ -56,8 +56,10 @@ useContext('icqq', (p) => { // 指定某个上下文就绪时，需要做的事
       if (!params.atUsers?.length) params.atUsers = [+m.$sender.id];
       const likeResult: string[] = []
       for (const user_id of params.atUsers) {
-        const userResult = await p.bots.get(m.$bot)?.sendLike(user_id, 10);
-        likeResult.push(`为用户(${user_id})赞${userResult ? '成功' : '失败'}`)
+        const userResult = await Promise.all(new Array(3).fill(0).map(()=>{
+            return p.bots.get(m.$bot)?.sendLike(user_id, 20)
+        }));
+        likeResult.push(`为用户(${user_id})赞${userResult.filter(Boolean).length ? '成功' : '失败'}`)
       }
       return likeResult.join('\n');
     })
