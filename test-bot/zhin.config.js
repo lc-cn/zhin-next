@@ -23,10 +23,17 @@ export default defineConfig(async (env)=>{
         log_level:'off',
         platform:4
       },
+      // {
+      //   name: env.ONEBOT_NAME,
+      //   context:'onebot11.wss',
+      //   path:'/ws',
+      //   access_token:env.ONEBOT_TOKEN
+      // },
+
       {
-        name: env.ONEBOT_QQ,
-        context:'onebot11.wss',
-        path:'/ws',
+        name: env.ONEBOT_NAME,
+        context:'onebot11',
+        url:'wss://napcat.liucl.cn/ws',
         access_token:env.ONEBOT_TOKEN
       },
       // {

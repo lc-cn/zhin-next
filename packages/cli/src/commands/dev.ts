@@ -62,7 +62,8 @@ export const devCommand = new Command('dev')
         return spawn(runtime, args, {
           cwd,
           stdio: 'inherit',
-          env
+          env,
+          shell:true,
         });
       };
 

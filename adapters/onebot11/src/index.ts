@@ -164,7 +164,7 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
         name:onebotMsg.user_id.toString()
       },
       $channel:{
-        id:[onebotMsg.self_id,(onebotMsg.group_id||onebotMsg.user_id)].join(':'),
+        id: (onebotMsg.group_id || onebotMsg.user_id).toString(),
         type:onebotMsg.group_id?'group':'private'
       },
       $content: onebotMsg.message,
@@ -352,7 +352,7 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
         name:onebotMsg.user_id.toString()
       },
       $channel:{
-        id:(onebotMsg.group_id||onebotMsg.user_id).toString(),
+        id:[onebotMsg.self_id,(onebotMsg.group_id||onebotMsg.user_id)].join(':'),
         type:onebotMsg.group_id?'group':'private'
       },
       $content: onebotMsg.message,

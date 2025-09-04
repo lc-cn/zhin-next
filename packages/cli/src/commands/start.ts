@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { logger } from '../utils/logger.js';
 import { loadEnvFiles } from '../utils/env.js';
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
 import { startProcess } from '../utils/process.js';

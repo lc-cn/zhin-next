@@ -30,7 +30,8 @@ export const buildCommand = new Command('build')
       // 使用TypeScript编译
       const child = spawn('npx', ['tsc','--project','tsconfig.json'], {
         cwd,
-        stdio: 'inherit'
+        stdio: 'inherit',
+        shell:true,
       });
       
       child.on('close', (code) => {

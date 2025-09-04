@@ -65,7 +65,8 @@ export async function startProcess(command: string, args: string[], cwd: string,
     const child = spawn(command, args, {
       cwd,
       detached: daemon,
-      stdio: 'ignore',
+      stdio: 'inherit',
+      shell:true,
       env: { ...process.env }
     });
 
