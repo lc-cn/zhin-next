@@ -110,10 +110,16 @@ importers:
       '@zhin.js/types':
         specifier: workspace:*
         version: link:../../packages/types
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
       zhin.js:
         specifier: workspace:*
         version: link:../../packages/zhin
     devDependencies:
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       typescript:
         specifier: ^5.3.0
         version: 5.9.2

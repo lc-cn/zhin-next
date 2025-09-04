@@ -6,10 +6,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "zhin dev --bun",
-    "start": "zhin start --bun",
-    "daemon": "zhin start --bun --daemon",
-    "build": "zhin build",
+    "dev": "npx zhin dev",
+    "start": "npx zhin start",
+    "daemon": "npx zhin start --daemon",
+    "build": "npx zhin build",
     "stop": "zhin stop"
   },
   "dependencies": {
@@ -19,8 +19,8 @@
     "@zhin.js/client": "workspace:*",
     "@zhin.js/http": "workspace:*",
     "@zhin.js/adapter-kook": "workspace:*",
-    "@zhin.js/adapter-process": "workspace:*",
-    "@zhin.js/adapter-onebot11": "workspace:*"
+    "@zhin.js/adapter-onebot11": "workspace:*",
+    "@zhin.js/adapter-process": "workspace:*"
   },
   "devDependencies": {
     "@zhin.js/cli": "workspace:*",
