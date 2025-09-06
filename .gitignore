@@ -90,3 +90,5 @@ apps/**/.env*
 apps/**/zhin.config.*
 apps/**/config.*
 !apps/**/env.example 
+
+**/dist/**
