@@ -1,43 +1,27 @@
-import pino, { Logger as PinoLogger, LoggerOptions } from 'pino'
 import chalk from 'chalk'
 import { performance } from 'node:perf_hooks'
+import { format } from 'node:util'
+import { WriteStream } from 'node:fs'
 
 /**
  * 日志级别枚举
  */
 export enum LogLevel {
-  TRACE = 10,
-  DEBUG = 20,
-  INFO = 30,
-  WARN = 40,
-  ERROR = 50,
-  FATAL = 60,
-  SILENT = Infinity
-}
-
-/**
- * 日志级别映射到pino级别
- */
-export const LOG_LEVEL_MAPPING: Record<LogLevel, pino.Level | 'silent'> = {
-  [LogLevel.TRACE]: 'trace',
-  [LogLevel.DEBUG]: 'debug',
-  [LogLevel.INFO]: 'info',
-  [LogLevel.WARN]: 'warn',
-  [LogLevel.ERROR]: 'error',
-  [LogLevel.FATAL]: 'fatal',
-  [LogLevel.SILENT]: 'silent'
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+  SILENT = 4
 }
 
 /**
  * 日志级别名称映射
  */
 export const LOG_LEVEL_NAMES: Record<LogLevel, string> = {
-  [LogLevel.TRACE]: 'TRACE',
   [LogLevel.DEBUG]: 'DEBUG',
   [LogLevel.INFO]: 'INFO',
   [LogLevel.WARN]: 'WARN',
   [LogLevel.ERROR]: 'ERROR',
-  [LogLevel.FATAL]: 'FATAL',
   [LogLevel.SILENT]: 'SILENT'
 }
 
@@ -45,252 +29,532 @@ export const LOG_LEVEL_NAMES: Record<LogLevel, string> = {
  * 日志级别颜色映射
  */
 export const LOG_LEVEL_COLORS: Record<LogLevel, (text: string) => string> = {
-  [LogLevel.TRACE]: chalk.gray,
-  [LogLevel.DEBUG]: chalk.blue,
-  [LogLevel.INFO]: chalk.cyan,
+  [LogLevel.DEBUG]: chalk.gray,
+  [LogLevel.INFO]: chalk.blue,
   [LogLevel.WARN]: chalk.yellow,
   [LogLevel.ERROR]: chalk.red,
-  [LogLevel.FATAL]: chalk.magenta,
   [LogLevel.SILENT]: chalk.gray
 }
 
 /**
- * 性能计时器接口
+ * Logger 名称颜色映射（循环使用）
+ */
+const NAME_COLORS = [
+  chalk.cyan,
+  chalk.magenta,
+  chalk.green,
+  chalk.yellow,
+  chalk.blue,
+  chalk.red
+]
+
+/**
+ * 日志条目接口
+ */
+export interface LogEntry {
+  level: LogLevel
+  name: string
+  message: string
+  timestamp: Date
+  args: any[]
+}
+
+/**
+ * 日志格式化器接口
+ */
+export interface LogFormatter {
+  format(entry: LogEntry): string
+}
+
+/**
+ * 日志输出器接口
+ */
+export interface LogTransport {
+  write(formatted: string): void
+}
+
+/**
+ * Transport安全选项
+ */
+export interface TransportSecurityOptions {
+  /** 是否移除ANSI转义序列 */
+  removeAnsi?: boolean
+  /** 是否脱敏敏感信息 */
+  maskSensitive?: boolean
+}
+
+/**
+ * Logger 配置选项
+ */
+export interface LoggerOptions {
+  /** 日志级别 */
+  level?: LogLevel
+  /** 自定义格式化器 */
+  formatter?: LogFormatter
+  /** 输出器列表 */
+  transports?: LogTransport[]
+  /** 性能选项 */
+  performance?: {
+    /** 最大子Logger数量（默认1000） */
+    maxChildLoggers?: number
+    /** 最大Timer数量（默认100） */
+    maxTimers?: number
+  }
+}
+
+/**
+ * 安全工具类
+ */
+class LogSanitizer {
+  private static readonly ANSI_REGEX = /\x1b\[[0-9;]*[mGKHF]/g
+  private static readonly SENSITIVE_PATTERNS = [
+    /password['\s]*[:=]['\s]*([^'\s,}]+)/gi,
+    /token['\s]*[:=]['\s]*([^'\s,}]+)/gi,  
+    /key['\s]*[:=]['\s]*([^'\s,}]+)/gi,
+    /secret['\s]*[:=]['\s]*([^'\s,}]+)/gi,
+    /apikey['\s]*[:=]['\s]*([^'\s,}]+)/gi
+  ]
+
+  /**
+   * 移除ANSI转义序列
+   */
+  static removeAnsi(message: string): string {
+    return message.replace(this.ANSI_REGEX, '')
+  }
+
+  /**
+   * 脱敏敏感信息
+   */
+  static maskSensitive(message: string): string {
+    let sanitized = message
+    for (const pattern of this.SENSITIVE_PATTERNS) {
+      sanitized = sanitized.replace(pattern, (match, value) => {
+        const masked = value.length > 4 
+          ? value.substring(0, 2) + '*'.repeat(value.length - 4) + value.substring(value.length - 2)
+          : '*'.repeat(value.length)
+        return match.replace(value, masked)
+      })
+    }
+    return sanitized
+  }
+}
+
+/**
+ * 默认格式化器 - 【date】【level】【name】：【message】
+ * 只负责格式化，不处理安全净化（由Transport处理）
+ */
+export class DefaultFormatter implements LogFormatter {
+  private nameColorMap = new Map<string, (text: string) => string>()
+  private colorIndex = 0
+  private readonly maxCacheSize = 1000
+
+  private getNameColor(name: string): (text: string) => string {
+    if (!this.nameColorMap.has(name)) {
+      // 防止缓存无限增长
+      if (this.nameColorMap.size >= this.maxCacheSize) {
+        const entries = Array.from(this.nameColorMap.entries())
+        this.nameColorMap.clear()
+        // 保留最新的500个
+        for (const [key, value] of entries.slice(-500)) {
+          this.nameColorMap.set(key, value)
+        }
+      }
+
+      this.nameColorMap.set(name, NAME_COLORS[this.colorIndex % NAME_COLORS.length])
+      this.colorIndex++
+    }
+    return this.nameColorMap.get(name)!
+  }
+
+  format(entry: LogEntry): string {
+    const { level, name, message, timestamp } = entry
+
+    // 格式化时间：MM-dd HH:MM:ss.SSS
+    const date = timestamp.toISOString().slice(5, 23).replace('T', ' ')
+    const dateStr = chalk.gray(`[${date}]`)
+
+    // 格式化级别（带颜色）
+    const levelName = LOG_LEVEL_NAMES[level]
+    const levelStr = LOG_LEVEL_COLORS[level](`[${levelName}]`)
+
+    // 格式化名称（带颜色）
+    const nameColor = this.getNameColor(name)
+    const nameStr = nameColor(`[${name}]`)
+
+    // 组合格式：【date】【level】【name】：【message】
+    return `${dateStr} ${levelStr} ${nameStr}: ${message}`
+  }
+}
+
+/**
+ * 控制台输出器 - 开发友好，默认保留颜色和完整信息
+ */
+export class ConsoleTransport implements LogTransport {
+  constructor(private securityOptions?: TransportSecurityOptions) {}
+
+  write(formatted: string): void {
+    let output = formatted
+
+    // 控制台输出的安全处理（默认不脱敏，便于开发调试）
+    const removeAnsi = this.securityOptions?.removeAnsi ?? false
+    const maskSensitive = this.securityOptions?.maskSensitive ?? false
+
+    if (removeAnsi) {
+      output = LogSanitizer.removeAnsi(output)
+    }
+
+    if (maskSensitive) {
+      output = LogSanitizer.maskSensitive(output)
+    }
+
+    // 直接使用 console.log，保持与 console.info 一致的行为
+    console.log(output)
+  }
+}
+
+/**
+ * 文件输出器 - 生产安全，默认去除颜色和脱敏
+ */
+export class FileTransport implements LogTransport {
+  constructor(
+    private stream: WriteStream, 
+    private securityOptions?: TransportSecurityOptions
+  ) {}
+
+  write(formatted: string): void {
+    let output = formatted
+
+    // 文件输出的安全处理（默认脱敏，保护生产环境）
+    const removeAnsi = this.securityOptions?.removeAnsi ?? true  // 文件默认去掉颜色
+    const maskSensitive = this.securityOptions?.maskSensitive ?? true  // 文件默认脱敏
+
+    if (removeAnsi) {
+      output = LogSanitizer.removeAnsi(output)
+    }
+
+    if (maskSensitive) {
+      output = LogSanitizer.maskSensitive(output)
+    }
+
+    this.stream.write(output + '\n')
+  }
+}
+
+/**
+ * 流输出器 - 可配置安全选项
+ */
+export class StreamTransport implements LogTransport {
+  constructor(
+    private stream: NodeJS.WritableStream,
+    private securityOptions?: TransportSecurityOptions
+  ) {}
+
+  write(formatted: string): void {
+    let output = formatted
+
+    // 流输出的安全处理（可配置）
+    const removeAnsi = this.securityOptions?.removeAnsi ?? false
+    const maskSensitive = this.securityOptions?.maskSensitive ?? false
+
+    if (removeAnsi) {
+      output = LogSanitizer.removeAnsi(output)
+    }
+
+    if (maskSensitive) {
+      output = LogSanitizer.maskSensitive(output)
+    }
+
+    this.stream.write(output + '\n')
+  }
+}
+
+/**
+ * 性能计时器
  */
 export interface Timer {
   end(): void
 }
 
 /**
- * Logger 配置选项
- */
-export interface ZhinLoggerOptions {
-  level?: LogLevel
-  name?: string
-  pretty?: boolean
-  prettyOptions?: {
-    colorize?: boolean
-    translateTime?: string | boolean
-    ignore?: string
-    hideObject?: boolean
-    singleLine?: boolean
-  }
-  destination?: string | NodeJS.WritableStream
-  pinoOptions?: LoggerOptions
-}
-
-/**
- * 默认的 pretty 配置
- */
-export const DEFAULT_PRETTY_OPTIONS = {
-  colorize: true,
-  translateTime: 'mm-dd HH:MM:ss.l',
-  ignore: 'pid,hostname',
-  hideObject: false,
-  singleLine: false
-}
-
-/**
- * Logger 类 - 基于 pino 的封装
+ * Logger 类 - 自管理子 Logger
  */
 export class Logger {
-  private pinoLogger: PinoLogger
+  private level: LogLevel=LogLevel.INFO
+  private formatter: LogFormatter=new DefaultFormatter()
+  private transports: LogTransport[]=[new ConsoleTransport()]
   private timers = new Map<string, number>()
-  private namespace:string
-  constructor(options: ZhinLoggerOptions = {}) {
-    this.namespace=options.name||'zhin'
-    const {
-      level = LogLevel.INFO,
-      name = 'zhin',
-      pretty = true,
-      prettyOptions = DEFAULT_PRETTY_OPTIONS,
-      destination,
-      pinoOptions = {}
-    } = options
-
-    // 准备 pino 配置
-    const pinoConfig: LoggerOptions = {
-      name,
-      level: LOG_LEVEL_MAPPING[level],
-      ...pinoOptions
-    }
-
-    // 配置输出目标
-    let transport: any = undefined
+  private childLoggers = new Map<string, Logger>()
+  #parent: Logger | null
+  #name: string
+  
+  // 🔧 性能配置
+  private readonly maxChildLoggers: number
+  private readonly maxTimers: number
+  constructor(
+    parent: Logger | null,
+    name:string,
+    options: LoggerOptions = {},
+  ) {
+    this.#name=name
+    this.#parent = parent
     
-    if (pretty && !destination) {
-      // 使用 pino-pretty 进行美化输出
-      transport = {
-        target: 'pino-pretty',
-        options: {
-          ...DEFAULT_PRETTY_OPTIONS,
-          ...prettyOptions
-        }
-      }
-    }
-
-    if (transport) {
-      pinoConfig.transport = transport
-    }
-
-    // 创建 pino logger
-    if (destination) {
-      if (typeof destination === 'string') {
-        // 如果是字符串路径，需要创建写入流
-        const fs = require('node:fs')
-        const stream = fs.createWriteStream(destination, { flags: 'a' })
-        this.pinoLogger = pino(pinoConfig, stream)
-      } else {
-        this.pinoLogger = pino(pinoConfig, destination)
-      }
-    } else {
-      this.pinoLogger = pino(pinoConfig)
+    // 初始化性能配置
+    this.maxChildLoggers = options.performance?.maxChildLoggers ?? 1000
+    this.maxTimers = options.performance?.maxTimers ?? 100
+    
+    this.setOptions(options)
+  }
+  get name(){
+    return this.#name
+  }
+  set name(name:string){
+    this.#name=name
+  }
+  /**
+   * 设置日志级别
+   * @param recursive 是否同时设置所有子 Logger 的级别
+   */
+  setLevel(level: LogLevel, recursive: boolean = false): void {
+    this.level = level
+    
+    if (recursive) {
+      // 🔧 防止递归过深
+      const maxDepth = 50
+      this.setLevelRecursive(level, 0, maxDepth)
     }
   }
 
   /**
-   * 设置日志级别
+   * 递归设置级别，带深度检查
    */
-  setLevel(level: LogLevel): void {
-    const pinoLevel = LOG_LEVEL_MAPPING[level]
-    // pino 支持 silent 级别，直接设置字符串
-    this.pinoLogger.level = pinoLevel as any
+  private setLevelRecursive(level: LogLevel, currentDepth: number, maxDepth: number): void {
+    if (currentDepth >= maxDepth) {
+      console.warn(`[Logger] 递归深度超过${maxDepth}，停止递归设置`)
+      return
+    }
+
+    for (const childLogger of this.childLoggers.values()) {
+      childLogger.level = level
+      childLogger.setLevelRecursive(level, currentDepth + 1, maxDepth)
+    }
   }
 
   /**
    * 获取当前日志级别
    */
   getLevel(): LogLevel {
-    const levelStr = this.pinoLogger.level
-    for (const [level, mapping] of Object.entries(LOG_LEVEL_MAPPING)) {
-      if (mapping === levelStr) {
-        return parseInt(level) as LogLevel
-      }
-    }
-    return LogLevel.INFO
+    return this.level
   }
 
   /**
    * 检查指定级别是否启用
    */
   isLevelEnabled(level: LogLevel): boolean {
-    return this.pinoLogger.isLevelEnabled(LOG_LEVEL_MAPPING[level])
+    return level >= this.level
   }
 
   /**
-   * 创建子 Logger
+   * 添加输出器
+   * @param recursive 是否同时添加到所有子 Logger
    */
-  child(bindings: Record<string, any> | string): Logger {
-    let childBindings: Record<string, any>
+  addTransport(transport: LogTransport, recursive: boolean = false): void {
+    this.transports.push(transport)
     
-    if (typeof bindings === 'string') {
-      childBindings = { module: bindings }
+    if (recursive) {
+      for (const childLogger of this.childLoggers.values()) {
+        childLogger.addTransport(transport, recursive)
+      }
+    }
+  }
+
+  /**
+   * 移除输出器
+   * @param recursive 是否同时从所有子 Logger 移除
+   */
+  removeTransport(transport: LogTransport, recursive: boolean = false): void {
+    const index = this.transports.indexOf(transport)
+    if (index > -1) {
+      this.transports.splice(index, 1)
+    }
+    
+    if (recursive) {
+      for (const childLogger of this.childLoggers.values()) {
+        childLogger.removeTransport(transport, recursive)
+      }
+    }
+  }
+
+  /**
+   * 设置格式化器
+   * @param recursive 是否同时设置所有子 Logger 的格式化器
+   */
+  setFormatter(formatter: LogFormatter, recursive: boolean = false): void {
+    this.formatter = formatter
+    
+    if (recursive) {
+      for (const childLogger of this.childLoggers.values()) {
+        childLogger.setFormatter(formatter, recursive)
+      }
+    }
+  }
+  hasLogger(name: string): boolean {
+    return this.childLoggers.has(name)
+  }
+  /**
+   * 获取或创建子 Logger
+   * @param namespace 子命名空间
+   * @param options 可选配置，会覆盖从父级继承的配置
+   */
+  getLogger(namespace: string, options?: LoggerOptions): Logger {
+    // 🔧 内存管理：检查子Logger数量
+    this.checkChildLoggerLimit()
+    
+    if (!this.childLoggers.has(namespace)) {
+      const childName = `${this.name}:${namespace}`
+      const childLogger = new Logger(this,childName, options ?? {})
+      this.childLoggers.set(namespace, childLogger)
+    }
+    return this.childLoggers.get(namespace)!
+  }
+
+  /**
+   * 检查并清理过多的子Logger
+   */
+  private checkChildLoggerLimit(): void {
+    if (this.childLoggers.size >= this.maxChildLoggers) {
+      const entries = Array.from(this.childLoggers.entries())
+      const toRemove = Math.floor(this.maxChildLoggers * 0.1) // 移除10%
+      
+      for (let i = 0; i < toRemove; i++) {
+        const [key] = entries[i]
+        this.childLoggers.delete(key)
+      }
+      
+      console.warn(`[Logger] 清理了${toRemove}个子Logger，当前数量: ${this.childLoggers.size}`)
+    }
+  }
+  setLogger(name: string, options?: LoggerOptions): Logger {
+    if (this.childLoggers.has(name)) {
+      this.childLoggers.get(name)!.setOptions(options)
     } else {
-      childBindings = bindings
+      const childLogger = new Logger(this,name, options ?? {})
+      this.childLoggers.set(name, childLogger)
+    }
+    return this.childLoggers.get(name)!
+  }
+  setOptions(options: LoggerOptions={}): void {
+    // 如果有父 Logger，默认继承父级配置，然后应用自定义选项
+    if (this.#parent) {
+      this.level = options.level ?? this.#parent?.level??LogLevel.INFO
+      this.formatter = options.formatter ?? this.#parent?.formatter??new DefaultFormatter() 
+      this.transports = options.transports ?? [...this.#parent?.transports??[]]
+    } else {
+      this.level = options.level ?? LogLevel.INFO
+      this.formatter = options.formatter ?? new DefaultFormatter()
+      this.transports = options.transports ?? [new ConsoleTransport()]
+    }
+  }
+  /**
+   * 移除子 Logger
+   */
+  removeLogger(namespace: string): boolean {
+    return this.childLoggers.delete(namespace)
+  }
+
+  /**
+   * 获取所有子 Logger 名称
+   */
+  getLoggerNames(): string[] {
+    return Array.from(this.childLoggers.keys())
+  }
+
+  
+  get parent(): Logger | null {
+    return this.#parent
+  }
+
+  /**
+   * 检查是否为根 Logger
+   */
+  isRoot(): boolean {
+    return !this.#parent
+  }
+
+  /**
+   * 记录日志的通用方法
+   */
+  private log(level: LogLevel, message: string, ...args: any[]): void {
+    if (!this.isLevelEnabled(level)) {
+      return
     }
 
-    const childLogger = new Logger()
-    childLogger.pinoLogger = this.pinoLogger.child(childBindings)
-    return childLogger
-  }
+    // 处理参数格式化，与 console.info 行为一致
+    const formattedMessage = args.length > 0 ? format(message, ...args) : message
 
-  /**
-   * TRACE 级别日志
-   */
-  trace(obj: any, msg?: string, ...args: any[]): void
-  trace(msg: string, ...args: any[]): void
-  trace(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.trace(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.trace(objOrMsg, msg, ...args)
+    const entry: LogEntry = {
+      level,
+      name: this.name,
+      message: formattedMessage,
+      timestamp: new Date(),
+      args
+    }
+
+    const formatted = this.formatter.format(entry)
+
+    // 输出到所有 transport
+    for (const transport of this.transports) {
+      try {
+        transport.write(formatted)
+      } catch (err) {
+        // 避免日志系统本身的错误导致应用崩溃
+        console.error('Logger transport error:', err)
+      }
     }
   }
 
   /**
    * DEBUG 级别日志
    */
-  debug(obj: any, msg?: string, ...args: any[]): void
-  debug(msg: string, ...args: any[]): void
-  debug(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.debug(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.debug(objOrMsg, msg, ...args)
-    }
+  debug(message: string, ...args: any[]): void {
+    this.log(LogLevel.DEBUG, message, ...args)
   }
 
   /**
    * INFO 级别日志
    */
-  info(obj: any, msg?: string, ...args: any[]): void
-  info(msg: string, ...args: any[]): void
-  info(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.info(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.info(objOrMsg, msg, ...args)
-    }
+  info(message: string, ...args: any[]): void {
+    this.log(LogLevel.INFO, message, ...args)
   }
 
   /**
-   * SUCCESS 日志 (INFO 级别，带绿色勾号)
+   * SUCCESS 日志（INFO 级别，带绿色 ✓ 标记）
    */
-  success(obj: any, msg?: string, ...args: any[]): void
-  success(msg: string, ...args: any[]): void
-  success(objOrMsg: any, msg?: string, ...args: any[]): void {
-    const successSymbol = chalk.green('✓')
-    
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.info(`${successSymbol} ${objOrMsg}`, ...args)
-    } else {
-      this.pinoLogger.info(objOrMsg, `${successSymbol} ${msg}`, ...args)
-    }
+  success(message: string, ...args: any[]): void {
+    const successMessage = chalk.green('✓ ') + message
+    this.log(LogLevel.INFO, successMessage, ...args)
   }
 
   /**
    * WARN 级别日志
    */
-  warn(obj: any, msg?: string, ...args: any[]): void
-  warn(msg: string, ...args: any[]): void
-  warn(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.warn(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.warn(objOrMsg, msg, ...args)
-    }
+  warn(message: string, ...args: any[]): void {
+    this.log(LogLevel.WARN, message, ...args)
   }
 
   /**
    * ERROR 级别日志
    */
-  error(obj: any, msg?: string, ...args: any[]): void
-  error(msg: string, ...args: any[]): void
-  error(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.error(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.error(objOrMsg, msg, ...args)
-    }
-  }
-
-  /**
-   * FATAL 级别日志
-   */
-  fatal(obj: any, msg?: string, ...args: any[]): void
-  fatal(msg: string, ...args: any[]): void
-  fatal(objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (typeof objOrMsg === 'string') {
-      this.pinoLogger.fatal(objOrMsg, ...args)
-    } else {
-      this.pinoLogger.fatal(objOrMsg, msg, ...args)
-    }
+  error(message: string, ...args: any[]): void {
+    this.log(LogLevel.ERROR, message, ...args)
   }
 
   /**
    * 开始性能计时
    */
   time(label: string): Timer {
+    // 🔧 清理过期的timer
+    this.cleanupTimers()
+    
     const startTime = performance.now()
     this.timers.set(label, startTime)
 
@@ -299,7 +563,41 @@ export class Logger {
         const endTime = performance.now()
         const duration = endTime - startTime
         this.timers.delete(label)
-        this.info({ duration: `${duration.toFixed(2)}ms` }, `Timer: ${label}`)
+        this.info(`${label} took ${duration.toFixed(2)}ms`)
+      }
+    }
+  }
+
+  /**
+   * 清理过期的Timer
+   */
+  private cleanupTimers(): void {
+    if (this.timers.size >= this.maxTimers) {
+      const now = performance.now()
+      const fiveMinutes = 5 * 60 * 1000 // 5分钟
+      let cleaned = 0
+      
+      for (const [label, startTime] of this.timers.entries()) {
+        if (now - startTime > fiveMinutes) {
+          this.timers.delete(label)
+          cleaned++
+        }
+      }
+      
+      // 如果还是太多，清理最老的一批
+      if (this.timers.size >= this.maxTimers) {
+        const entries = Array.from(this.timers.entries())
+        const toRemove = Math.floor(this.maxTimers * 0.2) // 移除20%
+        
+        for (let i = 0; i < toRemove && i < entries.length; i++) {
+          const [label] = entries[i]
+          this.timers.delete(label)
+          cleaned++
+        }
+      }
+      
+      if (cleaned > 0) {
+        console.warn(`[Logger] 清理了${cleaned}个过期Timer，当前数量: ${this.timers.size}`)
       }
     }
   }
@@ -312,7 +610,7 @@ export class Logger {
     if (startTime) {
       const duration = performance.now() - startTime
       this.timers.delete(label)
-      this.info({ duration: `${duration.toFixed(2)}ms` }, `Timer: ${label}`)
+      this.info(`${label} took ${duration.toFixed(2)}ms`)
     } else {
       this.warn(`Timer '${label}' does not exist`)
     }
@@ -321,155 +619,54 @@ export class Logger {
   /**
    * 条件日志
    */
-  logIf(condition: boolean, level: LogLevel, obj: any, msg?: string, ...args: any[]): void
-  logIf(condition: boolean, level: LogLevel, msg: string, ...args: any[]): void
-  logIf(condition: boolean, level: LogLevel, objOrMsg: any, msg?: string, ...args: any[]): void {
-    if (!condition) return
-
-    switch (level) {
-      case LogLevel.TRACE:
-        this.trace(objOrMsg, msg, ...args)
-        break
-      case LogLevel.DEBUG:
-        this.debug(objOrMsg, msg, ...args)
-        break
-      case LogLevel.INFO:
-        this.info(objOrMsg, msg, ...args)
-        break
-      case LogLevel.WARN:
-        this.warn(objOrMsg, msg, ...args)
-        break
-      case LogLevel.ERROR:
-        this.error(objOrMsg, msg, ...args)
-        break
-      case LogLevel.FATAL:
-        this.fatal(objOrMsg, msg, ...args)
-        break
+  logIf(condition: boolean, level: LogLevel, message: string, ...args: any[]): void {
+    if (condition) {
+      this.log(level, message, ...args)
     }
   }
 
   /**
-   * 获取底层 pino logger 实例
+   * 获取 logger 名称
    */
-  getInternalLogger(): PinoLogger {
-    return this.pinoLogger
-  }
-
-  /**
-   * 创建新的 Logger 实例，继承当前配置
-   */
-  fork(options: ZhinLoggerOptions = {}): Logger {
-    const newLogger = new Logger(options)
-    return newLogger
-  }
-
-  /**
-   * 刷新日志缓冲区
-   */
-  flush(): void {
-    if (this.pinoLogger.flush) {
-      this.pinoLogger.flush()
-    }
+  getName(): string {
+    return this.name
   }
 }
-
-/**
- * Logger 管理器
- */
-export class LoggerManager {
-  private static instance: LoggerManager
-  private loggers = new Map<string, Logger>()
-  private globalOptions: ZhinLoggerOptions = {
-    level: LogLevel.INFO,
-    pretty: true
-  }
-
-  private constructor() {}
-
-  static getInstance(): LoggerManager {
-    if (!LoggerManager.instance) {
-      LoggerManager.instance = new LoggerManager()
-    }
-    return LoggerManager.instance
-  }
-
-  /**
-   * 设置全局配置
-   */
-  setGlobalOptions(options: ZhinLoggerOptions): void {
-    this.globalOptions = { ...this.globalOptions, ...options }
-    
-    // 重新配置所有现有的 loggers
-    for (const [name, logger] of this.loggers) {
-      const newLogger = new Logger({ ...this.globalOptions, name })
-      this.loggers.set(name, newLogger)
-    }
-  }
-
-  /**
-   * 获取全局配置
-   */
-  getGlobalOptions(): ZhinLoggerOptions {
-    return { ...this.globalOptions }
-  }
-
-  /**
-   * 设置全局日志级别
-   */
-  setGlobalLevel(level: LogLevel): void {
-    this.globalOptions.level = level
-    for (const logger of this.loggers.values()) {
-      logger.setLevel(level)
-    }
-  }
-
-  /**
-   * 获取或创建 Logger
-   */
-  getLogger(name: string): Logger {
-    if (!this.loggers.has(name)) {
-      const logger = new Logger({ ...this.globalOptions, name })
-      this.loggers.set(name, logger)
-    }
-    return this.loggers.get(name)!
-  }
-
-  /**
-   * 创建 Logger（别名）
-   */
-  createLogger(name: string): Logger {
-    return this.getLogger(name)
-  }
-
-  /**
-   * 移除 Logger
-   */
-  removeLogger(name: string): boolean {
-    return this.loggers.delete(name)
-  }
-
-  /**
-   * 获取所有 Logger 名称
-   */
-  getLoggerNames(): string[] {
-    return Array.from(this.loggers.keys())
-  }
-
-  /**
-   * 清理所有 Logger
-   */
-  clear(): void {
-    // 刷新所有logger
-    for (const logger of this.loggers.values()) {
-      logger.flush()
-    }
-    this.loggers.clear()
-  }
-
-  /**
-   * 关闭所有 Logger 并清理资源
-   */
-  shutdown(): void {
-    this.clear()
-  }
+const defaultLogger=new Logger(null,'Zhin');
+export function getLogger(name: string, options: LoggerOptions = {}, parent=defaultLogger): Logger {
+  return parent.getLogger(name, options)
 }
+export function setLogger(name:string,options?:LoggerOptions,parent:Logger=defaultLogger): Logger {
+  return parent.setLogger(name, options)
+}
+export function setOptions(options: LoggerOptions={},logger:Logger=defaultLogger) {
+  return logger.setOptions(options)
+}
+export function addTransport(transport: LogTransport,logger:Logger=defaultLogger) {
+  return logger.addTransport(transport)
+}
+export function removeTransport(transport: LogTransport,logger:Logger=defaultLogger) {
+  return logger.removeTransport(transport)
+}
+export function setFormatter(formatter: LogFormatter,logger:Logger=defaultLogger) {
+  return logger.setFormatter(formatter)
+}
+export function setLevel(level: LogLevel,logger:Logger=defaultLogger) {
+  return logger.setLevel(level)
+}
+export function getLevel(logger:Logger=defaultLogger) {
+  return logger.getLevel()
+}
+export function isLevelEnabled(level: LogLevel,logger:Logger=defaultLogger) {
+  return logger.isLevelEnabled(level)
+}
+export function setName(name:string,logger:Logger=defaultLogger) {
+  return logger.name=name
+}
+export function getName(logger:Logger=defaultLogger) {
+  return logger.name
+}
+export function getLoggerNames(logger:Logger=defaultLogger) {
+  return logger.getLoggerNames()
+}
+export default defaultLogger

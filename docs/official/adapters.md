@@ -24,7 +24,7 @@ pnpm add @zhin.js/adapter-process
 ### 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     bots: [
@@ -76,7 +76,7 @@ pnpm add @zhin.js/adapter-icqq
 ### 配置（基于实际代码）
 
 ```javascript
-// zhin.config.js - 基于 test-bot 实际配置
+// zhin.config.ts - 基于 test-bot 实际配置
 export default defineConfig(async (env) => {
   return {
     bots: [
@@ -195,7 +195,7 @@ pnpm add @zhin.js/adapter-kook
 ### 配置（基于实际代码）
 
 ```javascript
-// zhin.config.js - 基于 test-bot 实际配置
+// zhin.config.ts - 基于 test-bot 实际配置
 export default defineConfig(async (env) => {
   return {
     bots: [
@@ -310,7 +310,7 @@ pnpm add @zhin.js/adapter-onebot11
 ### 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     bots: [
@@ -404,7 +404,7 @@ onMessage(async (message) => {
 ### 多适配器混合使用
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     bots: [
@@ -509,7 +509,7 @@ curl http://localhost:8080/get_status
 启用调试模式查看详细日志：
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     debug: true,  // 启用调试日志

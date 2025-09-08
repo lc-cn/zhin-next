@@ -21,7 +21,7 @@ npm install @zhin.js/adapter-onebot11
 ## 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default {
   bots: [
     {

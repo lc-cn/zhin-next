@@ -19,7 +19,7 @@ npm install @zhin.js/adapter-kook kook-client
 ## 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default {
   bots: [
     {

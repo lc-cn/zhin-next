@@ -18,7 +18,7 @@ my-zhin-bot/
 │   ├── config/               # 配置文件
 │   ├── storage/              # 持久化数据
 │   └── logs/                 # 日志文件
-├── zhin.config.js           # 核心配置文件
+├── zhin.config.ts           # 核心配置文件
 ├── package.json             # 项目依赖
 ├── tsconfig.json           # TypeScript 配置
 ├── .env.example            # 环境变量模板
@@ -32,7 +32,7 @@ my-zhin-bot/
 // src/index.ts - 简洁的入口文件
 import { createApp } from 'zhin.js'
 
-// 创建应用实例，自动加载 zhin.config.js
+// 创建应用实例，自动加载 zhin.config.ts
 const app = await createApp()
 
 // 启动应用
@@ -56,7 +56,7 @@ console.log('✅ 机器人启动成功！')
 ## ⚙️ 配置管理最佳实践
 
 ```javascript
-// zhin.config.js - 基于环境的配置
+// zhin.config.ts - 基于环境的配置
 import { defineConfig } from 'zhin.js'
 
 export default defineConfig(async (env) => {

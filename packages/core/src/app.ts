@@ -11,11 +11,10 @@ import {Message} from "./message.js";
 import { loadConfig } from './config.js';
 import { fileURLToPath } from 'url';
 import { generateEnvTypes } from './types-generator.js';
-import { createLoggerAdapter } from '@zhin.js/hmr';
-import { createLogger } from '@zhin.js/logger';
+import logger,{ setName } from '@zhin.js/logger';
 
 // 创建静态logger用于配置加载等静态操作
-const staticLogger = createLogger('Zhin');
+setName('Zhin');
 import { MessageMiddleware, Plugin} from "./plugin.js";
 import {Adapter} from "./adapter";
 import {MessageCommand} from "./command";
@@ -38,11 +37,11 @@ export class App extends HMR<Plugin> {
         if (!config || Object.keys(config).length === 0) {
             try {
                 // 异步加载配置，这里需要改为同步初始化
-                staticLogger.info('🔍 正在查找配置文件...');
+                logger.info('🔍 正在查找配置文件...');
                 finalConfig = App.loadConfigSync();
-                staticLogger.info('✅ 配置文件加载成功');
+                logger.info('✅ 配置文件加载成功');
             } catch (error) {
-                staticLogger.warn('⚠️  配置文件加载失败，使用默认配置', { 
+                logger.warn('⚠️  配置文件加载失败，使用默认配置', { 
                     error: error instanceof Error ? error.message : String(error) 
                 });
                 finalConfig = Object.assign({}, App.defaultConfig);
@@ -54,7 +53,7 @@ export class App extends HMR<Plugin> {
         
         // 调用父类构造函数
         super('Zhin',{
-            logger: createLoggerAdapter('Zhin'),
+            logger,
             dirs: finalConfig.plugin_dirs || [],
             extensions: new Set(['.js', '.ts']),
             debug: finalConfig.debug
@@ -172,9 +171,6 @@ export class App extends HMR<Plugin> {
         }
         return options
     }
-    getLogger(...names: string[]): Logger {
-        return createLoggerAdapter([...names].join('/'));
-    }
 }
 
 // ============================================================================
@@ -204,11 +200,11 @@ export async function createApp(config?: Partial<AppConfig>): Promise<App> {
         .filter(filename=>fs.existsSync(path.join(process.cwd(),filename)))
     if (!config || Object.keys(config).length === 0) {
         try {
-            staticLogger.info('🔍 正在查找配置文件...');
+            logger.info('🔍 正在查找配置文件...');
             [configPath,finalConfig] = await loadConfig();
-            staticLogger.info('✅ 配置文件加载成功');
+            logger.info('✅ 配置文件加载成功');
         } catch (error) {
-            staticLogger.warn('⚠️  配置文件加载失败，使用默认配置', { 
+            logger.warn('⚠️  配置文件加载失败，使用默认配置', { 
                 error: error instanceof Error ? error.message : String(error) 
             });
             finalConfig = Object.assign({}, App.defaultConfig);

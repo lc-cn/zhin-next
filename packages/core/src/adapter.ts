@@ -1,6 +1,5 @@
-import {BotConfig} from "./types";
-import {Bot} from "./bot";
-import {Plugin} from "./plugin";
+import {Bot,BotConfig} from "./bot.js";
+import {Plugin} from "./plugin.js";
 export class Adapter<R extends Bot=Bot>{
     public bots:Map<string,R>=new Map<string, R>()
     #botFactory:Adapter.BotFactory<R>

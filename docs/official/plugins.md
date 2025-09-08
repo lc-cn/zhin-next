@@ -23,7 +23,7 @@ pnpm add @zhin.js/http
 ### 基础配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     plugins: [
@@ -134,7 +134,7 @@ pnpm add @zhin.js/console
 ### 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     plugins: [
@@ -148,7 +148,7 @@ export default defineConfig(async (env) => {
 ### 高级配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     plugins: [
@@ -377,7 +377,7 @@ pnpm add @zhin.js/client
 ### 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     plugins: [
@@ -633,7 +633,7 @@ useContext('client', (client) => {
 ### 完整 Web 服务
 
 ```javascript
-// zhin.config.js - 完整的Web服务配置
+// zhin.config.ts - 完整的Web服务配置
 export default defineConfig(async (env) => {
   return {
     plugins: [
@@ -668,7 +668,7 @@ export default defineConfig(async (env) => {
 ### 多服务端口
 
 ```javascript
-// zhin.config.js - 多端口服务
+// zhin.config.ts - 多端口服务
 export default defineConfig(async (env) => {
   return {
     plugins: [

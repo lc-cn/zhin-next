@@ -22,7 +22,7 @@ test-bot/
 │       └── test-plugin.ts  # 测试插件
 ├── package.json
 ├── tsconfig.json
-└── zhin.config.js      # 配置文件
+└── zhin.config.ts      # 配置文件
 ```
 
 ## 测试插件功能
@@ -50,7 +50,7 @@ test-bot/
 
 ## 配置说明
 
-`zhin.config.js`配置了：
+`zhin.config.ts`配置了：
 - 进程管理适配器
 - ICQQ机器人
 - 插件加载

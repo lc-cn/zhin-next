@@ -162,7 +162,7 @@ pnpm stop         # 停止机器人
 支持多种配置文件格式：
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 import { defineConfig } from 'zhin.js'
 
 export default defineConfig({

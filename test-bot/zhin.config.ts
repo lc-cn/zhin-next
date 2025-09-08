@@ -1,4 +1,4 @@
-import { defineConfig } from 'zhin.js';
+import { defineConfig,BotConfig } from 'zhin.js';
 import path from "node:path";
 
 export default defineConfig(async (env)=>{

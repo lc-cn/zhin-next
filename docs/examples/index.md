@@ -699,7 +699,7 @@ test-bot/                    # 完整的机器人项目示例
 │   └── plugins/
 │       └── test-plugin.ts  # ✅ 完整功能插件示例
 ├── data/                   # 💾 运行时数据目录
-├── zhin.config.js         # ⚙️ 生产级配置文件
+├── zhin.config.ts         # ⚙️ 生产级配置文件
 ├── package.json           # 📦 完整依赖配置
 ├── tsconfig.json          # 🎯 TypeScript配置
 └── README.md              # 📖 项目文档
@@ -733,7 +733,7 @@ pnpm start --bun --daemon
 
 **4. 配置管理**
 ```javascript
-// zhin.config.js - 生产级配置
+// zhin.config.ts - 生产级配置
 export default defineConfig(async (env) => {
   return {
     bots: [

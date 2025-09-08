@@ -5,7 +5,7 @@
 
 import {MaybePromise} from '@zhin.js/types'
 import {AdapterMessage, BeforeSendHandler, RegisteredAdapter, SendOptions} from "./types.js";
-import {Message} from './message.js'
+import {Message, MessageBase} from './message.js'
 import {Dependency, Logger,} from "@zhin.js/hmr";
 import {App} from "./app";
 import {MessageCommand} from "./command.js";
@@ -26,7 +26,7 @@ export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (
  * 插件类：继承自Dependency，提供机器人特定功能
  */
 export class Plugin extends Dependency<Plugin> {
-    middlewares: MessageMiddleware[] = [];
+    middlewares: MessageMiddleware<any>[] = [];
     components: Map<string, Component<any, any, any>> = new Map();
     commands:MessageCommand[]=[];
     #logger?:Logger
@@ -93,13 +93,13 @@ export class Plugin extends Dependency<Plugin> {
     }
     get logger(): Logger {
         if(this.#logger) return this.#logger
-        const names = [this.name];
+        const names = [];
         let temp=this as Dependency<Plugin>
         while(temp.parent){
-            names.unshift(temp.parent.name)
+            names.unshift(temp.name)
             temp=temp.parent
         }
-        return this.#logger=this.app.getLogger(...names)
+        return temp.getLogger(names.join('/'))
     }
     /** 添加组件 */
     addComponent<T = {}, D = {}, P = Component.Props<T>>(component:Component<T,D,P>){
@@ -111,7 +111,7 @@ export class Plugin extends Dependency<Plugin> {
         this.dispatch('command.add',command);
     }
     /** 添加中间件 */
-    addMiddleware(middleware: MessageMiddleware) {
+    addMiddleware<T extends RegisteredAdapter>(middleware: MessageMiddleware<T>) {
         this.middlewares.push(middleware);
         this.dispatch('middleware.add',middleware)
         return ()=>{

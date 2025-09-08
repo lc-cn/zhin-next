@@ -44,7 +44,7 @@ my-bot/
 ```
 
 **配置文件支持：**
-- JavaScript (`zhin.config.js`) - 支持环境变量和动态配置
+- JavaScript (`zhin.config.ts`) - 支持环境变量和动态配置
 - TypeScript (`zhin.config.ts`) - 完整类型支持
 - JSON (`zhin.config.json`) - 简单静态配置
 - YAML (`zhin.config.yaml`) - 人性化格式
@@ -217,7 +217,7 @@ zhin build && zhin restart
 ### 多环境配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 import { defineConfig } from '@zhin.js/core';
 
 export default defineConfig(async (env) => {

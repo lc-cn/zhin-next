@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createLogger } from '@zhin.js/logger';
+import { getLogger } from '@zhin.js/logger';
 
-const logger = createLogger('TypesGenerator');
+const logger = getLogger('TypesGenerator');
 
 /**
  * 更新 tsconfig.json 的类型声明

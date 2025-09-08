@@ -101,7 +101,7 @@ module.exports = {
   ]
 }
 `
-      const configPath = path.join(testDir, 'zhin.config.js')
+      const configPath = path.join(testDir, 'zhin.config.ts')
       fs.writeFileSync(configPath, config)
 
       const [loadedPath, loadedConfig] = await loadConfig({ configPath })

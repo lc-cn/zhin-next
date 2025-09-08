@@ -79,7 +79,7 @@ my-awesome-bot/
 ├── lib/                  # 📦 构建输出目录
 ├── data/                  # 💾 数据存储目录
 ├── .env.example          # 🔐 环境变量示例
-├── zhin.config.js        # ⚙️ 机器人配置文件
+├── zhin.config.ts        # ⚙️ 机器人配置文件
 ├── package.json          # 📋 项目依赖配置
 ├── tsconfig.json         # 🎯 TypeScript 配置
 ├── .gitignore           # 🚫 Git 忽略规则
@@ -96,7 +96,7 @@ my-awesome-bot/
 
 ## ⚙️ 配置文件详解
 
-`zhin.config.js` 是机器人的核心配置文件，基于实际项目生成的配置：
+`zhin.config.ts` 是机器人的核心配置文件，基于实际项目生成的配置：
 
 ```javascript
 import { defineConfig } from 'zhin.js';
@@ -438,7 +438,7 @@ CMD ["pnpm", "start", "--daemon"]
 ### 🌐 配置其他平台
 
 ```javascript
-// zhin.config.js - 添加 QQ 机器人
+// zhin.config.ts - 添加 QQ 机器人
 export default defineConfig(async (env) => {
   return {
     bots: [

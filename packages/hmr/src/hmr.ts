@@ -1,8 +1,7 @@
 import * as path from 'path';
 import { Dependency } from './dependency.js';
 import {HMROptions, Logger} from './types.js';
-import { 
-    ConsoleLogger, 
+import {
     DEFAULT_WATCHABLE_EXTENSIONS, 
     STACK_TRACE_REGEX, 
     DEFAULT_CONFIG,
@@ -11,12 +10,12 @@ import {
     getCallerFile,
     performGC
 } from './utils.js';
-import { createLoggerAdapter } from './logger-adapter.js';
 import { FileWatcher } from './file-watcher.js';
 import { ModuleLoader } from './module-loader.js';
 import { PerformanceMonitor } from './performance.js';
 import { ReloadManager } from './reload-manager.js';
 import { fileURLToPath } from 'url';
+import {getLogger} from "@zhin.js/logger";
 
 // ============================================================================
 // 默认HMR配置
@@ -34,7 +33,7 @@ const DEFAULT_HMR_OPTIONS: Required<Omit<HMROptions,'logger'>> & {
     algorithm: DEFAULT_CONFIG.HASH_ALGORITHM,
     debug: DEFAULT_CONFIG.ENABLE_DEBUG,
     version: '1.0.0',
-    logger: createLoggerAdapter('HMR')
+    logger: getLogger('HMR')
 };
 
 // ============================================================================

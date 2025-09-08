@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { parse as parseToml } from 'toml';
 import { config as loadDotenv } from 'dotenv';
-import type { AppConfig,DefineConfig } from './types.js';
+import type {AppConfig, DefineConfig} from './types.js';
 
 export interface ConfigOptions {
   configPath?: string;
@@ -131,7 +131,7 @@ function findConfigFile(cwd: string = process.cwd()): string | null {
     'zhin.config.yml', 
     'zhin.config.json',
     'zhin.config.toml',
-    'zhin.config.js',
+    'zhin.config.ts',
     'zhin.config.ts',
     // 然后查找 config.* 格式
     'config.yaml',

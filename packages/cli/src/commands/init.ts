@@ -569,7 +569,7 @@ async function createConfigFile(projectPath: string, format: string) {
       fileName = 'zhin.config.ts';
       break;
     case 'js':
-      fileName = 'zhin.config.js';
+      fileName = 'zhin.config.ts';
       break;
     default:
       fileName = `zhin.config.${format}`;

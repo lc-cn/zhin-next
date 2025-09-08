@@ -644,7 +644,7 @@ registerAdapter(new MyAdapter())
 ### ⚙️ 配置使用
 
 ```typescript
-// zhin.config.js
+// zhin.config.ts
 export default defineConfig(async (env) => {
   return {
     bots: [

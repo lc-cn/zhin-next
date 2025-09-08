@@ -145,7 +145,7 @@ my-awesome-bot/
 ### JavaScript 配置 (推荐)
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 import { defineConfig } from '@zhin.js/core';
 
 export default defineConfig(async (env) => {

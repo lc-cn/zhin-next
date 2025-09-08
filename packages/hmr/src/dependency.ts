@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import {getLogger} from "@zhin.js/logger";
 import { Contexts, GlobalContext, SideEffect} from '@zhin.js/types';
 import {Context, DependencyOptions,} from './types.js'
 import { createError, ERROR_MESSAGES, DEFAULT_CONFIG, performGC } from './utils.js';
@@ -38,7 +39,9 @@ export class Dependency<P extends Dependency = any,O extends DependencyOptions=D
         // 初始化完成
         this.mounted();
     }
-
+    getLogger(namespace:string){
+        return getLogger(namespace)
+    }
     #contextsIsReady<CS extends (keyof GlobalContext)[]>(contexts:CS){
         if(!contexts.length) return true
         return contexts.every(name=>this.contextIsReady(name))

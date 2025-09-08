@@ -218,7 +218,7 @@ logger.info('我的超棒插件已启动！ ✨')
 
 ### 2️⃣ 启用插件
 
-在 `zhin.config.js` 中添加插件：
+在 `zhin.config.ts` 中添加插件：
 
 ```javascript
 export default defineConfig(async (env) => {

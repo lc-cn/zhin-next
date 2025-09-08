@@ -1,4 +1,4 @@
-import type {BotConfig, SendOptions} from "./types";
+import type {RegisteredAdapters, SendOptions,AdapterConfig} from "./types.js";
 import {Message} from "./message.js";
 export interface Bot<M extends object={},T extends BotConfig=BotConfig> {
     $config: T;
@@ -7,4 +7,9 @@ export interface Bot<M extends object={},T extends BotConfig=BotConfig> {
     $connect():Promise<void>
     $disconnect():Promise<void>
     $sendMessage(options: SendOptions): Promise<void>
+}
+export interface BotConfig{
+    context:string
+    name:string
+    [key:string]:any
 }

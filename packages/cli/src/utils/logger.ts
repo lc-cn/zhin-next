@@ -1,7 +1,7 @@
-import { createLogger, LogLevel } from '@zhin.js/logger'
+import { getLogger, LogLevel } from '@zhin.js/logger'
 
 // 创建CLI专用的logger
-const cliLogger = createLogger('CLI')
+const cliLogger = getLogger('CLI')
 
 // 根据环境变量设置日志级别
 const logLevel = process.env.ZHIN_LOG_LEVEL || process.env.NODE_ENV === 'development' ? 'debug' : 'info'

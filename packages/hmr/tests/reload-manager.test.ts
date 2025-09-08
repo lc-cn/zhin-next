@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ReloadManager } from '../src/reload-manager'
-import { createLoggerAdapter } from '../src/logger-adapter'
+import {getLogger, Logger} from "@zhin.js/logger";
 
 describe('ReloadManager', () => {
     let reloadManager: ReloadManager
-    let logger: ReturnType<typeof createLoggerAdapter>
+    let logger: Logger
 
     beforeEach(() => {
-        logger = createLoggerAdapter('test')
+        logger = getLogger('test')
         reloadManager = new ReloadManager(logger, 100) // 100ms debounce
     })
 

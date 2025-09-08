@@ -431,7 +431,7 @@ addComponent(StatusCard)
 ### JavaScript 配置
 
 ```javascript
-// zhin.config.js  
+// zhin.config.ts  
 import { defineConfig } from 'zhin.js'
 
 export default defineConfig(async (env) => {

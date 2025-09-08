@@ -34,14 +34,12 @@ export interface OneBot11Config extends BotConfig {
 }
 export interface OneBot11WsClientConfig extends OneBot11Config{
   type:'ws'
-  name: string
   url: string;
   reconnect_interval?: number;
   heartbeat_interval?: number;
 }
 export interface OneBot11WsServerConfig extends OneBot11Config{
   type:'ws_reverse'
-  name: string
   path:string
   heartbeat_interval?: number;
 }
@@ -108,6 +106,7 @@ export class OneBot11WsClient extends EventEmitter implements Bot<OneBot11Messag
 
       this.ws.on('open', () => {
         this.$connected=true;
+        if(!this.$config.access_token) this.plugin.logger.warn(`missing 'access_token', your OneBot protocol is not safely`)
         this.startHeartbeat();
         resolve();
       });
@@ -301,6 +300,7 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
     this.$connected=false
   }
   async $connect(): Promise<void> {
+    if(!this.$config.access_token) this.plugin.logger.warn(`missing 'access_token', your OneBot protocol is not safely`)
     this.#wss=this.router.ws(this.$config.path,{verifyClient:(info:{ origin: string; secure: boolean; req: IncomingMessage })=>{
         const {
           req: { headers },

@@ -11,7 +11,7 @@ Zhin Bot Framework 的完整 API 文档，基于实际项目代码和 test-bot �
 ```typescript
 import { createApp } from 'zhin.js'
 
-// 🚀 使用默认配置（自动加载 zhin.config.js）
+// 🚀 使用默认配置（自动加载 zhin.config.ts）
 const app = await createApp()
 await app.start()  // 重要：需要调用 start() 启动应用
 

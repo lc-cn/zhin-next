@@ -329,7 +329,7 @@ addMiddleware(async (message, next) => {
 ## 配置文件支持
 
 支持多种配置文件格式：
-- `zhin.config.js` - JavaScript 配置
+- `zhin.config.ts` - JavaScript 配置
 - `zhin.config.ts` - TypeScript 配置  
 - `zhin.config.json` - JSON 配置
 - `zhin.config.yaml` - YAML 配置

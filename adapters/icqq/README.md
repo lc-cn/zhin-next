@@ -19,7 +19,7 @@ npm install @zhin.js/adapter-icqq @icqqjs/icqq
 ## 配置
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 export default {
   bots: [
     {

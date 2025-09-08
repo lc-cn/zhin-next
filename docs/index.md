@@ -126,7 +126,7 @@ zhin-next/
 ## 📝 配置示例
 
 ```javascript
-// zhin.config.js
+// zhin.config.ts
 import { defineConfig } from 'zhin.js'
 
 export default defineConfig({
