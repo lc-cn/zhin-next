@@ -31,8 +31,8 @@ export default defineConfig(async (env)=>{
       // },
 
       {
-        name: env.ONEBOT_NAME,
         context:'onebot11',
+        name: env.ONEBOT_NAME,
         url:'wss://napcat.liucl.cn/ws',
         access_token:env.ONEBOT_TOKEN
       },

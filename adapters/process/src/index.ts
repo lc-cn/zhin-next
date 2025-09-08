@@ -8,6 +8,7 @@ declare module 'zhin.js'{
 }
 export interface ProcessConfig extends BotConfig {
     context: 'process';
+    name: string;  // 显式添加 name 属性
 }
 const logger=useLogger()
 export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:number},ProcessConfig>{

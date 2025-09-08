@@ -34,12 +34,14 @@ export interface OneBot11Config extends BotConfig {
 }
 export interface OneBot11WsClientConfig extends OneBot11Config{
   type:'ws'
+  name: string
   url: string;
   reconnect_interval?: number;
   heartbeat_interval?: number;
 }
 export interface OneBot11WsServerConfig extends OneBot11Config{
   type:'ws_reverse'
+  name: string
   path:string
   heartbeat_interval?: number;
 }

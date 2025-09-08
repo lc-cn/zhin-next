@@ -262,14 +262,7 @@ export function saveConfig(config: AppConfig, filePath: string): void {
  */
 export function createDefaultConfig(format: ConfigFormat = 'yaml'): AppConfig {
   return {
-    bots: [
-      {
-        name: 'onebot11',
-        context: 'onebot11',
-        url: '${ONEBOT_URL:-ws://localhost:8080}',
-        access_token: '${ONEBOT_ACCESS_TOKEN:-}'
-      }
-    ],
+    bots: [],
     plugin_dirs: ['./src/plugins', 'node_modules'],
     plugins: []
   };

@@ -5,13 +5,36 @@ import {Bot} from "./bot.js";
 declare module '@zhin.js/types'{
   interface GlobalContext extends RegisteredAdapters{}
 }
-export interface RegisteredAdapters extends Record<string, Adapter>{
-
+/**
+ * 注册的适配器接口
+ * 每个适配器模块通过声明合并来注册：RegisteredAdapters[key] = Adapter<BotClass>
+ */
+export interface RegisteredAdapters {
+  // 适配器会通过模块声明合并来扩展这个接口
+  // 例如: 'icqq': Adapter<IcqqBot>
 }
+
+/**
+ * 从注册的适配器中提取 Bot 的配置类型
+ */
+export type ExtractBotConfig<T> = T extends Adapter<infer B> 
+  ? B extends Bot<infer L,infer R>
+    ? R
+    : BaseBotConfig
+  : BaseBotConfig
+
+/**
+ * 根据 context 推导 BotConfig 类型的条件类型
+ */
+export type InferBotConfig<T extends string> = T extends keyof RegisteredAdapters 
+  ? ExtractBotConfig<RegisteredAdapters[T]>
+  : BaseBotConfig
+
 export type ObjectItem<T extends object>=T[keyof T]
-export type RegisteredAdapter=keyof RegisteredAdapters
-export type AdapterMessage<T extends keyof RegisteredAdapters>=RegisteredAdapters[T] extends Adapter<infer R>?BotMessage<R>:{}
-export type BotMessage<T extends Bot>=T extends Bot<infer R>?R:{}
+export type RegisteredAdapter=keyof RegisteredAdapters | string
+export type AdapterMessage<T>=any // 简化为 any，避免复杂的类型推导
+export type AdapterConfig<T>=any // 简化为 any，避免复杂的类型推导
+export type InferBorMessage<T extends Bot>=T extends Bot<infer R>?R:{}
 export interface MessageSegment {
   type: string;
   data: Record<string, any>;
@@ -36,10 +59,44 @@ export interface Group {
   member_count: number;
 }
 
-export interface BotConfig {
-  name: string;
-  context: string;
-  [key: string]: any;
+/**
+ * 基础 Bot 配置接口
+ */
+export interface BaseBotConfig {
+  /** 适配器上下文名称 */
+  context: string
+  /** Bot 实例名称，必须唯一 */
+  name: string
+}
+
+/**
+ * Bot 配置类型 - 根据 context 自动推导配置类型
+ * 当适配器注册了类型时，会自动提供对应的配置类型
+ */
+export type BotConfig = keyof RegisteredAdapters extends never
+  ? BaseBotConfig  // 如果没有注册任何适配器，使用基础类型
+  : {
+      [K in keyof RegisteredAdapters]: ExtractBotConfig<RegisteredAdapters[K]>
+    }[keyof RegisteredAdapters] | BaseBotConfig  // 支持未注册的适配器
+
+/**
+ * 创建 Bot 配置的辅助类型
+ * @template T 适配器名称
+ */
+export type CreateBotConfig<T extends string> = T extends keyof RegisteredAdapters
+  ? ExtractBotConfig<RegisteredAdapters[T]>
+  : BaseBotConfig & { context: T }
+
+/**
+ * 常用配置类型示例
+ */
+export interface CommonBotConfig extends BaseBotConfig {
+  /** 是否自动重连 */
+  autoReconnect?: boolean
+  /** 重连间隔（毫秒） */
+  reconnectInterval?: number
+  /** 是否启用调试模式 */
+  debug?: boolean
 }
 
 
