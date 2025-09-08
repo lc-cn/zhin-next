@@ -28,6 +28,8 @@ export type {
   LogTransport,
   LoggerOptions,
   TransportSecurityOptions,
+  LoggerColorOptions,
+  ColorFunction,
   Timer
 } from './logger.js'
 

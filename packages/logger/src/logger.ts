@@ -84,6 +84,23 @@ export interface TransportSecurityOptions {
 }
 
 /**
+ * 颜色函数类型
+ */
+export type ColorFunction = (text: string) => string
+
+/**
+ * Logger 颜色配置选项
+ */
+export interface LoggerColorOptions {
+  /** 日志级别颜色映射（覆盖默认级别颜色） */
+  levelColors?: Partial<Record<LogLevel, ColorFunction>>
+  /** Logger名称颜色（可以是单个颜色或颜色数组） */
+  nameColor?: ColorFunction | ColorFunction[]
+  /** 日期时间颜色 */
+  dateColor?: ColorFunction
+}
+
+/**
  * Logger 配置选项
  */
 export interface LoggerOptions {
@@ -93,6 +110,8 @@ export interface LoggerOptions {
   formatter?: LogFormatter
   /** 输出器列表 */
   transports?: LogTransport[]
+  /** 颜色配置 */
+  colors?: LoggerColorOptions
   /** 性能选项 */
   performance?: {
     /** 最大子Logger数量（默认1000） */
@@ -144,11 +163,36 @@ class LogSanitizer {
  * 只负责格式化，不处理安全净化（由Transport处理）
  */
 export class DefaultFormatter implements LogFormatter {
-  private nameColorMap = new Map<string, (text: string) => string>()
+  private nameColorMap = new Map<string, ColorFunction>()
   private colorIndex = 0
   private readonly maxCacheSize = 1000
+  
+  // 可自定义的颜色配置
+  private levelColors: Record<LogLevel, ColorFunction>
+  private nameColors: ColorFunction[]
+  private dateColor: ColorFunction
 
-  private getNameColor(name: string): (text: string) => string {
+  constructor(colorOptions?: LoggerColorOptions) {
+    // 初始化级别颜色（可覆盖默认值）
+    this.levelColors = {
+      ...LOG_LEVEL_COLORS,
+      ...colorOptions?.levelColors
+    }
+    
+    // 初始化名称颜色（可自定义）
+    if (colorOptions?.nameColor) {
+      this.nameColors = Array.isArray(colorOptions.nameColor) 
+        ? colorOptions.nameColor 
+        : [colorOptions.nameColor]
+    } else {
+      this.nameColors = NAME_COLORS
+    }
+    
+    // 初始化日期颜色
+    this.dateColor = colorOptions?.dateColor ?? chalk.gray
+  }
+
+  private getNameColor(name: string): ColorFunction {
     if (!this.nameColorMap.has(name)) {
       // 防止缓存无限增长
       if (this.nameColorMap.size >= this.maxCacheSize) {
@@ -160,7 +204,7 @@ export class DefaultFormatter implements LogFormatter {
         }
       }
 
-      this.nameColorMap.set(name, NAME_COLORS[this.colorIndex % NAME_COLORS.length])
+      this.nameColorMap.set(name, this.nameColors[this.colorIndex % this.nameColors.length])
       this.colorIndex++
     }
     return this.nameColorMap.get(name)!
@@ -169,15 +213,15 @@ export class DefaultFormatter implements LogFormatter {
   format(entry: LogEntry): string {
     const { level, name, message, timestamp } = entry
 
-    // 格式化时间：MM-dd HH:MM:ss.SSS
+    // 格式化时间：MM-dd HH:MM:ss.SSS（使用自定义颜色）
     const date = timestamp.toISOString().slice(5, 23).replace('T', ' ')
-    const dateStr = chalk.gray(`[${date}]`)
+    const dateStr = this.dateColor(`[${date}]`)
 
-    // 格式化级别（带颜色）
+    // 格式化级别（使用自定义颜色）
     const levelName = LOG_LEVEL_NAMES[level]
-    const levelStr = LOG_LEVEL_COLORS[level](`[${levelName}]`)
+    const levelStr = this.levelColors[level](`[${levelName}]`)
 
-    // 格式化名称（带颜色）
+    // 格式化名称（使用自定义颜色）
     const nameColor = this.getNameColor(name)
     const nameStr = nameColor(`[${name}]`)
 
@@ -446,11 +490,11 @@ export class Logger {
     // 如果有父 Logger，默认继承父级配置，然后应用自定义选项
     if (this.#parent) {
       this.level = options.level ?? this.#parent?.level??LogLevel.INFO
-      this.formatter = options.formatter ?? this.#parent?.formatter??new DefaultFormatter() 
+      this.formatter = options.formatter ?? this.#parent?.formatter??new DefaultFormatter(options.colors) 
       this.transports = options.transports ?? [...this.#parent?.transports??[]]
     } else {
       this.level = options.level ?? LogLevel.INFO
-      this.formatter = options.formatter ?? new DefaultFormatter()
+      this.formatter = options.formatter ?? new DefaultFormatter(options.colors)
       this.transports = options.transports ?? [new ConsoleTransport()]
     }
   }
@@ -500,7 +544,7 @@ export class Logger {
     }
 
     const formatted = this.formatter.format(entry)
-
+    
     // 输出到所有 transport
     for (const transport of this.transports) {
       try {
@@ -557,7 +601,7 @@ export class Logger {
     
     const startTime = performance.now()
     this.timers.set(label, startTime)
-
+    
     return {
       end: () => {
         const endTime = performance.now()

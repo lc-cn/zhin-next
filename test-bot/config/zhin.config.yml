@@ -1,0 +1,6 @@
+log_level: info
+disable_bots: []
+disable_plugins: []
+plugin_dirs: []
+bots: []
+plugins: []

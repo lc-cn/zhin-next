@@ -7,10 +7,12 @@
 - 🎯 **轻量级**: 仅依赖 chalk，无额外第三方库
 - 🎨 **自定义格式**: 【date】【level】【name】：【message】
 - 🌈 **智能着色**: 自动为不同级别和名称分配颜色
+- 🎨 **颜色自定义**: 完全自定义级别、名称、日期颜色（新功能）
 - 📊 **多输出支持**: 控制台、文件、流等多种输出方式
 - ⚡ **性能监控**: 内置高精度计时功能
 - 🎯 **命名空间**: 支持分层次的 Logger 命名空间
 - 🛡️ **类型安全**: 完整的 TypeScript 类型支持
+- 🔄 **智能继承**: 子Logger自动继承父Logger配置
 
 ## 📦 安装
 
@@ -190,6 +192,106 @@ const logger = createLogger('StreamApp', {
   ]
 })
 ```
+
+### 9. 自定义颜色配置 🎨
+
+完全自定义Logger的颜色方案，让不同模块、环境、团队成员拥有独特的视觉效果。
+
+#### 基础颜色自定义
+```typescript
+import { getLogger, LogLevel } from '@zhin.js/logger'
+import chalk from 'chalk'
+
+const logger = getLogger('MyApp', {
+  colors: {
+    // 自定义级别颜色
+    levelColors: {
+      [LogLevel.INFO]: chalk.magenta.bold,
+      [LogLevel.WARN]: chalk.cyan,
+      [LogLevel.ERROR]: chalk.green.bold.underline
+    },
+    // 自定义名称颜色（单色或多色循环）
+    nameColor: chalk.blue.bold,
+    // 自定义日期颜色
+    dateColor: chalk.yellow
+  }
+})
+```
+
+#### 团队协作颜色分配
+```typescript
+// 为不同开发者分配专属颜色
+const aliceLogger = getLogger('Alice', {
+  colors: { nameColor: chalk.magenta.bold }
+})
+const bobLogger = getLogger('Bob', {
+  colors: { nameColor: chalk.cyan.bold }
+})
+```
+
+#### 模块功能分类
+```typescript
+// 数据库模块 - 蓝色主题
+const dbLogger = getLogger('Database', {
+  colors: {
+    levelColors: { [LogLevel.INFO]: chalk.blue.bold },
+    nameColor: chalk.blue
+  }
+})
+
+// 安全模块 - 红色警告主题  
+const securityLogger = getLogger('Security', {
+  colors: {
+    levelColors: { 
+      [LogLevel.ERROR]: chalk.red.bold.bgYellow 
+    },
+    nameColor: chalk.red.bold
+  }
+})
+```
+
+#### 多色循环配置
+```typescript
+const multiColorLogger = getLogger('Development', {
+  colors: {
+    nameColor: [
+      chalk.red.bold,
+      chalk.green.bold, 
+      chalk.blue.bold,
+      chalk.magenta.bold
+    ]
+  }
+})
+
+// 每个子Logger将循环使用不同颜色
+const router = multiColorLogger.getLogger('Router')     // 红色
+const service = multiColorLogger.getLogger('Service')   // 绿色
+const utils = multiColorLogger.getLogger('Utils')       // 蓝色
+```
+
+#### 继承与覆盖
+```typescript
+// 父Logger配置
+const parent = getLogger('Parent', {
+  colors: {
+    dateColor: chalk.blue,
+    nameColor: chalk.magenta.bold
+  }
+})
+
+// 子Logger继承配置
+const child1 = parent.getLogger('Child1') // 完全继承
+
+// 子Logger部分覆盖
+const child2 = parent.getLogger('Child2', {
+  colors: {
+    levelColors: { [LogLevel.INFO]: chalk.red.bold }
+    // dateColor和nameColor继承自父Logger
+  }
+})
+```
+
+> 📖 **详细文档**: 查看 [CUSTOM_COLORS.md](./CUSTOM_COLORS.md) 了解更多颜色配置示例和最佳实践
 
 ## ⚙️ 全局配置
 

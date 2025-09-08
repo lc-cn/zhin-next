@@ -2,7 +2,8 @@
 node_modules/
 .pnp
 .pnp.js
-
+test-bot/data
+docs/.vitepress
 # Testing
 coverage/
 
