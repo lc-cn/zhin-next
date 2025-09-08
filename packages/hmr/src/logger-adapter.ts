@@ -133,8 +133,7 @@ export class LoggerAdapter implements Logger {
    * 创建子 Logger
    */
   child(namespace: string): LoggerAdapter {
-    const childLogger = new LoggerAdapter(`${this.zhinLogger['namespace']}:${namespace}`)
-    return childLogger
+    return  new LoggerAdapter(`${this.zhinLogger['namespace']}:${namespace}`)
   }
 }
 

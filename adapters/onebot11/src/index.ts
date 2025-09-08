@@ -449,6 +449,7 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
         break;
       case 'connect':
         this.#clientMap.set(message.self_id,client);
+        this.plugin.logger.info(`client ${message.self_id} of ${this.$config.name} by ${this.$config.context} connected`)
         break;
     }
   }
