@@ -48,7 +48,8 @@ export class KookBot extends Client implements Bot<PrivateMessageEvent|ChannelMe
             $content: KookBot.toSegments(msg.message),
             $raw: msg.raw_message,
             $timestamp: msg.timestamp,
-            $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+            $reply:async (content: SendContent, quote?: boolean|string):Promise<void>=> {
+                if(!Array.isArray(content)) content=[content];
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.$id:quote}})
                 this.plugin.dispatch('message.send',{
                     ...message.$channel,

@@ -26,7 +26,8 @@
       "@zhin.js/types",
       "@zhin.js/console",
       "@zhin.js/http",
-      "@zhin.js/client"
+      "@zhin.js/client",
+      "@zhin.js/adapter-qq"
     ]
   },
   "include": [

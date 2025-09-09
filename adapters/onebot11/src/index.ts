@@ -11,7 +11,7 @@ import {
   Group,
   MessageSegment,
   SendOptions,
-  MessageType, segment, useContext
+  MessageType, segment, useContext, SendContent
 } from 'zhin.js';
 import type {Router} from '@zhin.js/http'
 import {IncomingMessage} from "http";
@@ -360,7 +360,8 @@ export class OneBot11WsServer extends EventEmitter implements Bot<OneBot11Messag
       $content: onebotMsg.message,
       $raw: onebotMsg.raw_message,
       $timestamp: onebotMsg.time,
-      $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+      $reply:async (content: SendContent, quote?: boolean|string):Promise<void>=> {
+        if(!Array.isArray(content)) content=[content];
         if(quote) content.unshift({type:'reply',data:{message_id:message.$id}})
         this.plugin.dispatch('message.send',{
           ...message.$channel,

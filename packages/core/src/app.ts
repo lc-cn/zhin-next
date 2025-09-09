@@ -29,7 +29,7 @@ import {Component} from "./component";
 export class App extends HMR<Plugin> {
     static currentPlugin: Plugin;
     private config: AppConfig;
-
+    adapters:string[]=[];
     constructor(config?: Partial<AppConfig>) {
         // 如果没有传入配置或配置为空对象，尝试自动加载配置文件
         let finalConfig: AppConfig;
@@ -59,6 +59,12 @@ export class App extends HMR<Plugin> {
             debug: finalConfig.debug
         });
         this.on('message.send',this.sendMessage.bind(this))
+        process.on('uncaughtException',(e)=>{
+            this.logger.error(e);
+        })
+        process.on('unhandledRejection',e=>{
+            this.logger.error(e)
+        })
         this.config = finalConfig;
     }
     /** 默认配置 */
@@ -257,6 +263,7 @@ export function register<T>(context: Context<T,Plugin>): Context<T,Plugin> {
 }
 export function registerAdapter<T extends Adapter>(adapter:T){
     const plugin = usePlugin();
+    plugin.app.adapters.push(adapter.name)
     plugin.register({
         name:adapter.name,
         description:`adapter for ${adapter.name}`,

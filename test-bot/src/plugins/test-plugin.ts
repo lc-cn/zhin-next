@@ -5,29 +5,50 @@ import {
     Time,
     addComponent,
     defineComponent,
-    MessageCommand, usePlugin,
+    MessageCommand, useApp, Adapter,
 } from 'zhin.js';
 import path from "node:path";
+import * as os from "node:os";
+const app=useApp()
 function formatMemoSize(size:number){
-    return `${(size/1024/1024).toFixed(2)}MB`
+    const sizes=['B','KB','MB','GB','TB'];
+    while (size>1024){
+        size=size/1024
+        sizes.shift()
+    }
+    return `${(size).toFixed(2)}${sizes[0]}`
 }
 addCommand(new MessageCommand('send')
     .action((_,result)=>result.remaining))
 addCommand(new MessageCommand('zt')
     .action(()=>{
+        const totalmem=os.totalmem();
+        const freemem=os.freemem();
+        const usedmemo=totalmem-freemem;
         return [
-            '-------状态-------',
-            `运行时间：${Time.formatTime(process.uptime()*1000)}`,
+            '-------概览-------',
+            `操作系统：${os.type()} ${os.release()} ${os.arch()}`,
+            `内存占用：${formatMemoSize(usedmemo)}/${formatMemoSize(totalmem)} ${((usedmemo/totalmem)*100).toFixed(2)}%`,
+            `运行环境：NodeJS ${process.version}`,
+            `运行时长：${Time.formatTime(process.uptime()*1000)}`,
             `内存使用：${formatMemoSize(process.memoryUsage.rss())}`,
+            '-------框架-------',
+            `适配器：${app.adapters.length}个`,
+            `插件：${app.dependencyList.length}个`,
+            '-------机器人-------',
+            ...app.adapters.map((name)=>{
+                return `- ${name}：${app.getContext<Adapter>(name).bots.size}个`
+            })
         ].join('\n')
     }))
+
 const testComponent=defineComponent({
     name:'test',
     props:{
         id:String
     },
     async render({id},context){
-        return '这是父组件'+id+context.children||'';
+        return '这是父组件'+id+(context.children||'');
     }
 })
 const testComponent2=defineComponent({

@@ -140,6 +140,22 @@ importers:
         specifier: ^5.3.0
         version: 5.9.2
 
+  adapters/qq:
+    dependencies:
+      '@zhin.js/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      qq-official-bot:
+        specifier: ^1.0.11
+        version: 1.0.11
+      zhin.js:
+        specifier: workspace:*
+        version: link:../../packages/zhin
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.2
+
   packages/cli:
     dependencies:
       '@zhin.js/logger':
@@ -388,6 +404,9 @@ importers:
       '@zhin.js/adapter-process':
         specifier: workspace:*
         version: link:../adapters/process
+      '@zhin.js/adapter-qq':
+        specifier: workspace:*
+        version: link:../adapters/qq
       '@zhin.js/client':
         specifier: workspace:*
         version: link:../plugins/client
@@ -1128,6 +1147,14 @@ packages:
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
 
+  '@noble/curves@1.9.7':
+    resolution: {integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==}
+    engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
+    engines: {node: ^14.21.3 || >=16}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -1682,6 +1709,9 @@ packages:
 
   axios@1.11.0:
     resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
+
+  axios@1.8.2:
+    resolution: {integrity: sha512-ls4GYBm5aig9vWx8AWDSGLpnpDQRtWAfrjU+EuytuODrFBkqesN2RkOQCBzrA1RQNHw1SmRMSDDDSwzNAYQ6Rg==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -2888,6 +2918,10 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  qq-official-bot@1.0.11:
+    resolution: {integrity: sha512-Swg5egBznQli01vLSLcUGwKMcglDsHn5woNaNxmmkGj9onk2urpyEjAq5RFZTT+mnLaJFRiAV1fcgLZ/affGiA==}
+    engines: {node: '>=16'}
 
   qs@6.14.0:
     resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
@@ -4235,6 +4269,12 @@ snapshots:
       globby: 11.1.0
       read-yaml-file: 1.1.0
 
+  '@noble/curves@1.9.7':
+    dependencies:
+      '@noble/hashes': 1.8.0
+
+  '@noble/hashes@1.8.0': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -4864,6 +4904,14 @@ snapshots:
   asynckit@0.4.0: {}
 
   axios@1.11.0:
+    dependencies:
+      follow-redirects: 1.15.11
+      form-data: 4.0.4
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.8.2:
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
@@ -6150,6 +6198,19 @@ snapshots:
   proxy-from-env@1.1.0: {}
 
   punycode@2.3.1: {}
+
+  qq-official-bot@1.0.11:
+    dependencies:
+      '@noble/curves': 1.9.7
+      axios: 1.8.2
+      formdata-node: 6.0.3
+      log4js: 6.9.1
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
 
   qs@6.14.0:
     dependencies:

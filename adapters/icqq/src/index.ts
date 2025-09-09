@@ -92,7 +92,8 @@ export class IcqqBot extends Client implements Bot<PrivateMessageEvent|GroupMess
             $content: IcqqBot.toSegments(msg.message),
             $raw: msg.raw_message,
             $timestamp: msg.time,
-            $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+            $reply:async (content: SendContent, quote?: boolean|string):Promise<void>=> {
+                if(!Array.isArray(content)) content=[content];
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?result.$id:quote}})
                 this.plugin.dispatch('message.send',{
                     ...result.$channel,

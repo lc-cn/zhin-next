@@ -1,5 +1,17 @@
 import {EventEmitter} from "events";
-import {Bot, Adapter, Plugin, BotConfig, registerAdapter, useLogger, Message, SendOptions, MessageSegment, segment} from "zhin.js";
+import {
+    Bot,
+    Adapter,
+    Plugin,
+    BotConfig,
+    registerAdapter,
+    useLogger,
+    Message,
+    SendOptions,
+    MessageSegment,
+    segment,
+    SendContent
+} from "zhin.js";
 
 declare module 'zhin.js'{
     interface RegisteredAdapters{
@@ -44,7 +56,8 @@ export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:n
             $content:[{type:'text',data:{text:content}}],
             $raw:content,
             $timestamp: ts,
-            $reply:async (content: MessageSegment[], quote?: boolean|string):Promise<void>=> {
+            $reply:async (content: SendContent, quote?: boolean|string):Promise<void>=> {
+                if(!Array.isArray(content)) content=[content];
                 if(quote) content.unshift({type:'reply',data:{id:typeof quote==="boolean"?message.$id:quote}})
                 this.plugin.dispatch('message.send',{
                     ...message.$channel,
