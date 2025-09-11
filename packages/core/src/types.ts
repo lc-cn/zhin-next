@@ -2,10 +2,14 @@ import {MaybePromise}from '@zhin.js/types'
 import {MessageChannel} from "./message.js";
 import {Adapter} from "./adapter.js";
 import {Bot,BotConfig} from "./bot.js";
+import {DatabaseConfig,DatabaseDriver} from "./database.js";
 declare module '@zhin.js/types'{
-  interface GlobalContext extends RegisteredAdapters{}
+  interface GlobalContext extends RegisteredAdapters,RegisteredDrivers{}
 }
 export interface RegisteredAdapters extends Record<string, Adapter>{
+
+}
+export interface RegisteredDrivers extends Record<string, DatabaseDriver>{
 
 }
 export type ObjectItem<T extends object>=T[keyof T]
@@ -43,6 +47,8 @@ export interface Group {
 export interface AppConfig {
   /** 机器人配置列表 */
   bots?: BotConfig[];
+  /** 数据库配置列表 */
+  databases?: DatabaseConfig[];
   /** 插件目录列表，默认为 ['./plugins', 'node_modules'] */
   plugin_dirs?: string[];
   /** 需要加载的插件列表 */

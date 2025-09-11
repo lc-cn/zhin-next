@@ -1,4 +1,4 @@
-import {register, useContext, useLogger} from 'zhin.js';
+import {register, useContext, useLogger} from '@zhin.js/core';
 import WebSocket,{WebSocketServer} from 'ws';
 import {createServer,ViteDevServer,searchForWorkspaceRoot} from 'vite';
 import Components from 'unplugin-vue-components/vite';

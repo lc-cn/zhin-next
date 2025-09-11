@@ -1,5 +1,6 @@
 packages:
   - 'adapters/*'
+  - 'databases/*'
   - 'packages/*'
   - 'plugins/*'
   - 'test-bot'

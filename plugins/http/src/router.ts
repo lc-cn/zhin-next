@@ -1,4 +1,4 @@
-import { remove } from 'zhin.js';
+import { remove } from '@zhin.js/core';
 import { Layer, RouterOptions } from '@koa/router';
 import KoaRouter from "@koa/router";
 import * as http from 'http';

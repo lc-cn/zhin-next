@@ -1,0 +1,51 @@
+{
+  "name": "@zhin.js/database-postgresql",
+  "version": "1.0.0",
+  "description": "PostgreSQL database driver for zhin.js framework",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib"
+  },
+  "keywords": [
+    "zhin",
+    "zhin.js",
+    "database",
+    "postgresql",
+    "driver",
+    "orm"
+  ],
+  "author": "zhin.js team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhinjs/zhin-next.git",
+    "directory": "databases/postgresql"
+  },
+  "dependencies": {
+    "pg": "^8.11.0"
+  },
+  "peerDependencies": {
+    "zhin.js": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@zhin.js/types": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@zhin.js/types": "workspace:*",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.10.0",
+    "typescript": "^5.0.0"
+  }
+}

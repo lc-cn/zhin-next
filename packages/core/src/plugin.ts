@@ -25,6 +25,7 @@ export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (
 /**
  * 插件类：继承自Dependency，提供机器人特定功能
  */
+
 export class Plugin extends Dependency<Plugin> {
     middlewares: MessageMiddleware<any>[] = [];
     components: Map<string, Component<any, any, any>> = new Map();

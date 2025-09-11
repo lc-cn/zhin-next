@@ -21,7 +21,8 @@
     "@zhin.js/adapter-kook": "workspace:*",
     "@zhin.js/adapter-onebot11": "workspace:*",
     "@zhin.js/adapter-qq": "workspace:*",
-    "@zhin.js/adapter-process": "workspace:*"
+    "@zhin.js/adapter-process": "workspace:*",
+    "@zhin.js/database-sqlite": "workspace:*"
   },
   "devDependencies": {
     "@zhin.js/cli": "workspace:*",

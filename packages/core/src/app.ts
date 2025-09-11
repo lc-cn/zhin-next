@@ -17,6 +17,7 @@ import logger,{ setName } from '@zhin.js/logger';
 setName('Zhin');
 import { MessageMiddleware, Plugin} from "./plugin.js";
 import {Adapter} from "./adapter";
+import {Database, DatabaseDriver} from "./database.js";
 import {MessageCommand} from "./command";
 import {Component} from "./component";
 
@@ -30,6 +31,7 @@ export class App extends HMR<Plugin> {
     static currentPlugin: Plugin;
     private config: AppConfig;
     adapters:string[]=[];
+    drivers:string[]=[];
     constructor(config?: Partial<AppConfig>) {
         // 如果没有传入配置或配置为空对象，尝试自动加载配置文件
         let finalConfig: AppConfig;
@@ -177,6 +179,11 @@ export class App extends HMR<Plugin> {
         }
         return options
     }
+
+
+
+
+
 }
 
 // ============================================================================
@@ -199,35 +206,6 @@ function getPlugin(hmr: HMR<Plugin>, filename: string): Plugin {
     parent.dependencies.set(filename, newPlugin);
     
     return newPlugin;
-}
-export async function createApp(config?: Partial<AppConfig>): Promise<App> {
-    let finalConfig: AppConfig,configPath:string='';
-    const envFiles=['.env',`.env.${process.env.NODE_ENV}`]
-        .filter(filename=>fs.existsSync(path.join(process.cwd(),filename)))
-    if (!config || Object.keys(config).length === 0) {
-        try {
-            logger.info('🔍 正在查找配置文件...');
-            [configPath,finalConfig] = await loadConfig();
-            logger.info('✅ 配置文件加载成功');
-        } catch (error) {
-            logger.warn('⚠️  配置文件加载失败，使用默认配置', { 
-                error: error instanceof Error ? error.message : String(error) 
-            });
-            finalConfig = Object.assign({}, App.defaultConfig);
-        }
-    } else {
-        finalConfig = Object.assign({}, App.defaultConfig, config);
-    }
-    const app= new App(finalConfig);
-    app.watching(envFiles,()=>{
-        process.exit(51)
-    })
-    if(configPath){
-        app.watching(configPath,()=>{
-            process.exit(51);
-        })
-    }
-    return app
 }
 /** 获取App实例 */
 export function useApp(): App {
@@ -275,6 +253,22 @@ export function registerAdapter<T extends Adapter>(adapter:T){
             return adapter.stop(plugin)
         }
     })
+}
+
+export function registerDriver<T extends DatabaseDriver>(driver: T) {
+    const plugin = usePlugin();
+    plugin.app.drivers.push(driver.name);
+    plugin.register({
+        name: driver.name,
+        description: `database driver for ${driver.name}`,
+        async mounted(plugin) {
+            await driver.start(plugin);
+            return driver;
+        },
+        dispose() {
+            return driver.stop(plugin);
+        }
+    });
 }
 
 /** 标记必需的Context */

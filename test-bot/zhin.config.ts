@@ -3,6 +3,13 @@ import path from "node:path";
 
 export default defineConfig(async (env)=>{
   return {
+    databases: [
+      {
+        name: 'main',
+        type: 'sqlite',
+        database: './data/zhin.db'
+      }
+    ],
     // 机器人配置
     bots: [
       {
@@ -96,7 +103,6 @@ export default defineConfig(async (env)=>{
       'adapter-qq', // QQ官方机器人适配器
       'console',        // 🖥️ 控制台最后加载，处理静态文件
       'adapter-kook',
-      'adapter-process',
       'test-plugin'
     ],
 

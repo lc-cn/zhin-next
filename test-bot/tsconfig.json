@@ -27,7 +27,8 @@
       "@zhin.js/console",
       "@zhin.js/http",
       "@zhin.js/client",
-      "@zhin.js/adapter-qq"
+      "@zhin.js/adapter-qq",
+      "@zhin.js/database-sqlite"
     ]
   },
   "include": [

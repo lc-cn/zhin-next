@@ -1,0 +1,51 @@
+{
+  "name": "@zhin.js/database-sqlite",
+  "version": "1.0.0",
+  "description": "SQLite database driver for zhin.js framework",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib"
+  },
+  "keywords": [
+    "zhin",
+    "zhin.js",
+    "database",
+    "sqlite",
+    "driver",
+    "orm"
+  ],
+  "author": "zhin.js team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhinjs/zhin-next.git",
+    "directory": "databases/sqlite"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.6"
+  },
+  "peerDependencies": {
+    "zhin.js": "workspace:*",
+    "@zhin.js/types": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@zhin.js/types": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/sqlite3": "^3.1.8",
+    "typescript": "^5.0.0"
+  }
+}

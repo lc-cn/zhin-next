@@ -1,4 +1,4 @@
-import {register, useApp} from 'zhin.js';
+import {register, useApp} from '@zhin.js/core';
 import { createServer, Server } from 'http';
 import Koa from 'koa';
 import auth from 'koa-basic-auth';

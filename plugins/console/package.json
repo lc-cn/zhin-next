@@ -28,7 +28,7 @@
     "@zhin.js/http": "workspace:^",
     "unplugin-vue-components": "^29.0.0",
     "@primevue/auto-import-resolver": "^4.3.7",
-    "zhin.js": "workspace:^",
+    "@zhin.js/core": "workspace:^",
     "@zhin.js/types": "workspace:^"
   },
   "peerDependenciesMeta": {

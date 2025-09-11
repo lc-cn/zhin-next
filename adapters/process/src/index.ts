@@ -11,9 +11,9 @@ import {
     MessageSegment,
     segment,
     SendContent
-} from "zhin.js";
+} from "@zhin.js/core";
 
-declare module 'zhin.js'{
+declare module '@zhin.js/types'{
     interface RegisteredAdapters{
         process:Adapter<ProcessBot>
     }
@@ -21,9 +21,10 @@ declare module 'zhin.js'{
 export interface ProcessConfig extends BotConfig {
     context: 'process';
 }
-const logger=useLogger()
+
 export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:number},ProcessConfig>{
     $connected?:boolean
+    private logger = useLogger()
 
     constructor(private plugin:Plugin,public $config:ProcessConfig) {
         super();
@@ -73,14 +74,14 @@ export class ProcessBot extends EventEmitter implements Bot<{content:string,ts:n
     async $sendMessage(options: SendOptions){
         options=await this.plugin.app.handleBeforeSend(options)
         if(!this.$connected) return
-        logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
+        this.logger.info(`send ${options.type}(${options.id}):${segment.raw(options.content)}`)
     }
 
     #listenInput:(data:Buffer<ArrayBufferLike>)=>void=function (this:ProcessBot,data){
         const content=data.toString().trim()
         const ts=Date.now()
         const message =this.$formatMessage({content,ts});
-        logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
+        this.logger.info(`recv ${message.$channel.type}(${message.$channel.id}):${segment.raw(message.$content)}`)
         this.plugin.dispatch('message.receive',message)
         this.plugin.dispatch(`message.${message.$channel.type}.receive`,message)
     }
