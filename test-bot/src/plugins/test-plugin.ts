@@ -115,16 +115,14 @@ const model = defineModel("test_model", {
   info: { type: "json" },
 });
 onDatabaseReady(async () => {
-  console.log(await model.select());
-  console.log(
-    await model
-      .select('name','age')
+    const result=await model
+      .select("name", "age")
       .where({
         age: {
           $gt: 18,
         },
       })
-      .offset(0)
-      .limit(1)
-  );
+      console.log(result.map(r=>{
+        return r.name
+      }))
 });

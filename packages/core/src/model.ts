@@ -30,9 +30,6 @@ export class Model<
   delete(condition:Database.Condition<Model.Data<T>>) {
     return this.database.delete(this.name, this.config.driver).where(condition);
   }
-  count(field: keyof T = "*") {
-    return this.database.count<Model.Data<T>,keyof T>(this.name, field, this.config.driver);
-  }
   async sync() {
     if (this.database.has_init) {
       await this.driver.syncModels([this]);

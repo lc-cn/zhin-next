@@ -11,8 +11,8 @@ import { Client as PostgresClient, Pool as PostgresPool } from "pg";
 
 declare module "zhin.js" {
   namespace Database {
-    interface Drivers {
-      postgresql: PostgreSQL;
+    interface DriverConfig {
+      postgresql: PostgreSQLConfig;
     }
   }
 }
@@ -35,13 +35,13 @@ export interface PostgreSQLConfig {
     createTimeout?: number; // 创建连接超时时间
   };
 }
-const logger=useLogger();
+const logger = useLogger();
 /**
  * PostgreSQL 数据库驱动
  */
 export class PostgreSQL extends Database.Driver<PostgreSQLConfig> {
   public connected = false;
-  client?:PostgresClient
+  client?: PostgresClient;
   private pool?: PostgresPool;
 
   constructor(config: PostgreSQLConfig) {
@@ -50,12 +50,11 @@ export class PostgreSQL extends Database.Driver<PostgreSQLConfig> {
     this.validateConfig();
   }
 
-  async syncModels(models: Model<any>[]): Promise<void> {
-    
-  }
-  async alterModel<T extends Record<string, Model.Field>>(model: Model<T>, schema: Partial<T>): Promise<void> {
-    
-  }
+  async syncModels(models: Model<any>[]): Promise<void> {}
+  async alterModel<T extends Record<string, Model.Field>>(
+    model: Model<T>,
+    schema: Partial<T>
+  ): Promise<void> {}
   /**
    * 连接数据库
    */
@@ -151,7 +150,7 @@ export class PostgreSQL extends Database.Driver<PostgreSQLConfig> {
   /**
    * 执行查询
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  async query<T = any>(sql: string, params: any[] = []): Promise<T> {
     if (!this.isConnected()) {
       throw new Error("PostgreSQL database not connected");
     }
@@ -177,7 +176,7 @@ export class PostgreSQL extends Database.Driver<PostgreSQLConfig> {
         executionTime,
       });
 
-      return result.rows as T[];
+      return result.rows as T;
     } catch (error) {
       const executionTime = Date.now() - startTime;
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -220,7 +219,7 @@ export class PostgreSQL extends Database.Driver<PostgreSQLConfig> {
    * 获取表列表
    */
   async getTables(): Promise<string[]> {
-    const result = await this.query<{ table_name: string }>(`
+    const result = await this.query<{ table_name: string }[]>(`
             SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = 'public' 

@@ -31,11 +31,11 @@ export interface MySQLConfig {
 }
 
 declare module "zhin.js" {
-  namespace Database {
-    interface Drivers {
-      mysql: MySQL;
+    namespace Database {
+        interface DriverConfig {
+            mysql: MySQLConfig;
+        }
     }
-  }
 }
 
 /**
@@ -146,7 +146,7 @@ export class MySQL extends Database.Driver<MySQLConfig> {
   /**
    * 执行查询
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  async query<T = any>(sql: string, params: any[] = []): Promise<T> {
     if (!this.isConnected()) {
       throw new Error("MySQL database not connected");
     }
@@ -172,7 +172,7 @@ export class MySQL extends Database.Driver<MySQLConfig> {
         executionTime,
       });
 
-      return Array.isArray(result) ? result : [result];
+      return (Array.isArray(result) ? result : [result]) as T;
     } catch (error) {
       const executionTime = Date.now() - startTime;
       logger.error(
@@ -221,7 +221,7 @@ export class MySQL extends Database.Driver<MySQLConfig> {
    * 获取表列表
    */
   async getTables(): Promise<string[]> {
-    const result = await this.query<{ TABLE_NAME: string }>(
+    const result = await this.query<{ TABLE_NAME: string }[]>(
       'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = "BASE TABLE"'
     );
     return result.map((row) => row.TABLE_NAME);

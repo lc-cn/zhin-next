@@ -41,7 +41,7 @@ export class App extends HMR<Plugin> {
   private config: AppConfig;
   adapters: string[] = [];
   database: Database;
-  drivers: Map<keyof Database.Drivers, Database.DriverFactory<any>> = new Map();
+  drivers: Map<keyof Database.DriverConfig, Database.DriverFactory<any>> = new Map();
   constructor(config?: Partial<AppConfig>) {
     // 如果没有传入配置或配置为空对象，尝试自动加载配置文件
     let finalConfig: AppConfig;
@@ -87,7 +87,7 @@ export class App extends HMR<Plugin> {
   static defaultConfig: AppConfig = {
     databases: {
       default: "memory",
-      memory: true,
+      memory: true
     },
     plugin_dirs: ["./plugins"],
     plugins: [],
@@ -245,7 +245,7 @@ export function useApp(): App {
   if (!hmr) throw new Error("useApp must be called within a App Context");
   return hmr as unknown as App;
 }
-export function useDatabase(driver?: keyof Database.Drivers) {
+export function useDatabase(driver?: keyof Database.DriverConfig) {
   const app = useApp();
   return new Proxy(app.database, {
     get(target, p, receiver) {
@@ -308,8 +308,8 @@ export function registerAdapter<T extends Adapter>(adapter: T) {
 }
 
 export function registerDriver<
-  T extends keyof Database.Drivers,
-  S extends Database.DriverFactory<Database.Drivers[T]>
+  T extends keyof Database.DriverConfig,
+  S extends Database.DriverFactory<Database.DriverConfig[T]>
 >(name: T, creator: S) {
   const app = useApp();
   app.logger.info("register driver", name);

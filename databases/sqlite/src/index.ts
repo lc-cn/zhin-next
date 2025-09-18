@@ -13,8 +13,8 @@ export interface SQLiteConfig {
 }
 declare module 'zhin.js'{
     namespace Database {
-        interface Drivers{
-            sqlite?: SQLite
+        interface DriverConfig{
+            sqlite: SQLiteConfig
         }
     }
 }
@@ -99,7 +99,7 @@ export class SQLite extends Database.Driver<SQLiteConfig> {
     /**
      * 执行查询
      */
-    async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+    async query<T = any>(sql: string, params: any[] = []): Promise<T> {
         if (!this.db || !this.connected) {
             throw new Error('SQLite database not connected')
         }
@@ -123,7 +123,7 @@ export class SQLite extends Database.Driver<SQLiteConfig> {
                         logger.debug(`SQLite query executed`, {
                             sql, params, rows: rows.length, executionTime
                         })
-                        resolve(rows as T[])
+                        resolve(rows as T)
                     }
                 })
             } else {
@@ -148,7 +148,7 @@ export class SQLite extends Database.Driver<SQLiteConfig> {
                             id: this.lastID
                         }] as T[]
                         
-                        resolve(result)
+                        resolve(result as T)
                     }
                 })
             }
@@ -185,7 +185,7 @@ export class SQLite extends Database.Driver<SQLiteConfig> {
      * 获取表列表
      */
     async getTables(): Promise<string[]> {
-        const result = await this.query<{ name: string }>(
+        const result = await this.query<{ name: string }[]>(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
         )
         return result.map(row => row.name)

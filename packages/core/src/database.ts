@@ -8,16 +8,6 @@ export class Database {
   setDefaultDriver(name: string) {
     this.#default_driver_name = name;
   }
-  count<T extends object, K extends keyof T>(
-    name: string,
-    field: K,
-    driver_name?: string
-  ) {
-    const driver = this.getDriver(driver_name);
-    return new Database.Selection<T, K>(driver, name, [
-      `COUNT("${String(field)}") AS count`,
-    ] as K[]).then((res) => res[0]?.count || 0);
-  }
   select<T extends object, K extends keyof T>(
     name: string,
     fields: K[],
@@ -87,7 +77,7 @@ abstract class ThenableQuery<T = any>
   protected abstract buildQuery(): { sql: string; params: any[] };
   then<TResult1 = T, TResult2 = never>(
     onfulfilled?:
-      | ((value: any) => TResult1 | PromiseLike<TResult1>)
+      | ((value: T) => TResult1 | PromiseLike<TResult1>)
       | undefined
       | null,
     onrejected?:
@@ -96,7 +86,7 @@ abstract class ThenableQuery<T = any>
       | null
   ): Promise<TResult1 | TResult2> {
     const { sql, params } = this.buildQuery();
-    return this.driver.query(sql, params).then(onfulfilled, onrejected);
+    return this.driver.query<T>(sql, params).then(onfulfilled, onrejected);
   }
   catch<TResult = never>(
     onrejected?:
@@ -393,34 +383,30 @@ export namespace Database {
     abstract connect(): Promise<void>;
     abstract disconnect(): Promise<void>;
     abstract isConnected(): boolean;
-    abstract query<U = any>(sql: string, params?: any[]): Promise<U[]>;
+    abstract query<U = any>(sql: string, params?: any[]): Promise<T>;
     abstract healthCheck(): Promise<boolean>;
     abstract getTables(): Promise<string[]>;
     abstract getTableInfo(tableName: string): Promise<any[]>;
     abstract dispose(): Promise<void>;
   }
-  export interface Drivers {
-    momory:Driver<any>
+  export interface DriverConfig {
+    memory?:boolean
   }
-  export type DriverConfig<T extends Driver>=T extends Driver<infer R>?R:{
-    default?:string
-  }
-  export type Config = DriverConfig<Drivers[keyof Drivers]> &{
+  export interface Config extends DriverConfig{
     default?: string;
   }
-  export type DriverConstructor<T extends Driver> = {
-    new (config: InferConfig<T>): T;
+  export type DriverConstructor<T> = {
+    new (config:T): Driver<T>;
   };
 
-  export function isDriverConstructor<T extends Driver>(
+  export function isDriverConstructor<T>(
     fn: DriverFactory<T>
   ): fn is DriverConstructor<T> {
     return fn.prototype && fn.prototype.constructor === fn;
   }
 
-  export type DriverCreator<T extends Driver> = (config: InferConfig<T>) => T;
-  type InferConfig<T extends Driver> = T extends Driver<infer C> ? C : never;
-  export type DriverFactory<T extends Driver> =
+  export type DriverCreator<T> = (config: T) => Driver<T>;
+  export type DriverFactory<T> =
     | DriverConstructor<T>
     | DriverCreator<T>;
 }
