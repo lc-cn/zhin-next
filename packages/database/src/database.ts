@@ -8,6 +8,17 @@ export class Database {
   setDefaultDriver(name: string) {
     this.#default_driver_name = name;
   }
+  use<T extends keyof Database.DriverConfig>(name?: T) {
+    return new Proxy(this, {
+      get(target, p, receiver) {
+        if (p !== "getDriver") return Reflect.get(target, p, receiver);
+        const beforeFn = Reflect.get(target, "getDriver", receiver) as Database["getDriver"];
+        return (driver_name = name) => {
+          return beforeFn.call(target, driver_name);
+        };
+      },
+    });
+  }
   select<T extends object, K extends keyof T>(
     name: string,
     fields: K[],

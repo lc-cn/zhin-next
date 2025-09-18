@@ -24,10 +24,9 @@ import logger, { setName } from "@zhin.js/logger";
 setName("Zhin");
 import { MessageMiddleware, Plugin } from "./plugin.js";
 import { Adapter } from "./adapter";
-import { Database } from "./database.js";
 import { MessageCommand } from "./command";
 import { Component } from "./component";
-import { Model } from "./model.js";
+import { Model,Database } from "@zhin.js/database";
 import { sleep } from "./utils.js";
 
 // ============================================================================
@@ -247,15 +246,7 @@ export function useApp(): App {
 }
 export function useDatabase(driver?: keyof Database.DriverConfig) {
   const app = useApp();
-  return new Proxy(app.database, {
-    get(target, p, receiver) {
-      if (p !== "getDriver") return Reflect.get(target, p, receiver);
-      const beforeFn=Reflect.get(target,'getDriver',receiver) as Database['getDriver']
-      return (driver_name = driver) => {
-        return beforeFn.call(target,driver_name)
-      };
-    },
-  });
+  return app.database.use(driver)
 }
 export function defineModel<T extends Record<string, Model.Field>>(
   name: string,

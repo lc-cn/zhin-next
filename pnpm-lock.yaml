@@ -407,6 +407,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@zhin.js/database':
+        specifier: workspace:*
+        version: link:../database
       '@zhin.js/hmr':
         specifier: workspace:*
         version: link:../hmr
@@ -445,6 +448,12 @@ importers:
       '@zhin.js/types':
         specifier: workspace:*
         version: link:../types
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.2
+
+  packages/database:
+    devDependencies:
       typescript:
         specifier: ^5.3.0
         version: 5.9.2

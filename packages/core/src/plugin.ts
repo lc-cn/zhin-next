@@ -13,7 +13,7 @@ import {Component} from "./component.js";
 import { PluginError, MessageError, errorManager } from './errors.js';
 import {remove} from "./utils.js";
 import {Prompt} from "./prompt.js";
-import { Model } from './model.js';
+import { Model } from '@zhin.js/database';
 
 /** 消息中间件函数 */
 export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (message: Message<AdapterMessage<P>>, next: () => Promise<void>) => MaybePromise<void>;

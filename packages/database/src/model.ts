@@ -1,4 +1,4 @@
-import { Database } from "./database";
+import { Database } from "./database.js";
 
 export class Model<
   T extends Record<string, Model.Field> = Record<string, Model.Field>

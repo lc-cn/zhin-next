@@ -1,6 +1,6 @@
 import {MaybePromise}from '@zhin.js/types'
 import {MessageChannel} from "./message.js";
-import {Database} from "./database.js";
+import {Database} from "@zhin.js/database";
 import {Adapter} from "./adapter.js";
 import {Bot,BotConfig} from "./bot.js";
 declare module '@zhin.js/types'{
