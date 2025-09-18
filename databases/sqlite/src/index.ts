@@ -1,16 +1,10 @@
-// ================================================================================================
-// SQLite 数据库驱动包入口
-// ================================================================================================
-
-import { DatabaseDriver, registerDriver } from 'zhin.js'
+import { Database, registerDriver,Model, useLogger} from 'zhin.js'
 import sqlite3 from 'sqlite3'
 import path from 'path'
-import fs from 'fs'
-import type { Database, DatabaseConfig, Plugin } from 'zhin.js'
+import fs, { Mode } from 'fs'
 
-export interface SQLiteConfig extends DatabaseConfig {
-    type: 'sqlite'
-    database: string              // 数据库文件路径
+export interface SQLiteConfig {
+    data_path: string              // 数据库文件路径
     mode?: number                 // 打开模式
     busyTimeout?: number          // 忙碌超时时间
     enableWal?: boolean           // 启用 WAL 模式
@@ -18,26 +12,23 @@ export interface SQLiteConfig extends DatabaseConfig {
     cacheSize?: number           // 缓存大小
 }
 declare module 'zhin.js'{
-  interface RegisteredDrivers{
-    sqlite: DatabaseDriver<SQLite>
-  }
+    namespace Database {
+        interface Drivers{
+            sqlite?: SQLite
+        }
+    }
 }
+const logger=useLogger()
 /**
  * SQLite 数据库驱动
  */
-export class SQLite implements Database {
-    public readonly name: string
-    public readonly type: string = 'sqlite'
+export class SQLite extends Database.Driver<SQLiteConfig> {
     public connected = false
     
     private db?: sqlite3.Database
-    private plugin: Plugin
-    private config: SQLiteConfig
 
-    constructor(plugin: Plugin, config: DatabaseConfig) {
-        this.plugin = plugin
-        this.config = config as SQLiteConfig
-        this.name = config.name
+    constructor(config: SQLiteConfig) {
+        super('sqlite', config)
         this.validateConfig()
     }
 
@@ -49,7 +40,7 @@ export class SQLite implements Database {
             return
         }
 
-        const dbPath = path.resolve(this.config.database)
+        const dbPath = path.resolve(this.config.data_path)
         const dbDir = path.dirname(dbPath)
 
         // 确保数据库目录存在
@@ -62,11 +53,11 @@ export class SQLite implements Database {
         return new Promise((resolve, reject) => {
             this.db = new sqlite3.Database(dbPath, mode, (err) => {
                 if (err) {
-                    this.plugin.logger.error(`SQLite connection failed: ${err.message}`)
+                    logger.error(`SQLite connection failed: ${err.message}`)
                     reject(err)
                 } else {
                     this.connected = true
-                    this.plugin.logger.info(`SQLite connected: ${path.relative(process.cwd(), dbPath)}`)
+                    logger.info(`SQLite connected: ${path.relative(process.cwd(), dbPath)}`)
                     this.setupDatabase()
                         .then(resolve)
                         .catch(reject)
@@ -86,12 +77,12 @@ export class SQLite implements Database {
         return new Promise((resolve, reject) => {
             this.db!.close((err) => {
                 if (err) {
-                    this.plugin.logger.error(`SQLite disconnect failed: ${err.message}`)
+                    logger.error(`SQLite disconnect failed: ${err.message}`)
                     reject(err)
                 } else {
                     this.connected = false
                     this.db = undefined
-                    this.plugin.logger.info('SQLite disconnected')
+                    logger.info('SQLite disconnected')
                     resolve()
                 }
             })
@@ -124,12 +115,12 @@ export class SQLite implements Database {
                     const executionTime = Date.now() - startTime
                     
                     if (err) {
-                        this.plugin.logger.error(`SQLite query failed: ${err.message}`, {
+                        logger.error(`SQLite query failed: ${err.message}`, {
                             sql, params, executionTime
                         })
                         reject(err)
                     } else {
-                        this.plugin.logger.debug(`SQLite query executed`, {
+                        logger.debug(`SQLite query executed`, {
                             sql, params, rows: rows.length, executionTime
                         })
                         resolve(rows as T[])
@@ -141,12 +132,12 @@ export class SQLite implements Database {
                     const executionTime = Date.now() - startTime
                     
                     if (err) {
-                        driver.plugin.logger.error(`SQLite query failed: ${err.message}`, {
+                        logger.error(`SQLite query failed: ${err.message}`, {
                             sql, params, executionTime
                         })
                         reject(err)
                     } else {
-                        driver.plugin.logger.debug(`SQLite query executed`, {
+                        logger.debug(`SQLite query executed`, {
                             sql, params, changes: this.changes, lastID: this.lastID, executionTime
                         })
                         
@@ -177,7 +168,7 @@ export class SQLite implements Database {
             await this.query('SELECT 1 as health_check')
             return true
         } catch (error) {
-            this.plugin.logger.error('SQLite health check failed', error)
+            logger.error('SQLite health check failed', error)
             return false
         }
     }
@@ -212,7 +203,7 @@ export class SQLite implements Database {
     /**
      * 获取表结构
      */
-    async getTableInfo(tableName: string) {
+    async getTableInfo(tableName: string):Promise<SQLite.TableInfo[]> {
         const result = await this.query(`PRAGMA table_info(${tableName})`)
         return result
     }
@@ -254,9 +245,9 @@ export class SQLite implements Database {
         for (const pragma of optimizations) {
             try {
                 await this.query(pragma)
-                this.plugin.logger.debug(`Applied SQLite optimization: ${pragma}`)
+                logger.debug(`Applied SQLite optimization: ${pragma}`)
             } catch (error) {
-                this.plugin.logger.warn(`Failed to apply SQLite optimization: ${pragma}`, error)
+                logger.warn(`Failed to apply SQLite optimization: ${pragma}`, error)
             }
         }
     }
@@ -265,11 +256,7 @@ export class SQLite implements Database {
      * 验证配置
      */
     private validateConfig(): void {
-        if (this.config.type !== 'sqlite') {
-            throw new Error('Invalid database type for SQLiteDriver')
-        }
-
-        if (!this.config.database) {
+        if (!this.config.data_path) {
             throw new Error('SQLite database file path is required')
         }
 
@@ -290,8 +277,95 @@ export class SQLite implements Database {
             this.config.cacheSize = -16000  // 16MB 缓存
         }
     }
-}
 
-// 自动注册 SQLite 驱动
-const sqliteDriver = new DatabaseDriver('sqlite', SQLite)
-registerDriver(sqliteDriver)
+    /**
+     * 同步模型（创建表）
+     */
+    async syncModels(models: Model[]): Promise<void> {
+        for (const model of models) {
+            // 构建 CREATE TABLE 语句
+            const columns = Object.entries(model.schema).map(([fieldName, field]) => {
+                let col = `"${fieldName}" ${this.getSqlType(field)}`
+                if (field.primary) col += ' PRIMARY KEY'
+                if (field.autoIncrement) col += ' AUTOINCREMENT'
+                if (field.unique) col += ' UNIQUE'
+                if (field.notNull) col += ' NOT NULL'
+                if (field.initial !== undefined) col += ` DEFAULT ${this.formatDefault(field.initial)}`
+                return col
+            }).join(', ')
+            const sql = `CREATE TABLE IF NOT EXISTS "${model.name}" (${columns})`
+            await this.query(sql)
+        }
+    }
+
+    /**
+     * 修改模型（表结构变更）
+     */
+    async alterModel<T extends Record<string, Model.Field>>(model:Model<T>,schema: Partial<T>): Promise<void> {
+        // 1. 获取现有表结构
+        const tableInfo = await this.getTableInfo(model.name)
+        const existingFields = tableInfo.map((col: SQLite.TableInfo) => col.name)
+        const newFields = Object.keys(schema);
+        const updateFileds = Object.keys(schema).filter(f => existingFields.includes(f))
+        // 删除已存在的字段
+        for (const fieldName of updateFileds) {
+            if (existingFields.includes(fieldName)) {
+                const field = schema[fieldName] as Model.Field
+                // 备份旧字段数据，重命名旧字段，添加新字段，复制数据，删除旧字段
+                const tempFieldName = `_${fieldName}_old`
+                const renameSql = `ALTER TABLE "${model.name}" RENAME COLUMN "${fieldName}" TO "${tempFieldName}"`
+                await this.query(renameSql)
+                const addSql = `ALTER TABLE "${model.name}" ADD COLUMN "${fieldName}" ${this.getSqlType(field)}`
+                await this.query(addSql)
+                const copySql = `UPDATE "${model.name}" SET "${fieldName}" = "${tempFieldName}"`
+                await this.query(copySql)
+                const dropSql = `ALTER TABLE "${model.name}" DROP COLUMN "${tempFieldName}"`
+                await this.query(dropSql)
+            }
+        }
+        // 2. 添加新字段
+        for (const fieldName of newFields) {
+            if (!existingFields.includes(fieldName)) {
+                const field = schema[fieldName] as Model.Field
+                const sql = `ALTER TABLE "${model.name}" ADD COLUMN "${fieldName}" ${this.getSqlType(field)}`
+                await this.query(sql)
+            }
+        }
+    }
+
+    /**
+     * 获取字段的 SQLite 类型
+     */
+    private getSqlType(field: Model.Field): string {
+        switch (field.type) {
+            case 'integer': return 'INTEGER'
+            case 'float': return 'REAL'
+            case 'boolean': return 'INTEGER'
+            case 'string': return 'TEXT'
+            case 'json': return 'TEXT'
+            case 'date': return 'TEXT'
+            default: return 'TEXT'
+        }
+    }
+
+    /**
+     * 格式化默认值
+     */
+    private formatDefault(value: any): string {
+        if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`
+        if (typeof value === 'boolean') return value ? '1' : '0'
+        if (value === null) return 'NULL'
+        return String(value)
+    }
+}
+export namespace SQLite {
+    export interface TableInfo {
+        cid: number
+        name: string
+        type: string
+        notnull: number
+        dflt_value: any
+        pk: number
+    }
+}
+registerDriver('sqlite',SQLite)

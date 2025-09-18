@@ -8,6 +8,7 @@ export * from './adapter.js'
 export * from './database.js'
 export * from './config.js'
 export * from './message.js'
+export * from './model.js'
 // Logger moved to @zhin.js/logger package
 export * from './types.js'
 export * from './utils.js'

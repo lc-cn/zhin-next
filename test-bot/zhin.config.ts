@@ -3,13 +3,12 @@ import path from "node:path";
 
 export default defineConfig(async (env)=>{
   return {
-    databases: [
-      {
-        name: 'main',
-        type: 'sqlite',
-        database: './data/zhin.db'
+    databases: {
+      default: 'sqlite',
+      sqlite: {
+        data_path: './data/zhin.db'
       }
-    ],
+    },
     // 机器人配置
     bots: [
       {
@@ -100,6 +99,7 @@ export default defineConfig(async (env)=>{
       'http',           // 🚀 HTTP先加载，注册基础API路由
       'adapter-icqq',   // 🤖 ICQQ适配器注册 /api/icqq/* 路由
       'adapter-onebot11', // OneBot适配器
+      'database-sqlite', // 📦 SQLite数据库驱动
       'adapter-qq', // QQ官方机器人适配器
       'console',        // 🖥️ 控制台最后加载，处理静态文件
       'adapter-kook',
