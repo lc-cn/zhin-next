@@ -252,7 +252,7 @@ export function useDatabase(driver?: keyof Database.Drivers) {
       if (p !== "getDriver") return Reflect.get(target, p, receiver);
       const beforeFn=Reflect.get(target,'getDriver',receiver) as Database['getDriver']
       return (driver_name = driver) => {
-        return beforeFn.bind(receiver,driver_name)
+        return beforeFn.call(target,driver_name)
       };
     },
   });

@@ -23,8 +23,8 @@ function formatMemoSize(size: number) {
   }
   return `${size.toFixed(2)}${sizes[0]}`;
 }
-const db=useDatabase()
-console.log(db.getDriver())
+const db = useDatabase();
+console.log(db.getDriver());
 addCommand(new MessageCommand("send").action((_, result) => result.remaining));
 addCommand(
   new MessageCommand("zt").action(() => {
