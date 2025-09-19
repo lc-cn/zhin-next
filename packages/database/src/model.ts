@@ -1,65 +1,74 @@
 import { Database } from "./database.js";
+import { Dialect } from "./dialect.js";
+import { 
+  ModelField, 
+  ModelConfig, 
+  ModelRelation, 
+  Condition, 
+  AlterSchema,
+  NonEmptyArray 
+} from "./types.js";
 
-export class Model<
-  T extends Record<string, Model.Field> = Record<string, Model.Field>
-> {
+export class Model<O extends object = object,D extends Dialect<any>=Dialect<any>> {
   constructor(
-    public database: Database,
-    public name: string,
-    public schema: T,
-    public config: Model.Config = {}
+    public readonly database: Database<D,any>,
+    public readonly name: string,
+    public readonly config: ModelConfig = {}
   ) {}
-  get driver() {
-    return this.database.getDriver(this.config.driver);
+  
+  get dialect(): D {
+    return this.database.dialect;
   }
-  async alter<S extends Partial<T>>(schema: S) {
-    Object.assign(this.schema, schema);
-    if (this.database.has_init) {
-      await this.driver.alterModel(this, schema);
-    }
+  alter(alterations: AlterSchema<O>): Database.Alteration<O> {
+    return this.database.alter<O>(this.name, alterations);
   }
-  select<K extends keyof T>(...fields: K[]) {
-    return this.database.select<Model.Data<T>,K>(this.name, fields, this.config.driver);
+  select<K extends keyof O>(...fields: NonEmptyArray<K>): Database.Selection<Pick<O, K>, K> {
+    return this.database.select<O, K>(this.name, fields);
   }
-  create(data: Model.Data<T>) {
-    return this.database.insert<Model.Data<T>>(this.name, data, this.driver.name);
+  
+  create(data: O): Database.Insertion<O> {
+    return this.database.insert<O>(this.name, data);
   }
-  update(update: Partial<Model.Data<T>>) {
-    return this.database.update<Model.Data<T>>(this.name,update, this.config.driver);
+  
+  update(update: Partial<O>): Database.Updation<O> {
+    return this.database.update<O>(this.name, update);
   }
-  delete(condition:Database.Condition<Model.Data<T>>) {
-    return this.database.delete(this.name, this.config.driver).where(condition);
+  
+  delete(condition: Condition<O>): Database.Deletion<O> {
+    return this.database.delete<O>(this.name).where(condition);
   }
-  async sync() {
-    if (this.database.has_init) {
-      await this.driver.syncModels([this]);
-    }
-  }
-  belongsTo<M extends Model>(model: M, foreignKey?: string) {
+  
+  belongsTo<T extends object>(model: Model<T,D>, foreignKey?: string): this {
     this.config.relations = this.config.relations || [];
     this.config.relations.push({
       model: model.name,
       type: "belongs-to",
       foreignKey,
     });
+    return this;
   }
-  hasOne<M extends Model>(model: M, foreignKey?: string) {
+  
+  hasOne<T extends object>(model: Model<T,D>, foreignKey?: string): this {
     this.config.relations = this.config.relations || [];
     this.config.relations.push({
       model: model.name,
       type: "has-one",
       foreignKey,
     });
+    return this;
   }
-  hasMany<M extends Model>(model: M, foreignKey?: string) {
+  
+  hasMany<T extends object>(model: Model<T,D>, foreignKey?: string): this {
     this.config.relations = this.config.relations || [];
     this.config.relations.push({
       model: model.name,
       type: "has-many",
       foreignKey,
     });
+    return this;
   }
-  manyToMany<M extends Model>(model: M, through: string, foreignKey?: string) {
+  
+  manyToMany<T extends object>(model: Model<T,D>, through: string, foreignKey?: string): this {
     this.config.relations = this.config.relations || [];
     this.config.relations.push({
       model: model.name,
@@ -67,52 +76,12 @@ export class Model<
       foreignKey,
       through,
     });
+    return this;
   }
 }
 export namespace Model {
-  export interface Field {
-    type:
-      | "string"
-      | "integer"
-      | "number"
-      | "float"
-      | "json"
-      | "boolean"
-      | "date"
-      | "object"
-      | "array";
-    initial?: any;
-    length?: number;
-    primary?: boolean;
-    autoIncrement?: boolean;
-    unique?: boolean;
-    notNull?: boolean;
-  }
-  export type Data<T extends Record<string, Field>> = {
-    [K in keyof T]: T[K]["type"] extends "integer" | "number" | "float"
-      ? number
-      : T[K]["type"] extends "boolean"
-      ? boolean
-      : T[K]["type"] extends "date"
-      ? Date
-      : T[K]["type"] extends "json"
-      ? any
-        : T[K]["type"] extends "object"
-        ? Record<string, any>
-        : T[K]["type"] extends "array"
-        ? any[]
-        : string;
-  };
-  export type PartialData<T extends Record<string, Field>> = Partial<Data<T>>;
-  export interface Config {
-    driver?: string;
-    timestamps?: boolean;
-    softDelete?: boolean;
-    relations?: {
-      model: string;
-      type: "belongs-to" | "has-one" | "has-many" | "many-to-many";
-      foreignKey?: string;
-      through?: string;
-    }[];
-  }
+  // Re-export types from types.ts for backward compatibility
+  export type Field = ModelField;
+  export type Config = ModelConfig;
+  export type Relation = ModelRelation;
 }
