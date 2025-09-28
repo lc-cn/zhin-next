@@ -1,6 +1,9 @@
+
 # 🧩 插件开发指南
 
-本指南将帮助你深入掌握 Zhin Bot Framework 的插件开发，从基础概念到高级技巧。
+本指南将帮助你深入掌握 Zhin.js 插件开发，从基础到高级技巧。
+
+> **生态说明**：Zhin.js 开箱即用支持控制台适配器、HTTP 服务、Web 控制台、SQLite 数据库。Telegram、Discord、QQ、KOOK、OneBot v11、MySQL、PostgreSQL 等需手动安装扩展包。建议插件开发优先兼容主仓库内置服务，跨平台请注明依赖。
 
 ## 🎯 插件核心概念
 
@@ -589,8 +592,27 @@ useContext('stats', (stats) => {
 })
 ```
 
-## 📚 更多资源
 
+---
+
+## 🌍 生态系统与扩展
+
+### � 开箱即用
+- 控制台适配器（@zhin.js/adapter-process，默认内置）
+- HTTP 服务（@zhin.js/http）
+- Web 控制台（@zhin.js/console）
+- SQLite 数据库（默认）
+
+### 🔌 可选扩展（需手动安装）
+- Telegram（@zhin.js/adapter-telegram）
+- Discord（@zhin.js/adapter-discord）
+- QQ（@zhin.js/adapter-qq）
+- KOOK（@zhin.js/adapter-kook）
+- OneBot v11（@zhin.js/adapter-onebot11）
+- MySQL（@zhin.js/database-mysql）
+- PostgreSQL（@zhin.js/database-pg）
+
+## �📚 更多资源
 - 📖 [完整 API 参考](../api/README.md) - 详细的 API 文档
 - 💡 [实用示例集合](../examples/README.md) - 更多插件示例
 - 🚀 [最佳实践指南](../guide/best-practices.md) - 生产环境优化

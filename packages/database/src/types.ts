@@ -352,9 +352,7 @@ export interface ModelRelation {
 
 // ============================================================================
 // Utility Types
-// ============================================================================
-
-export type NonEmptyArray<T> = [T, ...T[]];
+// ========================================
 
 export type RequiredKeys<T, K extends keyof T> = T & Required<Pick<T, K>>;
 

@@ -1,6 +1,6 @@
 import type { Database } from './database.js';
 import type { Dialect } from './dialect.js';
-import { AlterSchema, NonEmptyArray, Condition } from '../types.js';
+import { AlterSchema, Condition } from '../types.js';
 import * as QueryClasses from './query-classes.js';
 
 
@@ -38,20 +38,20 @@ export abstract class Model<C=any,O extends object = object,Q = string> {
   alter(alterations: AlterSchema<O>): QueryClasses.Alteration<O, C, Q> {
     return this.database.alter<O>(this.name, alterations);
   }
-  find<K extends keyof O>(...fields: NonEmptyArray<K>): QueryClasses.Selection<Pick<O, K>, K, C, Q> {
-    return this.database.find<O, K>(this.name, fields);
+  select<K extends keyof O>(...fields: Array<K>): QueryClasses.Selection<Pick<O, K>, K, C, Q> {
+    return this.database.select<O, K>(this.name, fields);
   }
   
-  new(data: O): QueryClasses.Insertion<O, C, Q> {
-    return this.database.new<O>(this.name, data);
+  insert(data: O): QueryClasses.Insertion<O, C, Q> {
+    return this.database.insert<O>(this.name, data);
   }
   
   update(update: Partial<O>): QueryClasses.Updation<O, C, Q> {
     return this.database.update<O>(this.name, update);
   }
   
-  remove(condition: Condition<O>): QueryClasses.Deletion<O, C, Q> {
-    return this.database.remove<O>(this.name, condition);
+  delete(condition: Condition<O>): QueryClasses.Deletion<O, C, Q> {
+    return this.database.delete<O>(this.name, condition);
   }
   /**
    * 验证查询条件

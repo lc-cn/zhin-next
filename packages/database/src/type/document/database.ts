@@ -4,7 +4,6 @@ import {
   QueryParams, 
   BuildQueryResult, 
   DocumentQueryResult, 
-  DocumentOperationResult,
   CreateQueryParams,
   SelectQueryParams,
   InsertQueryParams,

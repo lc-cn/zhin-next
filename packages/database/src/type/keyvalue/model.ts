@@ -1,6 +1,6 @@
 import { Model, Dialect, Database } from '../../base';
 import { KeyValueDatabase } from './database.js';
-import { Condition, NonEmptyArray, KeyValueQueryResult } from '../../types.js';
+import { Condition, KeyValueQueryResult } from '../../types.js';
 
 /**
  * 键值模型类
@@ -48,7 +48,7 @@ export class KeyValueModel<T extends object = object, D=any> extends Model<D, T,
     
     // 检查是否过期
     if (row.expires_at && Date.now() > row.expires_at) {
-      await this.delete(key);
+      await this.deleteByKey(key);
       return null;
     }
 
@@ -58,7 +58,7 @@ export class KeyValueModel<T extends object = object, D=any> extends Model<D, T,
   /**
    * 删除键
    */
-  async delete(key: string): Promise<boolean> {
+  async deleteByKey(key: string): Promise<boolean> {
     const result = await this.dialect.query(
       {
         operation: 'delete',
@@ -301,7 +301,7 @@ export class KeyValueModel<T extends object = object, D=any> extends Model<D, T,
   async deleteAndGet<V = any>(key: string): Promise<V | null> {
     const value = await this.get<V>(key);
     if (value !== null) {
-      await this.delete(key);
+      await this.deleteByKey(key);
     }
     return value;
   }
@@ -319,7 +319,7 @@ export class KeyValueModel<T extends object = object, D=any> extends Model<D, T,
   /**
    * 查找单个数据
    */
-  async findOne(query: { key: string }): Promise<any> {
+  async selectOne(query: { key: string }): Promise<any> {
     return this.get(query.key);
   }
 

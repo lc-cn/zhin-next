@@ -1,11 +1,27 @@
+
 # Zhin Bot Framework 文档
 
-欢迎使用Zhin Bot Framework的文档系统。
+欢迎使用 Zhin.js 文档系统！本项目专注于插件化、热重载和多平台生态，支持 TypeScript 全量类型。
+
+## 文档说明
+
+本系统文档涵盖：
+- 快速入门与项目结构
+- API 参考与类型定义
+- 插件/适配器开发指南
+- 最佳实践与示例
+
+### 开箱即用
+- 控制台适配器、HTTP 服务、Web 控制台、SQLite 数据库
+
+### 可选扩展（需手动安装）
+- Telegram、Discord、QQ、KOOK、OneBot v11、MySQL、PostgreSQL 等
+
 
 ## 文档结构
 
 - [入门指南](./guide/getting-started.md)
-- [API参考](./api/README.md)
+- [API 参考](./api/README.md)
 - [插件开发](./plugin/README.md)
 - [适配器开发](./adapter/README.md)
 - [最佳实践](./guide/best-practices.md)

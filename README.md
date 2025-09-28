@@ -1,16 +1,19 @@
+
 # Zhin.js
 
-一个基于 TypeScript 的机器人框架，支持多平台适配和插件系统。
+现代 TypeScript 机器人框架，专注于插件化、热重载和多平台生态。
 
-## 特性
+## 核心特性
 
-- **TypeScript 支持**：完全使用 TypeScript 编写，提供类型提示
-- **多平台适配**：支持 QQ(ICQQ)、KOOK、OneBot v11、控制台等平台
-- **插件系统**：支持热插拔的插件架构
-- **热重载**：开发时支持代码热更新
-- **Web 控制台**：基于 Vue 3 的管理界面
-- **CLI 工具**：完整的命令行工具链
-- **Monorepo**：使用 pnpm workspace 管理多个包
+- **TypeScript 全量类型支持**
+- **热重载**：开发时代码/配置/插件变更自动生效
+- **插件化架构**：支持热插拔插件，灵活扩展
+- **Web 控制台**：浏览器实时监控、插件/数据库/日志管理
+- **命令行工具链**：一键创建/开发/调试/部署
+- **开箱即用**：内置控制台适配器、HTTP服务、Web控制台、SQLite数据库
+- **可选扩展**：支持 Telegram、Discord、QQ、KOOK、OneBot v11、MySQL、PostgreSQL 等（需手动安装）
+
+## 项目结构
 
 ## 项目结构
 
@@ -35,30 +38,23 @@ zhin-next/
 └── test-bot/         # 示例机器人
 ```
 
+
 ## 快速开始
 
-### 安装依赖
-
 ```bash
+# 安装依赖
 pnpm install
-```
 
-### 构建项目
-
-```bash
+# 构建所有包
 pnpm build
-```
 
-### 运行示例
-
-```bash
-# 开发模式（热重载）
+# 启动开发模式（热重载）
 pnpm dev
 
-# 或者进入 test-bot 目录
-cd test-bot
-pnpm dev
+# 或进入 test-bot 目录体验示例机器人
+cd test-bot && pnpm dev
 ```
+
 
 ### 创建新项目
 
@@ -70,108 +66,82 @@ pnpm install
 pnpm dev
 ```
 
-## 核心概念
 
-### 适配器 (Adapter)
-
-适配器负责连接不同的聊天平台：
+## 主要用法示例
 
 ```typescript
-// 配置示例
-{
-  bots: [
-    {
-      name: 'my-qq-bot',
-      context: 'icqq',
-      // QQ 相关配置...
-    },
-    {
-      name: 'my-kook-bot', 
-      context: 'kook',
-      token: 'your-kook-token',
-      // KOOK 相关配置...
-    }
-  ]
-}
-```
+import { createZhinApp, addCommand, onMessage } from 'zhin.js'
 
-### 插件系统
-
-编写插件处理消息和命令：
-
-```typescript
-import { addCommand, MessageCommand, onMessage } from 'zhin.js'
+const app = await createZhinApp({
+  databases: [{
+    name: 'main',
+    type: 'sqlite',
+    database: './data/bot.db'
+  }],
+  bots: [{
+    name: 'console',
+    context: 'process' // 控制台适配器，适合开发/测试
+  }]
+})
 
 // 添加命令
-addCommand(new MessageCommand('hello')
-  .action(() => 'Hello, World!'))
-
-// 处理所有消息
-onMessage((message) => {
-  if (message.content.includes('ping')) {
-    message.reply('pong')
+addCommand({
+  name: 'hello',
+  description: '打招呼',
+  async execute(message) {
+    await message.reply('Hello, World!')
   }
 })
-```
 
-### 上下文系统
-
-使用上下文访问特定平台功能：
-
-```typescript
-import { useContext } from 'zhin.js'
-
-// 使用特定适配器的功能
-useContext('icqq', (icqqAdapter) => {
-  // 访问 QQ 特定的 API
-  const bot = icqqAdapter.bots.get('my-bot')
-  // ...
+// 监听消息
+onMessage(async (message) => {
+  if (message.content === 'ping') {
+    await message.reply('pong!')
+  }
 })
+
+await app.start()
 ```
 
-## 可用命令
 
-### 开发
+## 常用命令
 
 ```bash
 pnpm dev          # 启动开发服务器（热重载）
 pnpm build        # 构建所有包
 pnpm test         # 运行测试
 pnpm lint         # 代码检查
-```
-
-### 部署
-
-```bash
 pnpm start        # 启动生产环境
 pnpm daemon       # 后台运行
 pnpm stop         # 停止机器人
 ```
 
+
 ## Web 控制台
 
-启动后访问 `http://localhost:3000/console` 查看 Web 管理界面，支持：
+启动后访问 `http://localhost:8086` 查看 Web 管理界面，支持：
 
-- 实时查看机器人状态
-- 管理插件启用/禁用
-- 查看日志和性能指标
-- 配置管理
+- 实时查看机器人状态和消息统计
+- 插件启用/禁用与管理
+- 数据库管理与查看
+- 日志实时查看
+- 配置热更新
 
-## 配置
 
-支持多种配置文件格式：
+## 配置说明
 
-```javascript
-// zhin.config.ts
+支持 TypeScript/JS/JSON 格式，推荐使用 `zhin.config.ts`：
+
+```typescript
 import { defineConfig } from 'zhin.js'
 
 export default defineConfig({
   bots: [
-    // 机器人配置...
+    { name: 'console', context: 'process' }
   ],
   plugins: [
     'http',
-    'console', 
+    'console',
     'adapter-process',
     // 其他插件...
   ],
@@ -182,41 +152,40 @@ export default defineConfig({
 })
 ```
 
-## 热重载
 
-开发时修改代码会自动重新加载，无需手动重启：
+## 热重载体验
 
-- 插件代码修改会热更新
-- 配置文件修改会重新加载
-- 保持机器人连接状态
+- 插件/配置/代码变更自动生效，无需重启
+- 保持机器人连接不中断
 
-## 核心包
 
-- `@zhin.js/core` - 框架核心
-- `@zhin.js/cli` - 命令行工具
-- `@zhin.js/hmr` - 热重载系统
-- `@zhin.js/logger` - 日志系统
-- `@zhin.js/types` - 类型定义
-- `zhin.js` - 主入口包
+## 生态系统与扩展
 
-## 适配器包
+### 开箱即用
+- `@zhin.js/adapter-process` - 控制台适配器（默认内置）
+- `@zhin.js/http` - HTTP 服务
+- `@zhin.js/console` - Web 控制台
+- SQLite 数据库（默认）
 
-- `@zhin.js/adapter-icqq` - QQ 适配器
+### 可选扩展（需手动安装）
+- `@zhin.js/adapter-telegram` - Telegram 适配器
+- `@zhin.js/adapter-discord` - Discord 适配器
+- `@zhin.js/adapter-qq` - QQ 适配器
 - `@zhin.js/adapter-kook` - KOOK 适配器
 - `@zhin.js/adapter-onebot11` - OneBot v11 适配器
-- `@zhin.js/adapter-process` - 控制台适配器
+- `@zhin.js/database-mysql` - MySQL 驱动
+- `@zhin.js/database-pg` - PostgreSQL 驱动
 
-## 插件包
-
-- `@zhin.js/http` - HTTP 服务器
-- `@zhin.js/console` - Web 控制台
-- `@zhin.js/client` - Vue 客户端框架
 
 ## 开发要求
-
 - Node.js 20.19.0+ 或 22.12.0+
 - pnpm 9.0+
 
-## 许可证
 
+## 📚 更多文档
+- [完整文档](./docs/)
+- [最佳实践](./docs/guide/best-practices.md)
+- [架构设计](./docs/guide/architecture.md)
+
+## 许可证
 MIT License

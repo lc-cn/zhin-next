@@ -126,7 +126,8 @@ onDatabaseReady(async (db) => {
     //   name:'张三',
     //   age:20,
     //   info:{}
-    // })
-    const result=await model.find('name','age').where({name:{$like:"张%"}})
+    // });
+    // await model.delete({name:'张三'});
+    const result=await model.select();
     console.log(result)
 });

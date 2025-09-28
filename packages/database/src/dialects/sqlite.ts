@@ -46,17 +46,78 @@ export class SQLiteDialect extends Dialect<SQLiteDialectConfig, string> {
         if (err) {
           reject(err);
         } else {
-          resolve(rows as U);
+          // 对查询结果进行后处理，移除多余的引号
+          const processedRows = this.processQueryResults(rows);
+          resolve(processedRows as U);
         }
       });
       this.db.get(sql, params, (err: any, row: any) => {
         if (err) {
           reject(err);
         } else {
-          resolve(row as U);
+          // 对单行结果进行后处理
+          const processedRow = this.processQueryResults(row);
+          resolve(processedRow as U);
         }
       });
     });
+  }
+
+  /**
+   * 处理查询结果，移除字符串字段的多余引号
+   */
+  private processQueryResults(data: any): any {
+    if (!data) return data;
+    
+    if (Array.isArray(data)) {
+      return data.map(row => this.processRowData(row));
+    } else if (typeof data === 'object') {
+      return this.processRowData(data);
+    }
+    
+    return data;
+  }
+
+  /**
+   * 处理单行数据
+   */
+  private processRowData(row: any): any {
+    if (!row || typeof row !== 'object') return row;
+    
+    const processedRow: any = {};
+    
+    for (const [key, value] of Object.entries(row)) {
+      processedRow[key] = this.processFieldValue(value);
+    }
+    
+    return processedRow;
+  }
+
+  /**
+   * 处理字段值，移除多余的引号并解析 JSON
+   */
+  private processFieldValue(value: any): any {
+    if (typeof value !== 'string') return value;
+    
+    // 移除字符串两端的引号（如果存在）
+    if ((value.startsWith("'") && value.endsWith("'")) || 
+        (value.startsWith('"') && value.endsWith('"'))) {
+      const unquoted = value.slice(1, -1);
+      
+      // 尝试解析为 JSON（用于 json 类型字段）
+      if (unquoted.startsWith('{') || unquoted.startsWith('[')) {
+        try {
+          return JSON.parse(unquoted);
+        } catch {
+          // 如果解析失败，返回去除引号的字符串
+          return unquoted;
+        }
+      }
+      
+      return unquoted;
+    }
+    
+    return value;
   }
 
   async dispose(): Promise<void> {

@@ -3,11 +3,29 @@ import { MessageMiddleware,Plugin } from './plugin.js';
 import { Message } from './message.js';
 import { Schema } from './schema.js';
 
+/**
+ * Prompt类：用于实现机器人与用户的交互式提问与输入收集。
+ * 支持文本、数字、确认、列表、选项、Schema等多种输入类型，自动处理超时、默认值、格式化等。
+ * 典型用法：await new Prompt(plugin, event).text('请输入内容')
+ * @template P 适配器类型
+ */
 export class Prompt<P extends RegisteredAdapter> {
+    /**
+     * 构造函数
+     * @param plugin 所属插件实例
+     * @param event 当前消息事件
+     */
     constructor(private plugin:Plugin,private event: Message<AdapterMessage<P>>) {}
+    /**
+     * 获取当前会话唯一标识（适配器-机器人-频道-用户）
+     */
     private getChannelAddress<P2 extends RegisteredAdapter>(event: Message<AdapterMessage<P2>>) {
         return `${event.$adapter}-${event.$bot}-${event.$channel.type}:${event.$channel.id}-${event.$sender.id}`;
     }
+    /**
+     * 通用提问方法，支持自定义格式化、超时、默认值等
+     * @param config 提问配置
+     */
     private prompt<T = any>(config: Prompt.Config<T>) {
         return new Promise<T>((resolve, reject) => {
             this.event.$reply(config.tips);
@@ -26,6 +44,12 @@ export class Prompt<P extends RegisteredAdapter> {
             );
         });
     }
+    /**
+     * 注册一次性消息中间件，等待用户输入或超时
+     * @param callback 输入回调
+     * @param timeout 超时时间（默认3分钟）
+     * @param timeoutText 超时提示
+     */
     middleware(callback: (input: string | Error) => any, timeout: number = 3 * 60 * 1000, timeoutText = '输入超时') {
         const middleware: MessageMiddleware<P> = (event, next) => {
             if (this.getChannelAddress<P>(event) !== this.getChannelAddress<P>(this.event)) return next();
@@ -39,6 +63,9 @@ export class Prompt<P extends RegisteredAdapter> {
             callback(new Error(timeoutText));
         }, timeout);
     }
+    /**
+     * 文本输入
+     */
     async text(tips: string, timeout?: number, defaultValue = '', timeoutText?: string): Promise<string> {
         return this.prompt<string>({
             tips,
@@ -48,6 +75,9 @@ export class Prompt<P extends RegisteredAdapter> {
             format: (input: string) => input,
         });
     }
+    /**
+     * 任意输入
+     */
     async any(tips: string, timeout?: number, defaultValue = '', timeoutText?: string) {
         return this.prompt<string>({
             tips,
@@ -57,6 +87,9 @@ export class Prompt<P extends RegisteredAdapter> {
             format: (input: string) => input,
         });
     }
+    /**
+     * 数字输入
+     */
     async number(tips: string, timeout?: number, defaultValue = 0, timeoutText?: string): Promise<number> {
         return this.prompt<number>({
             tips,
@@ -66,6 +99,9 @@ export class Prompt<P extends RegisteredAdapter> {
             format: (input: string) => +input,
         });
     }
+    /**
+     * 确认输入（如 yes/no）
+     */
     async confirm(
         tips: string,
         condition: string = 'yes',
@@ -81,6 +117,9 @@ export class Prompt<P extends RegisteredAdapter> {
             format: (input: string) => input === condition,
         });
     }
+    /**
+     * 列表输入，支持多值分隔
+     */
     async list<T extends Prompt.SingleType = 'text'>(
         tips: string,
         config: Prompt.ListConfig<T> = { type: 'text' as T },
@@ -105,9 +144,15 @@ export class Prompt<P extends RegisteredAdapter> {
                 }) as Prompt.Result<T>[],
         });
     }
+    /**
+     * 返回常量值（用于Schema）
+     */
     async const<T = any>(value: T): Promise<T> {
         return value;
     }
+    /**
+     * 选项选择，支持单选/多选
+     */
     async pick<T extends Prompt.SingleType, M extends boolean = false>(
         tips: string,
         config: Prompt.PickConfig<T, M>,
@@ -137,6 +182,9 @@ export class Prompt<P extends RegisteredAdapter> {
             },
         });
     }
+    /**
+     * 基于Schema的选项选择
+     */
     async pickValueWithSchema<T extends Schema>(schema: T): Promise<Schema.Types<T>> {
         return this.pick(schema.meta.description, {
             type: '' as any,
@@ -148,6 +196,9 @@ export class Prompt<P extends RegisteredAdapter> {
             defaultValue: schema.meta.default,
         });
     }
+    /**
+     * 批量Schema输入
+     */
     async getValueWithSchemas<T extends Record<string, Schema>>(schemas: T): Promise<Schema.RecordTypes<T>> {
         const result: Dict = {};
         for (const key of Object.keys(schemas)) {
@@ -156,6 +207,9 @@ export class Prompt<P extends RegisteredAdapter> {
         }
         return result as Schema.RecordTypes<T>;
     }
+    /**
+     * 单个Schema输入，自动分发到不同类型
+     */
     async getValueWithSchema<T extends Schema>(schema: T): Promise<Schema.Types<T>> {
         if (schema.meta.options) return this.pickValueWithSchema(schema);
         switch (schema.meta.type) {
@@ -196,6 +250,9 @@ export class Prompt<P extends RegisteredAdapter> {
         }
     }
 }
+/**
+ * Prompt命名空间：类型辅助定义
+ */
 export namespace Prompt {
     interface SingleMap {
         text: string;

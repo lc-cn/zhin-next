@@ -1,7 +1,7 @@
 import type { Database } from './database.js';
 import type { Dialect } from './dialect.js';
 import { ThenableQuery } from './thenable.js';
-import { QueryParams, AlterSchema, Condition, Ordering, NonEmptyArray, Schema } from '../types.js';
+import { QueryParams, AlterSchema, Condition, Ordering, Schema } from '../types.js';
 
 export class Alteration<T extends object, C = any, D = string> extends ThenableQuery<void, C, D> {
   constructor(
@@ -104,7 +104,7 @@ export class Selection<
   constructor(
     database: Database<C, Record<string, object>, D>,
     private readonly modelName: string,
-    private readonly fields: NonEmptyArray<K>
+    private readonly fields: Array<K>
   ) {
     super(database, database.dialect as Dialect<C, D>);
   }

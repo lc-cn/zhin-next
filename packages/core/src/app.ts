@@ -29,20 +29,24 @@ import { Component } from "./component";
 import { RelatedDatabase,DocumentDatabase,KeyValueDatabase,Schema,Registry} from "@zhin.js/database";
 
 // ============================================================================
-// App 类
+// App 类（Zhin.js 应用主入口，负责插件热重载、配置管理、消息分发等）
 // ============================================================================
 /**
- * App类：继承自HMR，提供热更新的机器人框架
+ * App类：Zhin.js 应用主入口，负责插件热重载、配置管理、消息分发等。
+ * 继承自 HMR，支持插件生命周期、适配器管理、数据库集成等。
  */
 export class App extends HMR<Plugin> {
   static currentPlugin: Plugin;
   private config: AppConfig;
   adapters: string[] = [];
   database?: RelatedDatabase<any,Models>|DocumentDatabase<any,Models>|KeyValueDatabase<any,Models>;
+  /**
+   * 构造函数：初始化应用，加载配置，注册全局异常处理
+   * @param config 可选的应用配置，若为空则自动查找配置文件
+   */
   constructor(config?: Partial<AppConfig>) {
     // 如果没有传入配置或配置为空对象，尝试自动加载配置文件
     let finalConfig: AppConfig;
-
     if (!config || Object.keys(config).length === 0) {
       try {
         // 异步加载配置，这里需要改为同步初始化
@@ -77,12 +81,24 @@ export class App extends HMR<Plugin> {
     this.config = finalConfig;
   }
   /** 默认配置 */
+  /**
+   * 默认配置
+   * - plugin_dirs: 插件目录
+   * - plugins: 启用插件
+   * - bots: 机器人配置
+   * - debug: 是否调试模式
+   */
   static defaultConfig: AppConfig = {
     plugin_dirs: ["./plugins"],
     plugins: [],
     bots: [],
     debug: false,
   };
+  /**
+   * 发送消息到指定适配器和机器人
+   * @param options 消息发送参数（包含 context、bot、内容等）
+   * @throws 找不到适配器或机器人时抛出异常
+   */
   async sendMessage(options: SendOptions) {
     const adapter = this.getContext<Adapter>(options.context);
     if (!adapter)
@@ -95,6 +111,10 @@ export class App extends HMR<Plugin> {
     return bot.$sendMessage(options);
   }
   /** 同步加载配置文件 */
+  /**
+   * 同步加载配置文件（暂不支持，建议使用异步创建）
+   * @throws 始终抛出异常，提示使用异步方法
+   */
   static loadConfigSync(): AppConfig {
     // 由于loadConfig是异步的，我们需要创建一个同步版本
     // 或者在这里简化处理，让用户使用异步创建方法
@@ -102,16 +122,28 @@ export class App extends HMR<Plugin> {
   }
 
   /** 创建插件依赖 */
+  /**
+   * 创建插件依赖
+   * @param name 插件名
+   * @param filePath 插件文件路径
+   */
   createDependency(name: string, filePath: string): Plugin {
     return new Plugin(this, name, filePath);
   }
 
   /** 获取App配置 */
+  /**
+   * 获取App配置（只读）
+   */
   getConfig(): Readonly<AppConfig> {
     return { ...this.config };
   }
 
   /** 更新App配置 */
+  /**
+   * 更新App配置
+   * @param config 部分配置项，将与现有配置合并
+   */
   updateConfig(config: Partial<AppConfig>): void {
     this.config = { ...this.config, ...config };
 

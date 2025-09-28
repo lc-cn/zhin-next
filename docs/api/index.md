@@ -500,6 +500,26 @@ useContext('web', (web) => {
 })
 ```
 
+
+---
+
+## 🌍 生态系统与扩展
+
+### 📦 开箱即用
+- 控制台适配器（@zhin.js/adapter-process，默认内置）
+- HTTP 服务（@zhin.js/http）
+- Web 控制台（@zhin.js/console）
+- SQLite 数据库（默认）
+
+### 🔌 可选扩展（需手动安装）
+- Telegram（@zhin.js/adapter-telegram）
+- Discord（@zhin.js/adapter-discord）
+- QQ（@zhin.js/adapter-qq）
+- KOOK（@zhin.js/adapter-kook）
+- OneBot v11（@zhin.js/adapter-onebot11）
+- MySQL（@zhin.js/database-mysql）
+- PostgreSQL（@zhin.js/database-pg）
+
 ## 📚 更多资源
 
 - 🎯 [test-bot 实例](../../test-bot) - 完整的实际使用示例

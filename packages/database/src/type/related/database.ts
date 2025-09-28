@@ -139,7 +139,7 @@ export class RelatedDatabase<
     const placeholders = keys.map((_, index) => this.dialect.getParameterPlaceholder(index)).join(', ');
     
     const query = `INSERT INTO ${this.dialect.quoteIdentifier(params.tableName)} (${columns}) VALUES (${placeholders})`;
-    const values = Object.values(params.data);
+    const values = Object.values(params.data).map(v => this.dialect.formatDefaultValue(v));
     
     return { query, params: values };
   }

@@ -4,6 +4,13 @@ import {Message} from "./message.js";
 import {MaybePromise} from "@zhin.js/types";
 export const CapWithChild = Symbol('CapWithChild');
 export const CapWithClose = Symbol('CapWithClose');
+/**
+ * Component类：消息组件系统核心，支持模板渲染、属性解析、循环等。
+ * 用于自定义消息结构和复用UI片段。
+ * @template T 组件props类型
+ * @template D 组件data类型
+ * @template P 组件props配置类型
+ */
 export class Component<T = {}, D = {}, P = Component.Props<T>> {
     [CapWithClose]: RegExp;
     [CapWithChild]: RegExp;
@@ -14,26 +21,47 @@ export class Component<T = {}, D = {}, P = Component.Props<T>> {
     set name(value:string){
         this.$options.name=value;
     }
+    /**
+     * 构造函数：初始化组件，生成属性正则
+     * @param $options 组件配置项
+     */
     constructor(private $options: Component.Options<T, D, P>) {
         this.formatProps();
         this[CapWithChild] = new RegExp(`<${$options.name}([^>]*)?>([^<])*?</${$options.name}>`);
         this[CapWithClose] = new RegExp(`<${$options.name}([^>]*)?/>`);
     }
+    /**
+     * 判断模板是否为自闭合标签
+     * @param template 模板字符串
+     */
     isClosing(template: string) {
         return this[CapWithClose].test(template);
     }
+    /**
+     * 匹配组件标签
+     * @param template 模板字符串
+     * @returns 匹配到的标签内容
+     */
     match(template: string) {
         let [match] = this[CapWithChild].exec(template) || [];
         if (match) return match;
         [match] = this[CapWithClose].exec(template) || [];
         return match;
     }
+    /**
+     * 格式化props配置，生成props数组
+     */
     private formatProps() {
         for (const [key, value] of Object.entries(this.$options.props || {})) {
             this.formatProp(key, value as any);
         }
     }
 
+    /**
+     * 格式化单个prop配置
+     * @param name 属性名
+     * @param value 类型或配置
+     */
     private formatProp(name: string, value: Exclude<Component.PropConfig, 'name'> | Component.TypeConstruct) {
         if (typeof value === 'function') {
             return this.$props.push({

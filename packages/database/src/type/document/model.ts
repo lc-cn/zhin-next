@@ -1,6 +1,6 @@
 import { Model} from '../../base';
 import { DocumentDatabase } from './database.js';
-import { NonEmptyArray, DocumentQueryResult, Condition } from '../../types.js';
+import { DocumentQueryResult, Condition } from '../../types.js';
 
 /**
  * 文档型模型类
@@ -46,16 +46,16 @@ export class DocumentModel<T extends object = object, D =any> extends Model<D, T
   /**
    * 查找单个文档
    */
-  async findOne<K extends keyof T>(...fields: NonEmptyArray<K>): Promise<(Pick<T, K> & { _id: string }) | null> {
-    const results = await this.find(...fields).limit(1);
+  async selectOne<K extends keyof T>(...fields: Array<K>): Promise<(Pick<T, K> & { _id: string }) | null> {
+    const results = await this.select(...fields).limit(1);
     return results.length > 0 ? results[0] as (Pick<T, K> & { _id: string }) : null;
   }
 
   /**
    * 根据ID查找文档
    */
-  async findById(id: string){
-    return this.find('_id' as any).where({
+  async selectById(id: string){
+    return this.select('_id' as any).where({
       _id: id,
     }).limit(1).then((results: any) => results[0] || null);
   }
@@ -72,7 +72,7 @@ export class DocumentModel<T extends object = object, D =any> extends Model<D, T
    * 根据ID删除文档
    */
   async deleteById(id: string): Promise<number> {
-    return this.remove({
+    return this.delete({
       _id: id,
     } as Condition<T>)
   }

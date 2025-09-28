@@ -1,5 +1,5 @@
 // ============================================================================
-// 插件类型定义
+// 插件类型定义（定义插件中间件、生命周期、命令、组件等核心类型）
 // ============================================================================
 
 
@@ -13,29 +13,39 @@ import {Component} from "./component.js";
 import { PluginError, MessageError, errorManager } from './errors.js';
 import {remove} from "./utils.js";
 import {Prompt} from "./prompt.js";
-import { Model, Schema } from '@zhin.js/database';
+import { Schema } from '@zhin.js/database';
+import { Cron} from './cron.js';
 
 /** 消息中间件函数 */
 export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (message: Message<AdapterMessage<P>>, next: () => Promise<void>) => MaybePromise<void>;
 
 
 // ============================================================================
-// Plugin 类
+// Plugin 类（插件的生命周期、命令/中间件/组件/定时任务等管理）
 // ============================================================================
 
 /**
- * 插件类：继承自Dependency，提供机器人特定功能
+ * 插件类：继承自 Dependency，提供机器人特定功能与生命周期管理。
+ * 支持命令注册、中间件、组件、定时任务、模型等。
  */
-
 export class Plugin extends Dependency<Plugin> {
     middlewares: MessageMiddleware<any>[] = [];
     components: Map<string, Component<any, any, any>> = new Map();
     schemas: Map<string,Schema<any>>=new Map();
     commands:MessageCommand[]=[];
+    crons:Cron[]=[];
     #logger?:Logger
+    /**
+     * 构造函数：初始化插件，注册消息事件、命令中间件、资源清理等
+     * @param parent 所属 App 实例
+     * @param name 插件名
+     * @param filePath 插件文件路径
+     */
     constructor(parent: Dependency<Plugin>, name: string, filePath: string) {
         super(parent, name, filePath);
+        // 绑定消息事件，自动分发到命令和中间件
         this.on('message.receive',this.#handleMessage.bind(this))
+        // 注册命令处理为默认中间件
         this.addMiddleware(async (message,next)=>{
             for(const command of this.commands){
                 const result=await command.handle(message);
@@ -43,13 +53,25 @@ export class Plugin extends Dependency<Plugin> {
             }
             return next()
         });
+        // 发送前渲染组件
         this.beforeSend((options)=>Component.render(this.components,options))
+        // 资源清理：卸载时清空模型、定时任务等
         this.on('dispose',()=>{
             for(const name of this.schemas.keys()){
                 this.app.database?.models.delete(name);
             }
             this.schemas.clear();
-        })
+            for(const cron of this.crons){
+                cron.dispose();
+            }
+            this.crons.length = 0;
+        });
+        // 挂载时启动定时任务
+        this.on('mounted',()=>{
+            for(const cron of this.crons){
+                cron.run();
+            }
+        });
     }
     async #handleMessage(message: Message) {
         try {
@@ -73,7 +95,11 @@ export class Plugin extends Dependency<Plugin> {
             }
         }
     }
-
+    cron(cronExpression:string,callback:()=>void){
+        const cronJob = new Cron(cronExpression,callback);
+        this.crons.push(cronJob);
+        return this;
+    }
     async #runMiddlewares(message: Message, index: number): Promise<void> {
         if (index >= this.middlewares.length) return
         

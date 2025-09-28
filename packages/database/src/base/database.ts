@@ -1,6 +1,6 @@
 import type { Dialect } from './dialect.js';
 import { Model } from './model.js';
-import { Schema, QueryParams, AlterSchema, Condition, Ordering, NonEmptyArray, BuildQueryResult } from '../types.js';
+import { Schema, QueryParams, AlterSchema, Condition, BuildQueryResult } from '../types.js';
 import * as QueryClasses from './query-classes.js';
 
 /**
@@ -93,16 +93,16 @@ export abstract class Database<D=any,S extends Record<string, object>=Record<str
   alter<T extends object>(name: string, alterations: AlterSchema<T>): QueryClasses.Alteration<T,D,Q>{
     return new QueryClasses.Alteration<T,D,Q>(this, name, alterations);
   }
-  find<T extends object, K extends keyof T>(name: string, fields: NonEmptyArray<K>): QueryClasses.Selection<Pick<T, K>, K,D,Q>{
+  select<T extends object, K extends keyof T>(name: string, fields: Array<K>): QueryClasses.Selection<Pick<T, K>, K,D,Q>{
     return new QueryClasses.Selection<Pick<T, K>, K,D,Q>(this, name, fields);
   }
-  new<T extends object>(name: string, data: T): QueryClasses.Insertion<T,D,Q>{
+  insert<T extends object>(name: string, data: T): QueryClasses.Insertion<T,D,Q>{
     return new QueryClasses.Insertion<T,D,Q>(this, name, data);
   }
   update<T extends object>(name: string, update: Partial<T>): QueryClasses.Updation<T,D,Q>{
     return new QueryClasses.Updation<T,D,Q>(this, name, update);
   }
-  remove<T extends object>(name: string, condition: Condition<T>): QueryClasses.Deletion<T,D,Q>{
+  delete<T extends object>(name: string, condition: Condition<T>): QueryClasses.Deletion<T,D,Q>{
     return new QueryClasses.Deletion<T,D,Q>(this, name).where(condition);
   }
   /**

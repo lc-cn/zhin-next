@@ -1,11 +1,25 @@
 import {Bot,BotConfig} from "./bot.js";
 import {Plugin} from "./plugin.js";
+/**
+ * Adapter类：适配器抽象，管理多平台Bot实例。
+ * 负责根据配置启动/关闭各平台机器人，统一异常处理。
+ */
 export class Adapter<R extends Bot=Bot>{
+    /** 当前适配器下所有Bot实例，key为bot名称 */
     public bots:Map<string,R>=new Map<string, R>()
     #botFactory:Adapter.BotFactory<R>
+    /**
+     * 构造函数
+     * @param name 适配器名称（如 'process'、'qq' 等）
+     * @param botFactory Bot工厂函数或构造器
+     */
     constructor(public name:string,botFactory:Adapter.BotFactory<R>) {
         this.#botFactory=botFactory
     }
+    /**
+     * 启动适配器，自动根据配置创建并连接所有Bot
+     * @param plugin 所属插件实例
+     */
     async start(plugin:Plugin){
         const configs=plugin.app.getConfig().bots?.filter(c=>c.context===this.name)
         if(!configs?.length) return
@@ -33,6 +47,10 @@ export class Adapter<R extends Bot=Bot>{
             throw error
         }
     }
+    /**
+     * 停止适配器，断开并移除所有Bot实例
+     * @param plugin 所属插件实例
+     */
     async stop(plugin:Plugin){
         try {
             for(const [name,bot] of this.bots){

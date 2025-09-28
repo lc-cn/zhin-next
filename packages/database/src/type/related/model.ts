@@ -1,6 +1,6 @@
-import { Model,Dialect,Database,ThenableQuery } from '../../base';
+import { Model} from '../../base';
 import { RelatedDatabase } from './database.js';
-import { Condition, NonEmptyArray, QueryParams } from '../../types.js';
+import { Condition } from '../../types.js';
 
 /**
  * 关系型模型类
@@ -22,7 +22,7 @@ export class RelatedModel<T extends object = object,D=any> extends Model<D,T,str
       throw new Error('Invalid data provided');
     }
     try {
-      const result = await (this.database as RelatedDatabase<D>).new<T>(this.name, data as T);
+      const result = await (this.database as RelatedDatabase<D>).insert<T>(this.name, data as T);
       return result as T;
     } catch (error) {
       this.handleError(error as Error, 'create');
@@ -51,24 +51,24 @@ export class RelatedModel<T extends object = object,D=any> extends Model<D,T,str
   /**
    * 查找单个数据
    */
-  async findOne(query?: Condition<T>): Promise<T | null> {
+  async selectOne(query?: Condition<T>): Promise<T | null> {
     try {
-      const selection = this.find('*' as keyof T);
+      const selection = this.select();
       if (query) {
         selection.where(query);
       }
       const results = await selection.limit(1);
       return results.length > 0 ? results[0] : null;
     } catch (error) {
-      this.handleError(error as Error, 'findOne');
+      this.handleError(error as Error, 'selectOne');
     }
   }
 
   /**
    * 根据ID查找
    */
-  async findById(id: any): Promise<T | null> {
-    return this.findOne({ id } as Condition<T>);
+  async selectById(id: any): Promise<T | null> {
+    return this.selectOne({ id } as Condition<T>);
   }
 
   /**
@@ -95,7 +95,7 @@ export class RelatedModel<T extends object = object,D=any> extends Model<D,T,str
    * 根据ID删除
    */
   async deleteById(id: any): Promise<boolean> {
-    const result=await this.remove({ id } as Condition<T>);
+    const result=await this.delete({ id } as Condition<T>);
     return result>0
   }
 
@@ -104,7 +104,7 @@ export class RelatedModel<T extends object = object,D=any> extends Model<D,T,str
    */
   async count(query?: Condition<T>): Promise<number> {
     try {
-      const selection = this.find('*' as keyof T);
+      const selection = this.select('*' as keyof T);
       if (query) {
         selection.where(query);
       }
