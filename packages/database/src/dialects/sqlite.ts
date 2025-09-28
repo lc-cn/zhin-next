@@ -1,11 +1,19 @@
-import sqlite3 from 'sqlite3';
-import { Dialect } from '../dialect.js';
-import { SQLiteConfig } from '../types.js';
+import {Dialect} from "../base";
+import {Registry} from "../registry";
+import {Database} from "../base";
+import {Column} from "../types";
+import {RelatedDatabase} from "../type/related/database";
 
-export class SQLiteDialect extends Dialect<SQLiteConfig>{
+
+export interface SQLiteDialectConfig {
+  filename: string;
+  mode?:string
+}
+
+export class SQLiteDialect extends Dialect<SQLiteDialectConfig, string> {
   private db: any = null;
 
-  constructor(config: SQLiteConfig = {}) {
+  constructor(config: SQLiteDialectConfig) {
     super('sqlite', config);
   }
 
@@ -15,7 +23,13 @@ export class SQLiteDialect extends Dialect<SQLiteConfig>{
   }
 
   async connect(): Promise<void> {
-    this.db = new sqlite3.Database(this.config.filename);
+    try {
+      const { default: sqlite3 } = await import('sqlite3');
+      this.db = new sqlite3.Database(this.config.filename);
+    } catch (error) {
+      console.error('forgot install sqlite3 ?');
+      throw new Error(`SQLite 连接失败: ${error}`);
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -35,13 +49,19 @@ export class SQLiteDialect extends Dialect<SQLiteConfig>{
           resolve(rows as U);
         }
       });
+      this.db.get(sql, params, (err: any, row: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row as U);
+        }
+      });
     });
   }
 
-
   async dispose(): Promise<void> {
     if (this.db) {
-      this.db.close();
+      await this.db.close();
       this.db = null;
     }
   }
@@ -119,8 +139,8 @@ export class SQLiteDialect extends Dialect<SQLiteConfig>{
     return `CREATE TABLE IF NOT EXISTS ${this.quoteIdentifier(tableName)} (${columns.join(', ')})`;
   }
   
-  formatColumnDefinition(column: any): string {
-    const name = this.quoteIdentifier(String(column.name));
+  formatColumnDefinition(field: string, column: Column<any>): string {
+    const name = this.quoteIdentifier(String(field));
     const type = this.mapColumnType(column.type);
     const length = column.length ? `(${column.length})` : '';
     const nullable = column.nullable === false ? ' NOT NULL' : '';
@@ -147,3 +167,6 @@ export class SQLiteDialect extends Dialect<SQLiteConfig>{
     return `DROP INDEX ${ifExistsClause}${this.quoteIdentifier(indexName)}`;
   }
 }
+Registry.register('sqlite', (config: SQLiteDialectConfig, schemas?: Database.Schemas<Record<string, object>>) => {
+  return new RelatedDatabase(new SQLiteDialect(config), schemas);
+});

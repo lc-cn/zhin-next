@@ -17,10 +17,6 @@
   },
   "dependencies": {
     "@zhin.js/core": "workspace:*",
-    "@zhin.js/adapter-process": "workspace:*",
-    "@zhin.js/http": "workspace:*",
-    "@zhin.js/console": "workspace:*",
-    "@zhin.js/database-sqlite": "workspace:*",
     "@zhin.js/logger": "workspace:*"
   },
   "devDependencies": {

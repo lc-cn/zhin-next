@@ -1,18 +1,21 @@
-import { 
-  QueryParams, 
-  QueryResult, 
-  CreateQueryParams, 
-  SelectQueryParams, 
-  InsertQueryParams, 
-  UpdateQueryParams, 
-  DeleteQueryParams, 
-  AlterQueryParams, 
-  DropTableQueryParams, 
+import { Database,Dialect } from '../../base';
+import { RelatedModel } from './model.js';
+import {
+  QueryParams,
+  BuildQueryResult,
+  CreateQueryParams,
+  SelectQueryParams,
+  InsertQueryParams,
+  UpdateQueryParams,
+  DeleteQueryParams,
+  AlterQueryParams,
+  DropTableQueryParams,
   DropIndexQueryParams,
+  Condition,
+  Column,
   AddSchema,
   ModifySchema,
   DropSchema,
-  Condition,
   isCreateQuery,
   isSelectQuery,
   isInsertQuery,
@@ -21,53 +24,33 @@ import {
   isAlterQuery,
   isDropTableQuery,
   isDropIndexQuery,
-  Column,
-} from './types.js';
+} from '../../types.js';
 
-// ============================================================================
-// Database Dialect Interface
-// ============================================================================
-
-
-// ============================================================================
-// SQL Builder Base Class
-// ============================================================================
-
-export abstract class Dialect<T = any> {
-  public readonly name: string;
-  public readonly config: T;
+/**
+ * 关系型数据库类
+ * 支持表、行、列的关系型数据模型
+ */
+export class RelatedDatabase<
+  D=any,
+  S extends Record<string, object> = Record<string, object>
+> extends Database<D,S,string> {
   
-  protected constructor(name: string, config: T) {
-    this.name = name;
-    this.config = config;
+  constructor(
+    dialect: Dialect<D,string>,
+    schemas?: Database.Schemas<S>,
+  ) {
+    super(dialect,schemas); 
   }
-  
-  // Abstract methods that must be implemented by concrete dialects
-  abstract isConnected(): boolean;
-  abstract connect(): Promise<void>;
-  abstract disconnect(): Promise<void>;
-  abstract healthCheck(): Promise<boolean>;
-  abstract query<U = any>(sql: string, params?: any[]): Promise<U>;
-  abstract mapColumnType(type: string): string;
-  abstract quoteIdentifier(identifier: string): string;
-  abstract getParameterPlaceholder(index: number): string;
-  abstract getStatementTerminator(): string;
-  abstract formatBoolean(value: boolean): string;
-  abstract formatDate(value: Date): string;
-  abstract formatJson(value: any): string;
-  abstract escapeString(value: string): string;
-  abstract formatDefaultValue(value: any): string;
-  abstract formatLimit(limit: number): string;
-  abstract formatOffset(offset: number): string;
-  abstract formatLimitOffset(limit: number, offset: number): string;
-  abstract formatCreateTable(tableName: string, columns: string[]): string;
-  abstract formatAlterTable(tableName: string, alterations: string[]): string;
-  abstract formatDropTable(tableName: string, ifExists?: boolean): string;
-  abstract formatDropIndex(indexName: string, tableName: string, ifExists?: boolean): string;
-  abstract dispose(): Promise<void>;
-  
+
+  protected async initialize(): Promise<void> {
+    // 自动创建表
+    for (const [tableName, schema] of Object.entries(this.schemas || {})) {
+      await this.create(tableName, schema);
+    }
+  }
+
   // SQL generation method
-  buildQuery<U extends object = any>(params: QueryParams<U>): QueryResult {
+  buildQuery<U extends object = any>(params: QueryParams<U>): BuildQueryResult<string> {
     if (isCreateQuery(params)) {
       return this.buildCreateQuery(params);
     } else if (isSelectQuery(params)) {
@@ -93,145 +76,145 @@ export abstract class Dialect<T = any> {
   // CREATE TABLE Query
   // ========================================================================
   
-  protected buildCreateQuery<T extends object>(params: CreateQueryParams<T>): QueryResult {
+  protected buildCreateQuery<T extends object>(params: CreateQueryParams<T>): BuildQueryResult<string> {
     const columnDefs = Object.entries(params.schema).map(([field, column]) => this.formatColumnDefinition(field,column as Column));
-    const sql = this.formatCreateTable(params.tableName, columnDefs);
-    return { sql, params: [] };
+    const query = this.dialect.formatCreateTable(params.tableName, columnDefs);
+    return { query, params: [] };
   }
   
   // ========================================================================
   // SELECT Query
   // ========================================================================
   
-  protected buildSelectQuery<T extends object>(params: SelectQueryParams<T>): QueryResult {
+  protected buildSelectQuery<T extends object>(params: SelectQueryParams<T>): BuildQueryResult<string> {
     const fields = params.fields && params.fields.length
-      ? params.fields.map(f => this.quoteIdentifier(String(f))).join(', ')
+      ? params.fields.map(f => this.dialect.quoteIdentifier(String(f))).join(', ')
       : '*';
     
-    let sql = `SELECT ${fields} FROM ${this.quoteIdentifier(params.tableName)}`;
+    let query = `SELECT ${fields} FROM ${this.dialect.quoteIdentifier(params.tableName)}`;
     const queryParams: any[] = [];
     
     // WHERE clause
     if (params.conditions) {
       const [condition, conditionParams] = this.parseCondition(params.conditions);
       if (condition) {
-        sql += ` WHERE ${condition}`;
+        query += ` WHERE ${condition}`;
         queryParams.push(...conditionParams);
       }
     }
     
     // GROUP BY clause
     if (params.groupings && params.groupings.length) {
-      const groupings = params.groupings.map(f => this.quoteIdentifier(String(f))).join(', ');
-      sql += ` GROUP BY ${groupings}`;
+      const groupings = params.groupings.map(f => this.dialect.quoteIdentifier(String(f))).join(', ');
+      query += ` GROUP BY ${groupings}`;
     }
     
     // ORDER BY clause
     if (params.orderings && params.orderings.length) {
       const orderings = params.orderings
-        .map(o => `${this.quoteIdentifier(String(o.field))} ${o.direction}`)
+        .map(o => `${this.dialect.quoteIdentifier(String(o.field))} ${o.direction}`)
         .join(', ');
-      sql += ` ORDER BY ${orderings}`;
+      query += ` ORDER BY ${orderings}`;
     }
     
     // LIMIT and OFFSET
     if (params.limitCount !== undefined && params.offsetCount !== undefined) {
-      sql += ` ${this.formatLimitOffset(params.limitCount, params.offsetCount)}`;
+      query += ` ${this.dialect.formatLimitOffset(params.limitCount, params.offsetCount)}`;
     } else if (params.limitCount !== undefined) {
-      sql += ` ${this.formatLimit(params.limitCount)}`;
+      query += ` ${this.dialect.formatLimit(params.limitCount)}`;
     } else if (params.offsetCount !== undefined) {
-      sql += ` ${this.formatOffset(params.offsetCount)}`;
+      query += ` ${this.dialect.formatOffset(params.offsetCount)}`;
     }
     
-    return { sql, params: queryParams };
+    return { query, params: queryParams };
   }
   
   // ========================================================================
   // INSERT Query
   // ========================================================================
   
-  protected buildInsertQuery<T extends object>(params: InsertQueryParams<T>): QueryResult {
+  protected buildInsertQuery<T extends object>(params: InsertQueryParams<T>): BuildQueryResult<string> {
     const keys = Object.keys(params.data);
-    const columns = keys.map(k => this.quoteIdentifier(k)).join(', ');
-    const placeholders = keys.map((_, index) => this.getParameterPlaceholder(index)).join(', ');
+    const columns = keys.map(k => this.dialect.quoteIdentifier(k)).join(', ');
+    const placeholders = keys.map((_, index) => this.dialect.getParameterPlaceholder(index)).join(', ');
     
-    const sql = `INSERT INTO ${this.quoteIdentifier(params.tableName)} (${columns}) VALUES (${placeholders})`;
+    const query = `INSERT INTO ${this.dialect.quoteIdentifier(params.tableName)} (${columns}) VALUES (${placeholders})`;
     const values = Object.values(params.data);
     
-    return { sql, params: values };
+    return { query, params: values };
   }
   
   // ========================================================================
   // UPDATE Query
   // ========================================================================
   
-  protected buildUpdateQuery<T extends object>(params: UpdateQueryParams<T>): QueryResult {
+  protected buildUpdateQuery<T extends object>(params: UpdateQueryParams<T>): BuildQueryResult<string> {
     const updateKeys = Object.keys(params.update);
     const setClause = updateKeys
-      .map((k, index) => `${this.quoteIdentifier(k)} = ${this.getParameterPlaceholder(index)}`)
+      .map((k, index) => `${this.dialect.quoteIdentifier(k)} = ${this.dialect.getParameterPlaceholder(index)}`)
       .join(', ');
     
-    let sql = `UPDATE ${this.quoteIdentifier(params.tableName)} SET ${setClause}`;
+    let query = `UPDATE ${this.dialect.quoteIdentifier(params.tableName)} SET ${setClause}`;
     const queryParams: any[] = [...Object.values(params.update)];
     
     // WHERE clause
     if (params.conditions) {
       const [condition, conditionParams] = this.parseCondition(params.conditions);
       if (condition) {
-        sql += ` WHERE ${condition}`;
+        query += ` WHERE ${condition}`;
         queryParams.push(...conditionParams);
       }
     }
     
-    return { sql, params: queryParams };
+    return { query, params: queryParams };
   }
   
   // ========================================================================
   // DELETE Query
   // ========================================================================
   
-  protected buildDeleteQuery<T extends object>(params: DeleteQueryParams<T>): QueryResult {
-    let sql = `DELETE FROM ${this.quoteIdentifier(params.tableName)}`;
+  protected buildDeleteQuery<T extends object>(params: DeleteQueryParams<T>): BuildQueryResult<string> {
+    let query = `DELETE FROM ${this.dialect.quoteIdentifier(params.tableName)}`;
     const queryParams: any[] = [];
     
     // WHERE clause
     if (params.conditions) {
       const [condition, conditionParams] = this.parseCondition(params.conditions);
       if (condition) {
-        sql += ` WHERE ${condition}`;
+        query += ` WHERE ${condition}`;
         queryParams.push(...conditionParams);
       }
     }
     
-    return { sql, params: queryParams };
+    return { query, params: queryParams };
   }
   
   // ========================================================================
   // ALTER TABLE Query
   // ========================================================================
   
-  protected buildAlterQuery<T extends object>(params: AlterQueryParams<T>): QueryResult {
+  protected buildAlterQuery<T extends object>(params: AlterQueryParams<T>): BuildQueryResult<string> {
     const alterations = Object.entries(params.alterations).map(([field,alteration]) => this.formatAlteration(field, alteration as AddSchema<T> | ModifySchema<T> | DropSchema));
-    const sql = this.formatAlterTable(params.tableName, alterations);
-    return { sql, params: [] };
+    const query = this.dialect.formatAlterTable(params.tableName, alterations);
+    return { query, params: [] };
   }
   
   // ========================================================================
   // DROP TABLE Query
   // ========================================================================
   
-  protected buildDropTableQuery<T extends object>(params: DropTableQueryParams<T>): QueryResult {
-    const sql = this.formatDropTable(params.tableName, true);
-    return { sql, params: [] };
+  protected buildDropTableQuery<T extends object>(params: DropTableQueryParams<T>): BuildQueryResult<string> {
+    const query = this.dialect.formatDropTable(params.tableName, true);
+    return { query, params: [] };
   }
   
   // ========================================================================
   // DROP INDEX Query
   // ========================================================================
   
-  protected buildDropIndexQuery(params: DropIndexQueryParams): QueryResult {
-    const sql = this.formatDropIndex(params.indexName, params.tableName, true);
-    return { sql, params: [] };
+  protected buildDropIndexQuery(params: DropIndexQueryParams): BuildQueryResult<string> {
+    const query = this.dialect.formatDropIndex(params.indexName, params.tableName, true);
+    return { query, params: [] };
   }
   
   // ========================================================================
@@ -239,21 +222,21 @@ export abstract class Dialect<T = any> {
   // ========================================================================
   
   protected formatColumnDefinition<T =any>(field: string, column: Column<T>): string {
-    const name = this.quoteIdentifier(String(field));
-    const type = this.mapColumnType(column.type);
+    const name = this.dialect.quoteIdentifier(String(field));
+    const type = this.dialect.mapColumnType(column.type);
     const length = column.length ? `(${column.length})` : '';
     const nullable = column.nullable === false ? ' NOT NULL' : '';
     const primary = column.primary ? ' PRIMARY KEY' : '';
     const unique = column.unique ? ' UNIQUE' : '';
     const defaultVal = column.default !== undefined 
-      ? ` DEFAULT ${this.formatDefaultValue(column.default)}` 
+      ? ` DEFAULT ${this.dialect.formatDefaultValue(column.default)}` 
       : '';
     
     return `${name} ${type}${length}${primary}${unique}${nullable}${defaultVal}`;
   }
   
   protected formatAlteration<T=any>(field:string,alteration: AddSchema<T> | ModifySchema<T> | DropSchema): string {
-    const name = this.quoteIdentifier(field);
+    const name = this.dialect.quoteIdentifier(field);
     
     switch (alteration.action) {
       case 'add':
@@ -267,13 +250,13 @@ export abstract class Dialect<T = any> {
         };
         return `ADD COLUMN ${this.formatColumnDefinition(field, addColumn)}`;
       case 'modify':
-        const type = alteration.type ? this.mapColumnType(alteration.type) : '';
+        const type = alteration.type ? this.dialect.mapColumnType(alteration.type) : '';
         const length = alteration.length ? `(${alteration.length})` : '';
         const nullable = alteration.nullable !== undefined 
           ? (alteration.nullable ? ' NULL' : ' NOT NULL') 
           : '';
         const defaultVal = alteration.default !== undefined 
-          ? ` DEFAULT ${this.formatDefaultValue(alteration.default)}` 
+          ? ` DEFAULT ${this.dialect.formatDefaultValue(alteration.default)}` 
           : '';
         return `MODIFY COLUMN ${name} ${type}${length}${nullable}${defaultVal}`;
       case 'drop':
@@ -322,8 +305,8 @@ export abstract class Dialect<T = any> {
         const value = (condition as any)[key];
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           for (const op in value) {
-            const quotedKey = this.quoteIdentifier(key);
-            const placeholder = this.getParameterPlaceholder(params.length);
+            const quotedKey = this.dialect.quoteIdentifier(key);
+            const placeholder = this.dialect.getParameterPlaceholder(params.length);
             
             switch (op) {
               case '$eq':
@@ -352,7 +335,7 @@ export abstract class Dialect<T = any> {
                 break;
               case '$in':
                 if (Array.isArray(value[op]) && value[op].length) {
-                  const placeholders = value[op].map(() => this.getParameterPlaceholder(params.length + value[op].indexOf(value[op])));
+                  const placeholders = value[op].map(() => this.dialect.getParameterPlaceholder(params.length + value[op].indexOf(value[op])));
                   clauses.push(`${quotedKey} IN (${placeholders.join(', ')})`);
                   params.push(...value[op]);
                 } else {
@@ -361,7 +344,7 @@ export abstract class Dialect<T = any> {
                 break;
               case '$nin':
                 if (Array.isArray(value[op]) && value[op].length) {
-                  const placeholders = value[op].map(() => this.getParameterPlaceholder(params.length + value[op].indexOf(value[op])));
+                  const placeholders = value[op].map(() => this.dialect.getParameterPlaceholder(params.length + value[op].indexOf(value[op])));
                   clauses.push(`${quotedKey} NOT IN (${placeholders.join(', ')})`);
                   params.push(...value[op]);
                 }
@@ -377,8 +360,8 @@ export abstract class Dialect<T = any> {
             }
           }
         } else {
-          const quotedKey = this.quoteIdentifier(key);
-          const placeholder = this.getParameterPlaceholder(params.length);
+          const quotedKey = this.dialect.quoteIdentifier(key);
+          const placeholder = this.dialect.getParameterPlaceholder(params.length);
           clauses.push(`${quotedKey} = ${placeholder}`);
           params.push(value);
         }
@@ -386,5 +369,24 @@ export abstract class Dialect<T = any> {
     }
 
     return [clauses.join(' AND '), params];
+  }
+
+  /**
+   * 获取模型
+   */
+  model<T extends keyof S>(name: T): RelatedModel<S[T], Dialect<D,string>> {
+    let model = this.models.get(name as string);
+    if (!model) {
+      model = new RelatedModel(this as unknown as RelatedDatabase<D>, name as string);
+      this.models.set(name as string, model);
+    }
+    return model as unknown as RelatedModel<S[T], Dialect<D,string>>;
+  }
+
+  /**
+   * 获取所有模型名称
+   */
+  getModelNames(): string[] {
+    return Object.keys(this.schemas || {});
   }
 }

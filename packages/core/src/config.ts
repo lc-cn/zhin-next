@@ -264,6 +264,6 @@ export function createDefaultConfig(format: ConfigFormat = 'yaml'): AppConfig {
   return {
     bots: [],
     plugin_dirs: ['./src/plugins', 'node_modules'],
-    plugins: []
+    plugins: [],
   };
 } 

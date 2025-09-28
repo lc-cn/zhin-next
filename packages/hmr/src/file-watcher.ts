@@ -147,7 +147,7 @@ export class FileWatcher extends EventEmitter {
                 }
             }
         }
-        throw new Error(`File not found: ${filePath}`);
+        throw new Error(`File not found: ${filePath}\n${this.#dirs.join('\n')}`);
     }
 
     /** 销毁监听器 */

@@ -13,7 +13,7 @@ import {Component} from "./component.js";
 import { PluginError, MessageError, errorManager } from './errors.js';
 import {remove} from "./utils.js";
 import {Prompt} from "./prompt.js";
-import { Model } from '@zhin.js/database';
+import { Model, Schema } from '@zhin.js/database';
 
 /** 消息中间件函数 */
 export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (message: Message<AdapterMessage<P>>, next: () => Promise<void>) => MaybePromise<void>;
@@ -30,7 +30,7 @@ export type MessageMiddleware<P extends RegisteredAdapter=RegisteredAdapter> = (
 export class Plugin extends Dependency<Plugin> {
     middlewares: MessageMiddleware<any>[] = [];
     components: Map<string, Component<any, any, any>> = new Map();
-    models: Map<string,Model<any>>=new Map();
+    schemas: Map<string,Schema<any>>=new Map();
     commands:MessageCommand[]=[];
     #logger?:Logger
     constructor(parent: Dependency<Plugin>, name: string, filePath: string) {
@@ -45,10 +45,10 @@ export class Plugin extends Dependency<Plugin> {
         });
         this.beforeSend((options)=>Component.render(this.components,options))
         this.on('dispose',()=>{
-            for(const name of this.models.keys()){
-                this.app.database.models.delete(name);
+            for(const name of this.schemas.keys()){
+                this.app.database?.models.delete(name);
             }
-            this.models.clear();
+            this.schemas.clear();
         })
     }
     async #handleMessage(message: Message) {
@@ -89,10 +89,9 @@ export class Plugin extends Dependency<Plugin> {
             )
         }
     }
-    defineModel<T extends Record<string,Model.Field>=Record<string,Model.Field>>(name:string,schema:T,config:Model.Config={}){
-        const model = this.app.database.defineModel(name,schema,config);
-        this.models.set(name,model);
-        return model;
+    defineModel<S extends Record<string,any>>(name:string,schema:Schema<S>){
+        this.schemas.set(name,schema);
+        return this;
     }
     beforeSend(handler:BeforeSendHandler){
         this.before('message.send',handler)

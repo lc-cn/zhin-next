@@ -22,7 +22,7 @@
     "@zhin.js/adapter-onebot11": "workspace:*",
     "@zhin.js/adapter-qq": "workspace:*",
     "@zhin.js/adapter-process": "workspace:*",
-    "@zhin.js/database-sqlite": "workspace:*"
+    "sqlite3":"latest"
   },
   "devDependencies": {
     "@zhin.js/cli": "workspace:*",

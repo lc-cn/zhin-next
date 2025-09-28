@@ -1,12 +1,17 @@
-import pg from 'pg';
-import { Dialect } from '../dialect.js';
-import { PostgreSQLConfig } from '../types.js';
+import {Dialect} from '../base';
+import {RelatedDatabase} from "../type/related/database";
+import {Database} from "../base";
+import {Registry} from "../registry";
+import type { ClientConfig } from 'pg';
+import {Column} from "../types";
 
-export class PostgreSQLDialect extends Dialect<PostgreSQLConfig> {
+export interface PostgreSQLDialectConfig extends ClientConfig {}
+
+export class PostgreSQLDialect extends Dialect<PostgreSQLDialectConfig, string> {
   private connection: any = null;
 
-  constructor(config: PostgreSQLConfig) {
-    super('postgresql', config);
+  constructor(config: PostgreSQLDialectConfig) {
+    super('pg', config);
   }
 
   // Connection management
@@ -15,7 +20,14 @@ export class PostgreSQLDialect extends Dialect<PostgreSQLConfig> {
   }
 
   async connect(): Promise<void> {
-    this.connection = await pg.connect(this.config);
+    try {
+      const { Client } = await import('pg');
+      this.connection = new Client(this.config);
+      await this.connection.connect();
+    } catch (error) {
+      console.error('forgot install pg ?');
+      throw new Error(`PostgreSQL 连接失败: ${error}`);
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -31,10 +43,9 @@ export class PostgreSQLDialect extends Dialect<PostgreSQLConfig> {
     return result.rows as U;
   }
 
-
   async dispose(): Promise<void> {
     if (this.connection) {
-      await this.connection.release();
+      await this.connection.end();
       this.connection = null;
     }
   }
@@ -112,8 +123,8 @@ export class PostgreSQLDialect extends Dialect<PostgreSQLConfig> {
     return `CREATE TABLE IF NOT EXISTS ${this.quoteIdentifier(tableName)} (${columns.join(', ')})`;
   }
   
-  formatColumnDefinition(column: any): string {
-    const name = this.quoteIdentifier(String(column.name));
+  formatColumnDefinition(field: string, column: Column<any>): string {
+    const name = this.quoteIdentifier(String(field));
     const type = this.mapColumnType(column.type);
     const length = column.length ? `(${column.length})` : '';
     const nullable = column.nullable === false ? ' NOT NULL' : '';
@@ -140,3 +151,7 @@ export class PostgreSQLDialect extends Dialect<PostgreSQLConfig> {
     return `DROP INDEX ${ifExistsClause}${this.quoteIdentifier(indexName)}`;
   }
 }
+
+Registry.register('pg', (config: PostgreSQLDialectConfig, schemas?: Database.Schemas<Record<string, object>>) => {
+  return new RelatedDatabase(new PostgreSQLDialect(config), schemas);
+});

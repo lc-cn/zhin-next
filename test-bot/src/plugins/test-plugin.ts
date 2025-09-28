@@ -8,12 +8,20 @@ import {
   MessageCommand,
   useApp,
   Adapter,
-  defineModel,
   onDatabaseReady,
-  useDatabase,
+  defineModel,
 } from "zhin.js";
 import path from "node:path";
 import * as os from "node:os";
+declare module "@zhin.js/types" {
+  interface Models {
+    test_model: {
+      name: string;
+      age: number;
+      info: object;
+    };
+  }
+}
 const app = useApp();
 function formatMemoSize(size: number) {
   const sizes = ["B", "KB", "MB", "GB", "TB"];
@@ -23,8 +31,6 @@ function formatMemoSize(size: number) {
   }
   return `${size.toFixed(2)}${sizes[0]}`;
 }
-const db = useDatabase();
-console.log(db.getDriver());
 addCommand(new MessageCommand("send").action((_, result) => result.remaining));
 addCommand(
   new MessageCommand("zt").action(() => {
@@ -109,20 +115,18 @@ const testCommand = new MessageCommand("test").action(async (m) =>
   usePrompt(m).text("请输入文本")
 );
 addCommand(testCommand);
-const model = defineModel("test_model", {
-  name: { type: "string", notNull: true },
-  age: { type: "integer", initial: 0 },
+defineModel("test_model",{
+  name: { type: "text", nullable: false },
+  age: { type: "integer", default: 0 },
   info: { type: "json" },
-});
-onDatabaseReady(async () => {
-    const result=await model
-      .select("name", "age")
-      .where({
-        age: {
-          $gt: 18,
-        },
-      })
-      console.log(result.map(r=>{
-        return r.name
-      }))
+} );
+onDatabaseReady(async (db) => {
+    const model=db.model("test_model")
+    // await model.create({
+    //   name:'张三',
+    //   age:20,
+    //   info:{}
+    // })
+    const result=await model.find('name','age').where({name:{$like:"张%"}})
+    console.log(result)
 });

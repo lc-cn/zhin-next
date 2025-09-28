@@ -31,17 +31,6 @@ export async function createApp(config?: Partial<AppConfig>): Promise<App> {
     } else {
         finalConfig = Object.assign({}, App.defaultConfig, config);
     }
-    finalConfig.plugins=Array.from(new Set([
-        'adapter-process',
-        'http',
-        'console',
-        'database-sqlite',
-        ...(finalConfig.plugins || [])
-    ]))
-    finalConfig.plugin_dirs=Array.from(new Set([
-        ...(finalConfig.plugin_dirs || []),
-        path.join('node_modules','@zhin.js'),
-    ]))
     const app= new App(finalConfig);
     app.watching(envFiles,()=>{
         process.exit(51)

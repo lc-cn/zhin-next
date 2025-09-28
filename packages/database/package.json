@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
-      "import": "./lib/index.js"
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
     }
   },
   "scripts": {
@@ -18,9 +19,11 @@
   "dependencies": {
   },
   "peerDependencies": {
-    "sqlite3":"^3.2.6",
-    "mysql2":"^3.6.0",
-    "pg":"^8.11.0"
+    "sqlite3":"latest",
+    "mysql2":"latest",
+    "pg":"latest",
+    "mongodb":"latest",
+    "redis":"latest"
   },
   "peerDependenciesMeta": {
     "sqlite3": {
@@ -31,12 +34,22 @@
     },
     "pg": {
       "optional": true
+    },
+    "mongodb": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
     }
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "sqlite3":"^3.2.6",
-    "mysql2":"^3.6.0",
-    "pg":"^8.11.0"
+    "sqlite3":"latest",
+    "mysql2":"latest",
+    "pg":"latest",
+    "mongodb":"latest",
+    "redis":"latest",
+    "@types/pg":"latest",
+    "@types/sqlite3":"latest"
   }
 } 

@@ -1,11 +1,16 @@
-import mysql from 'mysql2/promise';
-import { Dialect } from '../dialect.js';
-import { MySQLConfig } from '../types.js';
+import {Dialect} from '../base';
+import {RelatedDatabase} from "../type/related/database";
+import {Registry} from "../registry";
+import type { ConnectionOptions } from 'mysql2/promise';
+import {Database} from "../base";
+import {Column} from "../types";
 
-export class MySQLDialect extends Dialect<MySQLConfig> {
+export interface MySQLDialectConfig extends ConnectionOptions {}
+
+export class MySQLDialect extends Dialect<MySQLDialectConfig, string> {
   private connection: any = null;
 
-  constructor(config: MySQLConfig) {
+  constructor(config: MySQLDialectConfig) {
     super('mysql', config);
   }
 
@@ -15,7 +20,13 @@ export class MySQLDialect extends Dialect<MySQLConfig> {
   }
 
   async connect(): Promise<void> {
-    this.connection = await mysql.createConnection(this.config);
+    try {
+      const { createConnection } = await import('mysql2/promise');
+      this.connection = await createConnection(this.config);
+    } catch (error) {
+      console.error('forgot install mysql2 ?');
+      throw new Error(`MySQL 连接失败: ${error}`);
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -30,7 +41,6 @@ export class MySQLDialect extends Dialect<MySQLConfig> {
     const [rows] = await this.connection.execute(sql, params);
     return rows as U;
   }
-
 
   async dispose(): Promise<void> {
     if (this.connection) {
@@ -51,35 +61,35 @@ export class MySQLDialect extends Dialect<MySQLConfig> {
     };
     return typeMap[type.toLowerCase()] || 'TEXT';
   }
-  
+
   quoteIdentifier(identifier: string): string {
     return `\`${identifier}\``;
   }
-  
+
   getParameterPlaceholder(index: number): string {
     return '?';
   }
-  
+
   getStatementTerminator(): string {
     return ';';
   }
-  
+
   formatBoolean(value: boolean): string {
     return value ? 'TRUE' : 'FALSE';
   }
-  
+
   formatDate(value: Date): string {
     return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`;
   }
-  
+
   formatJson(value: any): string {
     return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
   }
-  
+
   escapeString(value: string): string {
     return value.replace(/'/g, "''");
   }
-  
+
   formatDefaultValue(value: any): string {
     if (typeof value === 'string') {
       return `'${this.escapeString(value)}'`;
@@ -95,49 +105,53 @@ export class MySQLDialect extends Dialect<MySQLConfig> {
       throw new Error(`Unsupported default value type: ${typeof value}`);
     }
   }
-  
+
   formatLimit(limit: number): string {
     return `LIMIT ${limit}`;
   }
-  
+
   formatOffset(offset: number): string {
     return `OFFSET ${offset}`;
   }
-  
+
   formatLimitOffset(limit: number, offset: number): string {
     return `LIMIT ${offset}, ${limit}`;
   }
-  
+
   formatCreateTable(tableName: string, columns: string[]): string {
     return `CREATE TABLE IF NOT EXISTS ${this.quoteIdentifier(tableName)} (${columns.join(', ')}) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
   }
-  
-  formatColumnDefinition(column: any): string {
-    const name = this.quoteIdentifier(String(column.name));
+
+  formatColumnDefinition(field: string, column: Column<any>): string {
+    const name = this.quoteIdentifier(String(field));
     const type = this.mapColumnType(column.type);
     const length = column.length ? `(${column.length})` : '';
     const nullable = column.nullable === false ? ' NOT NULL' : '';
     const primary = column.primary ? ' PRIMARY KEY' : '';
     const unique = column.unique ? ' UNIQUE' : '';
     const autoIncrement = column.autoIncrement ? ' AUTO_INCREMENT' : '';
-    const defaultVal = column.default !== undefined 
-      ? ` DEFAULT ${this.formatDefaultValue(column.default)}` 
+    const defaultVal = column.default !== undefined
+      ? ` DEFAULT ${this.formatDefaultValue(column.default)}`
       : '';
-    
+
     return `${name} ${type}${length}${primary}${unique}${autoIncrement}${nullable}${defaultVal}`;
   }
-  
+
   formatAlterTable(tableName: string, alterations: string[]): string {
     return `ALTER TABLE ${this.quoteIdentifier(tableName)} ${alterations.join(', ')}`;
   }
-  
+
   formatDropTable(tableName: string, ifExists?: boolean): string {
     const ifExistsClause = ifExists ? 'IF EXISTS ' : '';
     return `DROP TABLE ${ifExistsClause}${this.quoteIdentifier(tableName)}`;
   }
-  
+
   formatDropIndex(indexName: string, tableName: string, ifExists?: boolean): string {
     const ifExistsClause = ifExists ? 'IF EXISTS ' : '';
     return `DROP INDEX ${ifExistsClause}${this.quoteIdentifier(indexName)} ON ${this.quoteIdentifier(tableName)}`;
   }
 }
+
+Registry.register('mysql', (config: MySQLDialectConfig, schemas?: Database.Schemas<Record<string, object>>) => {
+  return new RelatedDatabase(new MySQLDialect(config), schemas);
+});

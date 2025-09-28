@@ -1,14 +1,17 @@
 import {MaybePromise}from '@zhin.js/types'
 import {MessageChannel} from "./message.js";
-import {Database} from "@zhin.js/database";
 import {Adapter} from "./adapter.js";
 import {Bot,BotConfig} from "./bot.js";
+import { Databases,Registry } from "@zhin.js/database";
 declare module '@zhin.js/types'{
   interface GlobalContext extends RegisteredAdapters{}
 }
 export interface RegisteredAdapters extends Record<string, Adapter>{
 
 }
+export type DatabaseConfig<T extends keyof Databases=keyof Databases>={
+  dialect:T
+} & Registry.Config<Databases[T]>
 export type ObjectItem<T extends object>=T[keyof T]
 export type RegisteredAdapter=keyof RegisteredAdapters
 export type AdapterMessage<T extends keyof RegisteredAdapters=keyof RegisteredAdapters>=RegisteredAdapters[T] extends Adapter<infer R>?BotMessage<R>:{}
@@ -40,12 +43,11 @@ export interface Group {
 }
 
 
-
 export interface AppConfig {
   /** 机器人配置列表 */
   bots?: BotConfig[];
   /** 数据库配置列表 */
-  databases?: Database.Config;
+  database?: DatabaseConfig;
   /** 插件目录列表，默认为 ['./plugins', 'node_modules'] */
   plugin_dirs?: string[];
   /** 需要加载的插件列表 */

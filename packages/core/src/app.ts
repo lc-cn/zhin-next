@@ -1,6 +1,5 @@
 import path from "path";
-import * as fs from "fs";
-import { SideEffect, GlobalContext } from "@zhin.js/types";
+import { SideEffect, GlobalContext, Models } from "@zhin.js/types";
 import {
   HMR,
   Context,
@@ -19,6 +18,7 @@ import { Message } from "./message.js";
 import { fileURLToPath } from "url";
 import { generateEnvTypes } from "./types-generator.js";
 import logger, { setName } from "@zhin.js/logger";
+import { sleep } from "./utils.js";
 
 // 创建静态logger用于配置加载等静态操作
 setName("Zhin");
@@ -26,8 +26,7 @@ import { MessageMiddleware, Plugin } from "./plugin.js";
 import { Adapter } from "./adapter";
 import { MessageCommand } from "./command";
 import { Component } from "./component";
-import { Model,Database } from "@zhin.js/database";
-import { sleep } from "./utils.js";
+import { RelatedDatabase,DocumentDatabase,KeyValueDatabase,Schema,Registry} from "@zhin.js/database";
 
 // ============================================================================
 // App 类
@@ -39,8 +38,7 @@ export class App extends HMR<Plugin> {
   static currentPlugin: Plugin;
   private config: AppConfig;
   adapters: string[] = [];
-  database: Database;
-  drivers: Map<keyof Database.DriverConfig, Database.DriverFactory<any>> = new Map();
+  database?: RelatedDatabase<any,Models>|DocumentDatabase<any,Models>|KeyValueDatabase<any,Models>;
   constructor(config?: Partial<AppConfig>) {
     // 如果没有传入配置或配置为空对象，尝试自动加载配置文件
     let finalConfig: AppConfig;
@@ -69,7 +67,6 @@ export class App extends HMR<Plugin> {
       extensions: new Set([".js", ".ts"]),
       debug: finalConfig.debug,
     });
-    this.database = new Database();
     this.on("message.send", this.sendMessage.bind(this));
     process.on("uncaughtException", (e) => {
       this.logger.error(e);
@@ -78,16 +75,9 @@ export class App extends HMR<Plugin> {
       this.logger.error(e);
     });
     this.config = finalConfig;
-    if (finalConfig.databases?.default) {
-      this.database.setDefaultDriver(finalConfig.databases.default);
-    }
   }
   /** 默认配置 */
   static defaultConfig: AppConfig = {
-    databases: {
-      default: "memory",
-      memory: true
-    },
     plugin_dirs: ["./plugins"],
     plugins: [],
     bots: [],
@@ -148,7 +138,14 @@ export class App extends HMR<Plugin> {
 
     this.logger.info("App configuration updated", this.config);
   }
-
+  get schemas(){
+    return this.dependencyList.reduce((result, plugin) => {
+      plugin.schemas.forEach((schema, name) => {
+        result.set(name, schema);
+      });
+      return result;
+    }, new Map<string,Schema<any>>());
+  }
   /** 使用插件 */
   use(filePath: string): void {
     this.emit("internal.add", filePath);
@@ -162,16 +159,14 @@ export class App extends HMR<Plugin> {
       this.use(pluginName);
     }
     await sleep(200);
-    for (const [name, creator] of this.drivers) {
-      const config = this.getConfig().databases?.[name] || {};
-      const driver = Database.isDriverConstructor(creator)
-        ? new creator(config)
-        : creator(config);
-      this.database.register(driver);
+    const schemas:Record<string,Schema>={};
+    for (const [name, schema] of this.schemas) {
+      schemas[name]=schema;
     }
-    await this.database.init();
+    this.database=Registry.create((this.config.database as any).dialect,this.config.database,schemas);
+    await this.database?.start();
     this.logger.info(`database init success`);
-    this.dispatch("database.ready");
+    this.dispatch("database.ready",this.database);
     // 等待所有插件就绪
     await this.waitForReady();
     this.logger.info("started successfully");
@@ -244,17 +239,12 @@ export function useApp(): App {
   if (!hmr) throw new Error("useApp must be called within a App Context");
   return hmr as unknown as App;
 }
-export function useDatabase(driver?: keyof Database.DriverConfig) {
-  const app = useApp();
-  return app.database.use(driver)
-}
-export function defineModel<T extends Record<string, Model.Field>>(
+export function defineModel<T extends Record<string, any>>(
   name: string,
-  schema: T,
-  config: Model.Config = {}
+  schema: Schema<T>,
 ) {
   const plugin = usePlugin();
-  return plugin.defineModel(name, schema, config);
+  return plugin.defineModel(name, schema);
 }
 
 /** 获取当前插件实例 */
@@ -298,14 +288,6 @@ export function registerAdapter<T extends Adapter>(adapter: T) {
   });
 }
 
-export function registerDriver<
-  T extends keyof Database.DriverConfig,
-  S extends Database.DriverFactory<Database.DriverConfig[T]>
->(name: T, creator: S) {
-  const app = useApp();
-  app.logger.info("register driver", name);
-  app.drivers.set(name, creator);
-}
 
 /** 标记必需的Context */
 export function useContext<T extends (keyof GlobalContext)[]>(
@@ -320,10 +302,14 @@ export function addMiddleware(middleware: MessageMiddleware): void {
   const plugin = usePlugin();
   plugin.addMiddleware(middleware);
 }
-export function onDatabaseReady(callback: () => PromiseLike<void>) {
+export function onDatabaseReady(callback: (database: RelatedDatabase<any,Models>|DocumentDatabase<any,Models>|KeyValueDatabase<any,Models>) => PromiseLike<void>) {
   const plugin = usePlugin();
-  if (plugin.app.database.has_init) callback();
+  if (plugin.app.database?.isStarted) callback(plugin.app.database);
   plugin.on("database.ready", callback);
+}
+export function useDatabase() {
+  const plugin = usePlugin();
+  return plugin.app.database;
 }
 export function onAppReady(callback: () => PromiseLike<void>) {
   const plugin = usePlugin();

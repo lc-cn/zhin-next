@@ -78,7 +78,6 @@ onMessage(async (message) => {
 | **@zhin.js/adapter-process** | 控制台适配器，支持命令行交互 |
 | **@zhin.js/http** | HTTP服务，提供API接口 |
 | **@zhin.js/console** | Web控制台，浏览器管理界面 |
-| **@zhin.js/database-sqlite** | SQLite数据库支持 |
 
 ## 🔌 扩展功能
 
@@ -90,9 +89,6 @@ pnpm add @zhin.js/adapter-telegram  # Telegram机器人
 pnpm add @zhin.js/adapter-discord   # Discord机器人
 pnpm add @zhin.js/adapter-qq        # QQ机器人
 
-# 更多数据库
-pnpm add @zhin.js/database-mysql      # MySQL支持
-pnpm add @zhin.js/database-postgresql # PostgreSQL支持
 ```
 
 然后在代码中引入即可自动注册：

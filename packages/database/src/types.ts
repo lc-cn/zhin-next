@@ -1,8 +1,3 @@
-// Core type definitions for the database driver library
-
-// ============================================================================
-// Query Type Definitions
-// ============================================================================
 
 export type QueryType = 
   | 'create' 
@@ -30,12 +25,13 @@ export interface Column<T = any> {
   type: ColumnType;
   nullable?: boolean;
   default?: T;
+  autoIncrement?: boolean;
   primary?: boolean;
   unique?: boolean;
   length?: number;
 }
 
-export type Schema<T extends object> = {
+export type Schema<T extends object=object> = {
   [P in keyof T]: Column<T[P]>;
 }
 
@@ -175,9 +171,75 @@ export type QueryParams<T extends object = any> =
 // Query Result Types
 // ============================================================================
 
-export interface QueryResult<T = any> {
-  sql: string;
+export interface BuildQueryResult<R> {
+  query: R;
   params: any[];
+}
+
+// ============================================================================
+// NoSQL Query Result Types
+// ============================================================================
+
+/**
+ * 文档查询结果类型
+ */
+export interface DocumentQueryResult {
+  collection: string;
+  filter: Record<string, any>;
+  sort?: Record<string, 1 | -1>;
+  limit?: number;
+  skip?: number;
+  projection?: Record<string, 1 | 0>;
+  operation?: 'find' | 'insertOne' | 'insertMany' | 'updateOne' | 'updateMany' | 'deleteOne' | 'deleteMany' | 'createCollection' | 'createIndex' | 'dropIndex' | 'dropCollection';
+}
+
+/**
+ * 键值查询结果类型
+ */
+export interface KeyValueQueryResult {
+  bucket: string;
+  operation: 'get' | 'set' | 'delete' | 'has' | 'keys' | 'values' | 'entries' | 'clear' | 'size' | 'expire' | 'ttl' | 'persist' | 'cleanup' | 'keysByPattern';
+  key?: string;
+  value?: any;
+  ttl?: number;
+  pattern?: string;
+  keys?: string[];
+}
+
+/**
+ * 文档操作结果类型
+ */
+export interface DocumentOperationResult<T = any> {
+  success: boolean;
+  data?: T | T[];
+  count?: number;
+  error?: string;
+}
+
+/**
+ * 键值操作结果类型
+ */
+export interface KeyValueOperationResult<T = any> {
+  success: boolean;
+  data?: T | T[] | number | boolean;
+  error?: string;
+}
+
+/**
+ * 数据库方言信息接口
+ */
+export interface DatabaseDialect {
+  name: string;
+  version: string;
+  features: string[];
+  dataTypes: Record<string, string>;
+  identifierQuote: string;
+  parameterPlaceholder: string;
+  supportsTransactions: boolean;
+  supportsIndexes: boolean;
+  supportsForeignKeys: boolean;
+  supportsViews: boolean;
+  supportsStoredProcedures: boolean;
 }
 
 export interface SelectResult<T> {
@@ -204,35 +266,14 @@ export interface DeleteResult {
 // ============================================================================
 
 export interface BaseDriverConfig {
-  memory?: boolean;
   timeout?: number;
   retries?: number;
 }
 
-export interface SQLiteConfig extends BaseDriverConfig {
-  filename?: string;
-  memory?: boolean;
+
+export interface MemoryConfig{
 }
 
-export interface MySQLConfig extends BaseDriverConfig {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl?: boolean;
-}
-
-export interface PostgreSQLConfig extends BaseDriverConfig {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl?: boolean;
-}
-
-export type DriverConfig = SQLiteConfig | MySQLConfig | PostgreSQLConfig;
 
 // ============================================================================
 // Driver Interface Types
@@ -254,8 +295,8 @@ export interface DriverSchema {
   getTableInfo(tableName: string): Promise<TableInfo[]>;
 }
 
-export interface DriverQueryBuilder {
-  buildQuery<T extends object = any>(params: QueryParams<T>): QueryResult;
+export interface DriverQueryBuilder<R> {
+  buildQuery<T extends object = any>(params: QueryParams<T>): BuildQueryResult<R>;
 }
 
 export interface DriverLifecycle {
